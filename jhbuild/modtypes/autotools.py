@@ -56,6 +56,7 @@ class AutogenModule(MakeModule, DownloadableModule):
                  supports_non_srcdir_builds=True,
                  skip_autogen=False,
                  skip_install_phase=False,
+                 skip_build_phase=False,
                  uninstall_before_install=False,
                  autogen_sh='autogen.sh',
                  makefile='Makefile',
@@ -229,10 +230,10 @@ class AutogenModule(MakeModule, DownloadableModule):
                 extra_env.get('ACLOCAL', os.environ.get('ACLOCAL', 'aclocal')),
                 extra_env.get('ACLOCAL_FLAGS', os.environ.get('ACLOCAL_FLAGS', ''))))
             buildscript.execute(['autoreconf', '-fi'], cwd=srcdir,
-                    extra_env=extra_env)
+                    extra_env=extra_env, expectedreturncode = self.expectedreturncode)
             os.chmod(os.path.join(srcdir, 'configure'), 0755)
 
-        buildscript.execute(cmd, cwd = builddir, extra_env = self.extra_env)
+        buildscript.execute(cmd, cwd = builddir, extra_env = self.extra_env, expectedreturncode = self.expectedreturncode)
     do_configure.depends = [PHASE_CHECKOUT]
     do_configure.error_phases = [PHASE_FORCE_CHECKOUT,
             PHASE_CLEAN, PHASE_DISTCLEAN]
@@ -252,7 +253,7 @@ class AutogenModule(MakeModule, DownloadableModule):
         makeargs = self.get_makeargs(buildscript)
         cmd = '%s %s clean' % (os.environ.get('MAKE', 'make'), makeargs)
         buildscript.execute(cmd, cwd = self.get_builddir(buildscript),
-                extra_env = self.extra_env)
+                extra_env = self.extra_env, expectedreturncode = self.expectedreturncode)
     do_clean.depends = [PHASE_CONFIGURE]
     do_clean.error_phases = [PHASE_FORCE_CHECKOUT, PHASE_CONFIGURE]
 
@@ -261,7 +262,7 @@ class AutogenModule(MakeModule, DownloadableModule):
         makeargs = self.get_makeargs(buildscript)
         cmd = '%s%s %s' % (self.static_analyzer_pre_cmd(buildscript), os.environ.get('MAKE', 'make'), makeargs)
         buildscript.execute(cmd, cwd = self.get_builddir(buildscript),
-                extra_env = self.extra_env)
+                extra_env = self.extra_env, expectedreturncode = self.expectedreturncode)
     do_build.depends = [PHASE_CONFIGURE]
     do_build.error_phases = [PHASE_FORCE_CHECKOUT, PHASE_CONFIGURE,
             PHASE_CLEAN, PHASE_DISTCLEAN]
@@ -296,7 +297,7 @@ class AutogenModule(MakeModule, DownloadableModule):
         cmd = '%s%s %s check' % (self.static_analyzer_pre_cmd(buildscript), os.environ.get('MAKE', 'make'), makeargs)
         try:
             buildscript.execute(cmd, cwd = self.get_builddir(buildscript),
-                    extra_env = self.extra_env)
+                    extra_env = self.extra_env, expectedreturncode = self.expectedreturncode)
         except CommandError:
             if not buildscript.config.makecheck_advisory:
                 raise
@@ -308,7 +309,7 @@ class AutogenModule(MakeModule, DownloadableModule):
         makeargs = self.get_makeargs(buildscript)
         cmd = '%s %s dist' % (os.environ.get('MAKE', 'make'), makeargs)
         buildscript.execute(cmd, cwd = self.get_builddir(buildscript),
-                    extra_env = self.extra_env)
+                    extra_env = self.extra_env, expectedreturncode = self.expectedreturncode)
     do_dist.depends = [PHASE_CONFIGURE]
     do_dist.error_phases = [PHASE_FORCE_CHECKOUT, PHASE_CONFIGURE]
 
@@ -317,7 +318,7 @@ class AutogenModule(MakeModule, DownloadableModule):
         makeargs = self.get_makeargs(buildscript)
         cmd = '%s %s distcheck' % (os.environ.get('MAKE', 'make'), makeargs)
         buildscript.execute(cmd, cwd = self.get_builddir(buildscript),
-                    extra_env = self.extra_env)
+                    extra_env = self.extra_env, expectedreturncode = self.expectedreturncode)
     do_distcheck.depends = [PHASE_DIST]
     do_distcheck.error_phases = [PHASE_FORCE_CHECKOUT, PHASE_CONFIGURE]
 
@@ -338,13 +339,16 @@ class AutogenModule(MakeModule, DownloadableModule):
             cmd = '%s install DESTDIR=%s' % (os.environ.get('MAKE', 'make'),
                                              destdir)
         buildscript.execute(cmd, cwd = self.get_builddir(buildscript),
-                    extra_env = self.extra_env)
+                    extra_env = self.extra_env, expectedreturncode = self.expectedreturncode)
         self.process_install(buildscript, self.get_revision())
 
     do_install.depends = [PHASE_BUILD]
 
     def skip_install(self, buildscript, last_phase):
         return self.config.noinstall or self.skip_install_phase
+
+    def skip_build(self, buildscript, last_phase):
+        return self.skip_build_phase
 
     def skip_distclean(self, buildscript, last_phase):
         builddir = self.get_builddir(buildscript)
@@ -364,7 +368,7 @@ class AutogenModule(MakeModule, DownloadableModule):
             makeargs = self.get_makeargs(buildscript)
             cmd = '%s %s distclean' % (os.environ.get('MAKE', 'make'), makeargs)
             buildscript.execute(cmd, cwd = self.get_builddir(buildscript),
-                                extra_env = self.extra_env)
+                                extra_env = self.extra_env, expectedreturncode = self.expectedreturncode)
     do_distclean.depends = [PHASE_CHECKOUT]
 
     def xml_tag_and_attrs(self):
@@ -377,8 +381,10 @@ class AutogenModule(MakeModule, DownloadableModule):
                   'supports_non_srcdir_builds', True),
                  ('skip-autogen', 'skip_autogen', False),
                  ('skip-install', 'skip_install_phase', False),
+                 ('skip-build', 'skip_build_phase', False),
                  ('uninstall-before-install', 'uninstall_before_install', False),
                  ('autogen-sh', 'autogen_sh', 'autogen.sh'),
+                 ('expectedreturncode', 'expectedreturncode', 'expectedreturncode'),
                  ('makefile', 'makefile', 'Makefile'),
                  ('supports-static-analyzer', 'supports_static_analyzer', True),
                  ('autogen-template', 'autogen_template', None)])
@@ -419,6 +425,12 @@ def parse_autotools(node, config, uri, repositories, default_repo):
             instance.skip_install_phase = True
         else:
             instance.skip_install_phase = False
+    if node.hasAttribute('skip-build'):
+        skip_build = node.getAttribute('skip-build')
+        if skip_build.lower() in ('true', 'yes'):
+            instance.skip_build_phase = True
+        else:
+            instance.skip_build_phase = False
     if node.hasAttribute('uninstall-before-install'):
         instance.uninstall_before_install = (node.getAttribute('uninstall-before-install') == 'true')
 
@@ -441,6 +453,8 @@ def parse_autotools(node, config, uri, repositories, default_repo):
         instance.makefile = node.getAttribute('makefile')
     if node.hasAttribute('autogen-template'):
         instance.autogen_template = node.getAttribute('autogen-template')
+    if node.hasAttribute('expectedreturncode'):
+        instance.expectedreturncode = int(node.getAttribute('expectedreturncode'))
 
     return instance
 register_module_type('autotools', parse_autotools)

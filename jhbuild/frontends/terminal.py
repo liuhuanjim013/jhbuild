@@ -140,7 +140,7 @@ class TerminalBuildScript(buildscript.BuildScript):
         sys.stdout.flush()
 
 
-    def execute(self, command, hint=None, cwd=None, extra_env=None):
+    def execute(self, command, hint=None, cwd=None, extra_env=None, expectedreturncode=None):
         if not command:
             raise CommandError(_('No command given'))
 
@@ -253,7 +253,8 @@ class TerminalBuildScript(buildscript.BuildScript):
                     # process might already be dead.
                     pass
         try:
-            if p.wait() != 0:
+            returnvalue = p.wait()
+            if returnvalue != expectedreturncode and returnvalue != 0:
                 if self.config.quiet_mode:
                     print ''.join(output)
                 raise CommandError(_('########## Error running %s')
