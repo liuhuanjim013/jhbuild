@@ -455,6 +455,8 @@ def parse_autotools(node, config, uri, repositories, default_repo):
         instance.autogen_template = node.getAttribute('autogen-template')
     if node.hasAttribute('expectedreturncode'):
         instance.expectedreturncode = int(node.getAttribute('expectedreturncode'))
+    else:
+        instance.expectedreturncode = None
 
     return instance
 register_module_type('autotools', parse_autotools)

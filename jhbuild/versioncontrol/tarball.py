@@ -149,6 +149,8 @@ class TarballBranch(Branch):
             localdir = localdir[:-4]
         elif localdir.endswith('.rar'):
             localdir = localdir[:-4]
+        elif localdir.endswith('.deb'):
+            localdir = localdir[:-4]
         if localdir.endswith('.src'):
             localdir = localdir[:-4]
         return localdir

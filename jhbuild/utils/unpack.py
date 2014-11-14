@@ -138,6 +138,10 @@ def unpack_archive(buildscript, localfile, target_directory, checkoutdir=None):
     elif ext == '.rar' and has_command('rar'):
         buildscript.execute('rar x "%s"' % localfile,
                 cwd=target_directory)
+    elif ext == '.deb':
+        dirname=os.path.join(target_directory,os.path.basename(localfile)[:-4])
+        buildscript.execute('mkdir -p %s'%(dirname))
+        buildscript.execute('ln -sf %s %s/%s' % (localfile, dirname, os.path.basename(localfile)))
     else:
         try:
             if tarfile.is_tarfile(localfile):
