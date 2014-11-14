@@ -135,6 +135,9 @@ def unpack_archive(buildscript, localfile, target_directory, checkoutdir=None):
     elif ext == '.zip' and has_command('unzip'):
         buildscript.execute('unzip "%s"' % localfile,
                 cwd=target_directory)
+    elif ext == '.rar' and has_command('rar'):
+        buildscript.execute('rar x "%s"' % localfile,
+                cwd=target_directory)
     else:
         try:
             if tarfile.is_tarfile(localfile):
