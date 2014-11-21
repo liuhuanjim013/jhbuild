@@ -69,6 +69,7 @@ class AutogenModule(MakeModule, DownloadableModule):
         self.supports_non_srcdir_builds = supports_non_srcdir_builds
         self.skip_autogen = skip_autogen
         self.skip_install_phase = skip_install_phase
+        self.skip_build_phase = skip_build_phase
         self.uninstall_before_install = uninstall_before_install
         self.autogen_sh = autogen_sh
         self.autogen_template = autogen_template
