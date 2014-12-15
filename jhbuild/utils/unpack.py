@@ -133,7 +133,9 @@ def unpack_archive(buildscript, localfile, target_directory, checkoutdir=None):
         buildscript.execute('gzip -dc "%s" | tar xf -' % localfile,
                 cwd=target_directory)
     elif ext == '.zip' and has_command('unzip'):
-        buildscript.execute('unzip "%s"' % localfile,
+        dirname=os.path.join(target_directory,os.path.basename(localfile)[:-4])
+        buildscript.execute('mkdir -p %s'%(dirname))
+        buildscript.execute('unzip -u "%s" -d "%s"' % (localfile, dirname),
                 cwd=target_directory)
     elif ext == '.rar' and has_command('rar'):
         buildscript.execute('rar x "%s"' % localfile,
