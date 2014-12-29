@@ -49,6 +49,7 @@ class CMakeModule(MakeModule, DownloadableModule):
     def eval_args(self, args):
         args = Package.eval_args(self, args)
         args = args.replace('${libsuffix}', '')
+        args = args.replace('${checkoutroot}',self.config.checkoutroot)
         return args
 
     def get_srcdir(self, buildscript):
