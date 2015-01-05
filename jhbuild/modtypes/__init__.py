@@ -320,7 +320,7 @@ them into the prefix."""
                 dirname = prefix_dirs.pop()
                 subprefix = os.path.join(*([destdir] + prefix_dirs))
                 target = os.path.join(subprefix, dirname)
-                assert target.startswith(buildscript.config.prefix)
+                #assert target.startswith(buildscript.config.prefix)
                 try:
                     os.rmdir(target)
                 except OSError, e:
@@ -342,7 +342,7 @@ them into the prefix."""
                 shutil.rmtree(broken_name)
             fileutils.rename(destdir, broken_name)
         else:
-            assert destdir.startswith(buildscript.config.prefix)
+            #assert destdir.startswith(buildscript.config.prefix)
             os.rmdir(destdir)
 
         if not install_succeeded:
