@@ -409,10 +409,7 @@ class GitBranch(Branch):
             cmd.append(self.checkoutdir)
 
         if self.branch is not None:
-            # need to remove the following cmd because git will fail to clone if branch is not a tag, i.e. when branch is specified as a commit hash
-            #cmd.extend(['-b', self.branch])
-            # fake the tag so that self._update will switch to the right commit
-            self.tag = self.branch
+            cmd.extend(['-b', self.branch])
 
         if copydir:
             buildscript.execute(cmd, cwd=copydir, extra_env=get_git_extra_env())
