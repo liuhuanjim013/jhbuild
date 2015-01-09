@@ -56,7 +56,7 @@ class AutogenModule(MakeModule, DownloadableModule):
                  supports_non_srcdir_builds=True,
                  skip_autogen=False,
                  skip_install_phase=False,
-                 skip_build_phase=False,
+                 skip_build_phase=False, # liuhuan: support for skipping build
                  uninstall_before_install=False,
                  autogen_sh='autogen.sh',
                  makefile='Makefile',
@@ -69,7 +69,7 @@ class AutogenModule(MakeModule, DownloadableModule):
         self.supports_non_srcdir_builds = supports_non_srcdir_builds
         self.skip_autogen = skip_autogen
         self.skip_install_phase = skip_install_phase
-        self.skip_build_phase = skip_build_phase
+        self.skip_build_phase = skip_build_phase # liuhuan: support for skipping build
         self.uninstall_before_install = uninstall_before_install
         self.autogen_sh = autogen_sh
         self.autogen_template = autogen_template
@@ -231,10 +231,10 @@ class AutogenModule(MakeModule, DownloadableModule):
                 extra_env.get('ACLOCAL', os.environ.get('ACLOCAL', 'aclocal')),
                 extra_env.get('ACLOCAL_FLAGS', os.environ.get('ACLOCAL_FLAGS', ''))))
             buildscript.execute(['autoreconf', '-fi'], cwd=srcdir,
-                    extra_env=extra_env, expectedreturncode = self.expectedreturncode)
+                    extra_env=extra_env, expectedreturncode = self.expectedreturncode) # liuhuan: support for non-0 exit value
             os.chmod(os.path.join(srcdir, 'configure'), 0755)
 
-        buildscript.execute(cmd, cwd = builddir, extra_env = self.extra_env, expectedreturncode = self.expectedreturncode)
+        buildscript.execute(cmd, cwd = builddir, extra_env = self.extra_env, expectedreturncode = self.expectedreturncode) # liuhuan: support for non-0 exit value
     do_configure.depends = [PHASE_CHECKOUT]
     do_configure.error_phases = [PHASE_FORCE_CHECKOUT,
             PHASE_CLEAN, PHASE_DISTCLEAN]
@@ -254,7 +254,7 @@ class AutogenModule(MakeModule, DownloadableModule):
         makeargs = self.get_makeargs(buildscript)
         cmd = '%s %s clean' % (os.environ.get('MAKE', 'make'), makeargs)
         buildscript.execute(cmd, cwd = self.get_builddir(buildscript),
-                extra_env = self.extra_env, expectedreturncode = self.expectedreturncode)
+                extra_env = self.extra_env, expectedreturncode = self.expectedreturncode) # liuhuan: support for non-0 exit value
     do_clean.depends = [PHASE_CONFIGURE]
     do_clean.error_phases = [PHASE_FORCE_CHECKOUT, PHASE_CONFIGURE]
 
@@ -263,7 +263,7 @@ class AutogenModule(MakeModule, DownloadableModule):
         makeargs = self.get_makeargs(buildscript)
         cmd = '%s%s %s' % (self.static_analyzer_pre_cmd(buildscript), os.environ.get('MAKE', 'make'), makeargs)
         buildscript.execute(cmd, cwd = self.get_builddir(buildscript),
-                extra_env = self.extra_env, expectedreturncode = self.expectedreturncode)
+                extra_env = self.extra_env, expectedreturncode = self.expectedreturncode) # liuhuan: support for non-0 exit value
     do_build.depends = [PHASE_CONFIGURE]
     do_build.error_phases = [PHASE_FORCE_CHECKOUT, PHASE_CONFIGURE,
             PHASE_CLEAN, PHASE_DISTCLEAN]
@@ -298,7 +298,7 @@ class AutogenModule(MakeModule, DownloadableModule):
         cmd = '%s%s %s check' % (self.static_analyzer_pre_cmd(buildscript), os.environ.get('MAKE', 'make'), makeargs)
         try:
             buildscript.execute(cmd, cwd = self.get_builddir(buildscript),
-                    extra_env = self.extra_env, expectedreturncode = self.expectedreturncode)
+                    extra_env = self.extra_env, expectedreturncode = self.expectedreturncode) # liuhuan: support for non-0 exit value
         except CommandError:
             if not buildscript.config.makecheck_advisory:
                 raise
@@ -310,7 +310,7 @@ class AutogenModule(MakeModule, DownloadableModule):
         makeargs = self.get_makeargs(buildscript)
         cmd = '%s %s dist' % (os.environ.get('MAKE', 'make'), makeargs)
         buildscript.execute(cmd, cwd = self.get_builddir(buildscript),
-                    extra_env = self.extra_env, expectedreturncode = self.expectedreturncode)
+                    extra_env = self.extra_env, expectedreturncode = self.expectedreturncode) # liuhuan: support for non-0 exit value
     do_dist.depends = [PHASE_CONFIGURE]
     do_dist.error_phases = [PHASE_FORCE_CHECKOUT, PHASE_CONFIGURE]
 
@@ -319,7 +319,7 @@ class AutogenModule(MakeModule, DownloadableModule):
         makeargs = self.get_makeargs(buildscript)
         cmd = '%s %s distcheck' % (os.environ.get('MAKE', 'make'), makeargs)
         buildscript.execute(cmd, cwd = self.get_builddir(buildscript),
-                    extra_env = self.extra_env, expectedreturncode = self.expectedreturncode)
+                    extra_env = self.extra_env, expectedreturncode = self.expectedreturncode) # liuhuan: support for non-0 exit value
     do_distcheck.depends = [PHASE_DIST]
     do_distcheck.error_phases = [PHASE_FORCE_CHECKOUT, PHASE_CONFIGURE]
 
@@ -340,7 +340,7 @@ class AutogenModule(MakeModule, DownloadableModule):
             cmd = '%s install DESTDIR=%s' % (os.environ.get('MAKE', 'make'),
                                              destdir)
         buildscript.execute(cmd, cwd = self.get_builddir(buildscript),
-                    extra_env = self.extra_env, expectedreturncode = self.expectedreturncode)
+                    extra_env = self.extra_env, expectedreturncode = self.expectedreturncode) # liuhuan: support for non-0 exit value
         self.process_install(buildscript, self.get_revision())
 
     do_install.depends = [PHASE_BUILD]
@@ -348,6 +348,7 @@ class AutogenModule(MakeModule, DownloadableModule):
     def skip_install(self, buildscript, last_phase):
         return self.config.noinstall or self.skip_install_phase
 
+    # liuhuan: support for skipping build
     def skip_build(self, buildscript, last_phase):
         return self.skip_build_phase
 
@@ -369,7 +370,7 @@ class AutogenModule(MakeModule, DownloadableModule):
             makeargs = self.get_makeargs(buildscript)
             cmd = '%s %s distclean' % (os.environ.get('MAKE', 'make'), makeargs)
             buildscript.execute(cmd, cwd = self.get_builddir(buildscript),
-                                extra_env = self.extra_env, expectedreturncode = self.expectedreturncode)
+                                extra_env = self.extra_env, expectedreturncode = self.expectedreturncode) # liuhuan: support for non-0 exit value
     do_distclean.depends = [PHASE_CHECKOUT]
 
     def xml_tag_and_attrs(self):
@@ -382,10 +383,10 @@ class AutogenModule(MakeModule, DownloadableModule):
                   'supports_non_srcdir_builds', True),
                  ('skip-autogen', 'skip_autogen', False),
                  ('skip-install', 'skip_install_phase', False),
-                 ('skip-build', 'skip_build_phase', False),
+                 ('skip-build', 'skip_build_phase', False), # liuhuan: support for skipping build
                  ('uninstall-before-install', 'uninstall_before_install', False),
                  ('autogen-sh', 'autogen_sh', 'autogen.sh'),
-                 ('expectedreturncode', 'expectedreturncode', 'expectedreturncode'),
+                 ('expectedreturncode', 'expectedreturncode', 'expectedreturncode'), # liuhuan: support for non-0 exit value
                  ('makefile', 'makefile', 'Makefile'),
                  ('supports-static-analyzer', 'supports_static_analyzer', True),
                  ('autogen-template', 'autogen_template', None)])
@@ -426,6 +427,7 @@ def parse_autotools(node, config, uri, repositories, default_repo):
             instance.skip_install_phase = True
         else:
             instance.skip_install_phase = False
+    # liuhuan: support for skipping build
     if node.hasAttribute('skip-build'):
         skip_build = node.getAttribute('skip-build')
         if skip_build.lower() in ('true', 'yes'):
@@ -454,6 +456,7 @@ def parse_autotools(node, config, uri, repositories, default_repo):
         instance.makefile = node.getAttribute('makefile')
     if node.hasAttribute('autogen-template'):
         instance.autogen_template = node.getAttribute('autogen-template')
+    # liuhuan: support for allowing non-0 exit value
     if node.hasAttribute('expectedreturncode'):
         instance.expectedreturncode = int(node.getAttribute('expectedreturncode'))
     else:

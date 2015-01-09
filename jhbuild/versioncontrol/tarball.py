@@ -147,8 +147,10 @@ class TarballBranch(Branch):
             localdir = localdir[:-4]
         elif localdir.endswith('.zip'):
             localdir = localdir[:-4]
+        # liuhuan: support for .rar file
         elif localdir.endswith('.rar'):
             localdir = localdir[:-4]
+        # liuhuan: support for .deb file TODO: create a new module type
         elif localdir.endswith('.deb'):
             localdir = localdir[:-4]
         if localdir.endswith('.src'):

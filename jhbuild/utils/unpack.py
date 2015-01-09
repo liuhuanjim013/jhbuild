@@ -133,13 +133,16 @@ def unpack_archive(buildscript, localfile, target_directory, checkoutdir=None):
         buildscript.execute('gzip -dc "%s" | tar xf -' % localfile,
                 cwd=target_directory)
     elif ext == '.zip' and has_command('unzip'):
+        # liuhuan: create a directory with the zip file's basename before unziping it to support zipped files without top level directory
         dirname=os.path.join(target_directory,os.path.basename(localfile)[:-4])
         buildscript.execute('mkdir -p %s'%(dirname))
         buildscript.execute('unzip -u "%s" -d "%s"' % (localfile, dirname),
                 cwd=target_directory)
+    # liuhuan: support for .rar file
     elif ext == '.rar' and has_command('rar'):
         buildscript.execute('rar x "%s"' % localfile,
                 cwd=target_directory)
+    # liuhuan: support for .deb file TODO: create a new module type
     elif ext == '.deb':
         dirname=os.path.join(target_directory,os.path.basename(localfile)[:-4])
         buildscript.execute('mkdir -p %s'%(dirname))

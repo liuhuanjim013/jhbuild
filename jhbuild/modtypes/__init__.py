@@ -320,6 +320,7 @@ them into the prefix."""
                 dirname = prefix_dirs.pop()
                 subprefix = os.path.join(*([destdir] + prefix_dirs))
                 target = os.path.join(subprefix, dirname)
+                # liuhuan: need to disable this assertion to allow custom top_builddir
                 #assert target.startswith(buildscript.config.prefix)
                 try:
                     os.rmdir(target)
@@ -342,6 +343,7 @@ them into the prefix."""
                 shutil.rmtree(broken_name)
             fileutils.rename(destdir, broken_name)
         else:
+            # liuhuan: need to disable this assertion to allow custom top_builddir
             #assert destdir.startswith(buildscript.config.prefix)
             os.rmdir(destdir)
 

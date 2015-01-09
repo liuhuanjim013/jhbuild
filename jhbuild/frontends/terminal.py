@@ -139,7 +139,7 @@ class TerminalBuildScript(buildscript.BuildScript):
             sys.stdout.write('\n')
         sys.stdout.flush()
 
-
+    # liuhuan: support for allowing non-0 exit value
     def execute(self, command, hint=None, cwd=None, extra_env=None, expectedreturncode=None):
         if not command:
             raise CommandError(_('No command given'))
@@ -253,6 +253,7 @@ class TerminalBuildScript(buildscript.BuildScript):
                     # process might already be dead.
                     pass
         try:
+            # liuhuan: support for allowing non-0 exit value
             returnvalue = p.wait()
             if returnvalue != expectedreturncode and returnvalue != 0:
                 if self.config.quiet_mode:
