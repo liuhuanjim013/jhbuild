@@ -2,6 +2,7 @@
 <?xml-stylesheet type="text/xsl" href="moduleset.xsl"?>
 <moduleset>
   <repository type="tarball" name="ftp.gnu.org" href="http://ftp.gnu.org/gnu/"/>
+  <repository type="tarball" name="xorg" href="http://xorg.freedesktop.org/"/>
   <repository type="tarball" name="pkgconfig" href="http://pkgconfig.freedesktop.org/releases/"/>
   <repository type="tarball" name="python" href="http://www.python.org/ftp/python/"/>
   <repository type="tarball" name="sourceforge" href="http://dfn.dl.sourceforge.net/sourceforge/"/>
@@ -9,7 +10,7 @@
   <repository type="tarball" name="xmlsoft" href="http://xmlsoft.org/sources/"/>
   <repository type="tarball" name="sourceware" href="http://mirrors.kernel.org/sources.redhat.com/"/>
   <repository type="tarball" name="launchpad" href="http://launchpad.net/"/>
-  <repository type="tarball" name="gnome-http" href="http://ftp.cse.buffalo.edu/pub/Gnome/sources/"/>
+  <repository type="tarball" name="gnome-http" href="http://download.gnome.org/sources/"/>
   <repository type="tarball" name="dbus" href="http://dbus.freedesktop.org/releases/dbus/"/>
   <repository type="tarball" name="cairo" href="http://www.cairographics.org/releases/"/>
   <repository type="tarball" name="tango" href="http://tango.freedesktop.org/releases/"/>
@@ -17,7 +18,14 @@
   <repository type="tarball" name="ragel" href="http://www.complang.org/ragel/"/>
   <repository type="tarball" name="sqlite" href="http://www.sqlite.org/"/>
   <repository type="tarball" name="libproxy" href="http://libproxy.googlecode.com/files/"/>
+  <repository type="tarball" name="cmake" href="http://www.cmake.org/files/"/>
 
+  <autotools id="xorg-macros">
+    <branch repo="xorg"
+            module="releases/individual/util/util-macros-1.19.0.tar.gz" version="1.19.0"
+            size="96185"
+            hash="sha256:0d4df51b29023daf2f63aebf3ebc638ea88efedfd560ab5866741ab3f92acaa1"/>
+  </autotools>
 
   <autotools id="gettext" autogen-sh="configure">
     <branch repo="ftp.gnu.org"
@@ -25,6 +33,13 @@
             size="16171945"
             hash="sha256:36f3c1043df803565d4977c1efbd41e1ec0f0301acf5f057984406c34cb9f948">
     </branch>
+  </autotools>
+
+  <autotools id="bison" autogen-sh="configure">
+    <branch repo="ftp.gnu.org"
+            module="bison/bison-3.0.2.tar.gz" version="3.0.2"
+            size="3261770"
+            hash="sha256:cdf29d1a4c0f7d5b0c181bc8818fe6816d3b6ad4fcc8f6c0e5540a228c3f81ed"/>
   </autotools>
 
   <autotools id="m4" autogen-sh="configure">
@@ -64,10 +79,17 @@
             size="1620860"/>
   </autotools>
 
-  <autotools id="pkg-config" autogen-sh="configure">
-    <branch repo="pkgconfig"
-            module="pkg-config-0.25.tar.gz" version="0.25"
-            size="988899" md5sum="a3270bab3f4b69b7dc6dbdacbcae9745" />
+  <autotools id="pkg-config" autogen-sh="configure" autogenargs="--with-internal-glib">
+    <branch repo="pkgconfig" module="pkg-config-0.28.tar.gz" version="0.28"
+            size="1931203" hash="sha256:6b6eb31c6ec4421174578652c7e141fdaae2dabad1021f420d8713206ac1f845"/>
+  </autotools>
+
+  <!-- cmakes ./configure is picky about invalid flags so we manually set it -->
+  <autotools id="cmake" autogen-template="%(srcdir)s/configure --prefix=%(prefix)s">
+    <branch repo="cmake"
+            module="v3.1/cmake-3.1.0.tar.gz" version="3.1.0"
+            size="5955836"
+            hash="sha256:8bdc3fa3f2da81bc10c772a6b64cc9052acc2901d42e1e1b2588b40df224aad9"/>
   </autotools>
 
   <autotools id="python" autogenargs="--enable-shared" autogen-sh="configure">
@@ -97,13 +119,13 @@
   </autotools>
 
   <autotools id="libxml2" autogen-sh="configure">
-    <branch repo="xmlsoft" module="libxml2-2.9.1.tar.gz" version="2.9.1"
-            size="5172503" hash="sha256:fd3c64cb66f2c4ea27e934d275904d92cec494a8e8405613780cbc8a71680fdb"/>
+    <branch repo="xmlsoft" module="libxml2-2.9.2.tar.gz" version="2.9.2"
+            size="5444991" hash="sha256:5178c30b151d044aefb1b08bf54c3003a0ac55c59c866763997529d60770d5bc"/>
   </autotools>
 
   <autotools id="gtk-osx-docbook" autogen-sh="configure" supports-non-srcdir-builds="no">
-     <branch repo="sourceforge" module="gtk-osx/gtk-osx-docbook-1.1.tar.gz" version="1.1"
-             size="1931036" hash="sha256:fd43e5423ecd55025d81ac5482f01c6982b7cb0cdbb54f74d4bf65716c49414c"/>
+     <branch repo="sourceforge" module="gtk-osx/gtk-osx-docbook-1.2.tar.gz" version="1.2"
+             size="1985073" hash="sha256:1550665e4130c64914d26036785be1878a5867fd2bd9b954a30d0c82dee98789"/>
   </autotools>
 
   <autotools id="libffi" autogen-sh="configure">
@@ -156,7 +178,9 @@
         <dep package="autoconf"/>
         <dep package="libtool"/>
         <dep package="automake"/>
+        <dep package="bison"/>
         <dep package="pkg-config"/>
+        <dep package="cmake"/>
         <dep package="python"/>
         <dep package="intltool"/>
         <dep package="libxslt"/>
@@ -164,12 +188,12 @@
         <dep package="gtk-osx-docbook"/>
         <dep package="libffi"/>
         <dep package="libpng"/>
-        <dep package="vala-bootstrap"/>
         <dep package="dbus"/>
         <dep package="pixman"/>
         <dep package="libtasn1"/>
         <dep package="libjpeg"/>
         <dep package="sqlite"/>
+        <dep package="xorg-macros"/>
       </if>
     </dependencies>
   </metamodule>

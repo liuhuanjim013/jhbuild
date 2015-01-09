@@ -91,25 +91,17 @@ class PackageEntry:
 
         dbentry = cls(package, version, metadata, manifests_dir)
 
-        # Transition code for the time when the list of files were stored
-        # in list of xml nodes
-        manifestNode = node.find('manifest')
-        if manifestNode is not None:
-            manifest = []
-            for manifest_child in manifestNode:
-                if manifest_child.tag != 'file':
-                    continue
-                # The strip here is important since presently we
-                # "pretty print" which adds whitespace around <file>.
-                # Since we don't handle files with whitespace in their
-                # names anyways, it's a fine hack.
-                manifest.append(manifest_child.text.strip())
-            dbentry.manifest = manifest
-
         return dbentry
 
+    def write(self):
+        writer = fileutils.SafeWriter(os.path.join(self.manifests_dir, self.package))
+        writer.fp.write('\n'.join(self.manifest) + '\n')
+        writer.commit()
 
-    def to_xml(self, doc):
+    def remove(self):
+        fileutils.ensure_unlinked(os.path.join(self.manifests_dir, self.package))
+
+    def to_xml(self):
         entry_node = ET.Element('entry', {'package': self.package,
                                           'version': self.version})
         if 'installed-date' in self.metadata:
@@ -117,16 +109,7 @@ class PackageEntry:
         if 'configure-hash' in self.metadata:
             entry_node.attrib['configure-hash'] = \
                 self.metadata['configure-hash']
-        if self.manifest is not None:
-            fd = file(os.path.join(self.manifests_dir, self.package + '.tmp'), 'w')
-            fd.write('\n'.join(self.manifest))
-            if hasattr(os, 'fdatasync'):
-                os.fdatasync(fd.fileno())
-            else:
-                os.fsync(fd.fileno())
-            fd.close()
-            fileutils.rename(os.path.join(self.manifests_dir, self.package + '.tmp'),
-                             os.path.join(self.manifests_dir, self.package))
+
         return entry_node
 
 class PackageDB:
@@ -184,12 +167,11 @@ class PackageDB:
         pkgdb_node = ET.Element('packagedb')
         doc = ET.ElementTree(pkgdb_node)
         for package,entry in self._entries.iteritems():
-            node = entry.to_xml(doc)
+            node = entry.to_xml()
             pkgdb_node.append(node)
 
-        tmp_dbfile_path = self.dbfile + '.tmp'
-        tmp_dbfile = open(tmp_dbfile_path, 'w')
-        
+        writer = fileutils.SafeWriter(self.dbfile)
+
         # Because ElementTree can't pretty-print, we convert it to a string
         # and then read it back with DOM, then write it out again.  Yes, this
         # is lame.
@@ -198,15 +180,11 @@ class PackageDB:
         doc.write(buf, encoding='UTF-8')
         dom_doc = DOM.parseString(buf.getvalue())
         try:
-            dom_doc.writexml(tmp_dbfile, addindent='  ', newl='\n', encoding='UTF-8')
+            dom_doc.writexml(writer.fp, addindent='  ', newl='\n', encoding='UTF-8')
         except:
-            tmp_dbfile.close()
-            os.unlink(tmp_dbfile_path)
+            writer.abandon()
             raise
-        tmp_dbfile.flush()
-        os.fsync(tmp_dbfile.fileno())
-        tmp_dbfile.close()
-        fileutils.rename(tmp_dbfile_path, self.dbfile)
+        writer.commit()
         # Ensure we don't reread what we already have cached
         self._entries_stat = os.stat(self.dbfile)
 
@@ -239,6 +217,7 @@ class PackageDB:
         self._entries[package] = PackageEntry(package, version, metadata,
                                               self.manifests_dir)
         self._entries[package].manifest = contents
+        self._entries[package].write()
         self._write_cache()
 
     def check(self, package, version=None):
@@ -286,6 +265,7 @@ class PackageDB:
                 logging.warn(_("Failed to delete %(file)r: %(msg)s") % { 'file': path,
                                                                          'msg': error_string})
 
+        self._entries[package_name].remove()
         del self._entries[package_name]
         self._write_cache()
 

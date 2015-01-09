@@ -41,17 +41,6 @@
        that are not covered there, add them in here
     -->
 
-  <autotools id="appstream-glib">
-    <if condition-set="freebsd">
-      <autogenargs value="LIBARCHIVE_CFLAGS=' ' LIBARCHIVE_LIBS='-larchive'"/>
-    </if>
-    <branch repo="github.com" module="hughsie/appstream-glib.git"/>
-    <dependencies>
-      <dep package="glib"/>
-      <dep package="gobject-introspection"/>
-    </dependencies>
-  </autotools>
-
   <autotools id="babl">
     <branch/>
   </autotools>
@@ -71,6 +60,7 @@
   <autotools id="bijiben">
     <branch/>
     <dependencies>
+      <dep package="appstream-glib"/>
       <dep package="tracker"/>
       <dep package="clutter-gtk"/>
       <dep package="gtk+"/>
@@ -130,17 +120,6 @@
       <dep package="gtk+"/>
       <dep package="intltool"/>
       <dep package="yelp-tools"/>
-    </dependencies>
-  </autotools>
-
-  <autotools id="gtkhtml">
-    <branch/>
-    <dependencies>
-      <dep package="intltool"/>
-      <dep package="gtk+"/>
-      <dep package="enchant"/>
-      <dep package="iso-codes"/>
-      <dep package="libsoup"/>
     </dependencies>
   </autotools>
 
@@ -209,11 +188,26 @@
     </suggests>
  </autotools>
 
-  <autotools id="libgda" autogenargs="--with-java=no --disable-tools --enable-gda-gi --enable-gdaui-gi --enable-vala --enable-gdaui-vala">
+  <autotools id="libgda-5.2" autogenargs="--with-java=no --disable-tools --enable-gda-gi --enable-gdaui-gi --enable-vala --enable-gdaui-vala">
     <if condition-set="freebsd">
       <autogenargs value="LIBCRYPTO_CFLAGS=' ' LIBCRYPTO_LIBS='-lcrypto' --with-bdb=/usr/local --with-bdb-libdir-name=lib/db5 --with-bdb-includedir-name=include/db5"/>
     </if>
-    <branch revision="LIBGDA_5.2"/>
+    <branch checkoutdir="libgda-5.2" module="libgda" revision="LIBGDA_5.2"/>
+    <dependencies>
+      <dep package="glib"/>
+      <dep package="gobject-introspection"/>
+      <dep package="libxml2"/>
+      <dep package="openssl"/>
+      <dep package="vala"/>
+    </dependencies>
+  </autotools>
+
+  <autotools id="libgda"
+             autogenargs="--with-java=no --disable-tools --enable-gda-gi --enable-gdaui-gi --enable-vala --enable-gdaui-vala">
+    <if condition-set="freebsd">
+      <autogenargs value="LIBCRYPTO_CFLAGS=' ' LIBCRYPTO_LIBS='-lcrypto' --with-bdb=/usr/local --with-bdb-libdir-name=lib/db5 --with-bdb-includedir-name=include/db5"/>
+    </if>
+    <branch/>
     <dependencies>
       <dep package="glib"/>
       <dep package="gobject-introspection"/>
@@ -261,7 +255,9 @@
             version="1.2.0"
             hash="sha256:b9de6cc596049cf852d17a37014f9a4b0cac1682bd8ccff5def4433b0b52d1e1"
             size="350915"/>
-    <dependencies />
+    <dependencies>
+      <dep package="c++"/>
+    </dependencies>
   </autotools>
 
   <autotools id="speech-dispatcher" autogenargs="--with-espeak">
@@ -280,10 +276,10 @@
       <autogenargs value="SSL_CFLAGS=' ' SSL_LIBS='-lssl'"/>
     </if>
     <branch repo="spice"
-            module="gtk/spice-gtk-0.25.tar.bz2"
-            version="0.25"
-            hash="sha256:0730c6a80ad9f5012f65927d443377019f300573f7ccc93db84eadec462ad087"
-            size="1242457"/>
+            module="gtk/spice-gtk-0.27.tar.bz2"
+            version="0.27"
+            hash="sha256:5075e07010db434146649110ade31f5a6cdcdb4efbb4bedd40f1a977f090430c"
+            size="1258415"/>
     <dependencies>
       <dep package="cairo"/>
       <dep package="cyrus-sasl"/>
@@ -416,6 +412,8 @@
       <dep package="libchamplain"/>
       <dep package="geocode-glib"/>
       <dep package="geoclue"/>
+      <dep package="gnome-online-accounts"/>
+      <dep package="libgfbgraph"/>
       <dep package="gnome-themes-standard"/>
     </dependencies>
   </autotools>
@@ -501,7 +499,7 @@
       <dep package="gtk+"/>
       <dep package="vte"/>
       <dep package="gdl"/>
-      <dep package="libgda"/>
+      <dep package="libgda-5.2"/>
       <dep package="gtksourceview"/>
       <dep package="yelp-tools"/>
     </dependencies>
@@ -536,27 +534,37 @@
     </dependencies>
   </autotools>
 
-  <autotools id="evolution" autogenargs="--disable-pst-import">
+  <autotools id="evolution" autogenargs="--disable-autoar --disable-libcryptui --disable-pst-import">
     <branch/>
     <dependencies>
+      <dep package="atk"/>
       <dep package="bogofilter"/>
+      <dep package="cairo"/>
+      <dep package="enchant"/>
       <dep package="evolution-data-server"/>
+      <dep package="gcr"/>
+      <dep package="gdk-pixbuf"/>
       <dep package="gnome-desktop"/>
       <dep package="gnome-online-accounts"/>
+      <dep package="gsettings-desktop-schemas"/>
       <dep package="gstreamer"/>
+      <dep package="glib"/>
       <dep package="gtk+"/>
-      <dep package="gtkhtml"/>
       <dep package="highlight"/>
       <dep package="intltool"/>
       <dep package="libcanberra"/>
+      <dep package="libgcrypt"/>
       <dep package="libgdata"/>
       <dep package="libgweather"/>
       <dep package="libical"/>
+      <dep package="libnotify"/>
       <dep package="libsoup"/>
       <dep package="libxml2"/>
-      <dep package="libnotify"/>
+      <dep package="nspr"/>
+      <dep package="nss"/>
       <dep package="shared-mime-info"/>
       <dep package="spamassassin"/>
+      <dep package="WebKit"/>
       <dep package="yelp-tools"/>
     </dependencies>
     <suggests>
@@ -639,7 +647,7 @@
     <dependencies>
       <dep package="vala"/>
       <dep package="gtk+"/>
-      <dep package="libcanberra"/>
+      <dep package="gsound"/>
       <dep package="gnome-desktop"/>
       <dep package="libgweather"/>
       <dep package="libnotify"/>
@@ -703,6 +711,7 @@
   <autotools id="five-or-more">
     <branch/>
     <dependencies>
+      <dep package="appstream-glib"/>
       <dep package="intltool"/>
       <dep package="librsvg"/>
       <dep package="gtk+"/>
@@ -714,6 +723,7 @@
   <autotools id="four-in-a-row">
     <branch/>
     <dependencies>
+      <dep package="appstream-glib"/>
       <dep package="intltool"/>
       <dep package="librsvg"/>
       <dep package="gtk+"/>
@@ -722,9 +732,19 @@
     </dependencies>
   </autotools>
 
+  <autotools id="gnome-characters">
+    <branch/>
+    <dependencies>
+      <dep package="appstream-glib"/>
+      <dep package="gjs"/>
+      <dep package="gtk+"/>
+    </dependencies>
+  </autotools>
+
   <autotools id="gnome-chess">
     <branch/>
     <dependencies>
+      <dep package="appstream-glib"/>
       <dep package="intltool"/>
       <dep package="librsvg"/>
       <dep package="gtk+"/>
@@ -737,6 +757,7 @@
   <autotools id="gnome-klotski">
     <branch/>
     <dependencies>
+      <dep package="appstream-glib"/>
       <dep package="intltool"/>
       <dep package="librsvg"/>
       <dep package="gtk+"/>
@@ -759,6 +780,7 @@
   <autotools id="gnome-mahjongg">
     <branch/>
     <dependencies>
+      <dep package="appstream-glib"/>
       <dep package="intltool"/>
       <dep package="gtk+"/>
       <dep package="librsvg"/>
@@ -770,6 +792,7 @@
   <autotools id="gnome-mines">
     <branch/>
     <dependencies>
+      <dep package="appstream-glib"/>
       <dep package="intltool"/>
       <dep package="librsvg"/>
       <dep package="gtk+"/>
@@ -798,6 +821,7 @@
   <autotools id="gnome-nibbles">
     <branch/>
     <dependencies>
+      <dep package="appstream-glib"/>
       <dep package="intltool"/>
       <dep package="librsvg"/>
       <dep package="gtk+"/>
@@ -868,6 +892,7 @@
   <autotools id="gnome-robots">
     <branch/>
     <dependencies>
+      <dep package="appstream-glib"/>
       <dep package="intltool"/>
       <dep package="librsvg"/>
       <dep package="gtk+"/>
@@ -879,6 +904,8 @@
   <autotools id="gnome-sudoku">
     <branch/>
     <dependencies>
+      <dep package="appstream-glib"/>
+      <dep package="c++"/>
       <dep package="glib"/>
       <dep package="gtk+"/>
       <dep package="intltool"/>
@@ -892,6 +919,7 @@
   <autotools id="gnome-tetravex">
     <branch/>
     <dependencies>
+      <dep package="appstream-glib"/>
       <dep package="intltool"/>
       <dep package="librsvg"/>
       <dep package="gtk+"/>
@@ -924,6 +952,7 @@
   <autotools id="iagno">
     <branch/>
     <dependencies>
+      <dep package="appstream-glib"/>
       <dep package="intltool"/>
       <dep package="librsvg"/>
       <dep package="gtk+"/>
@@ -936,6 +965,7 @@
   <autotools id="lightsoff">
     <branch/>
     <dependencies>
+      <dep package="appstream-glib"/>
       <dep package="intltool"/>
       <dep package="gtk+"/>
       <dep package="vala"/>
@@ -946,9 +976,20 @@
     </dependencies>
   </autotools>
 
+  <autotools id="libgames-scores">
+    <branch/>
+    <dependencies>
+      <dep package="glib"/>
+      <dep package="gtk+"/>
+      <dep package="libgee"/>
+      <dep package="vala"/>
+    </dependencies>
+  </autotools>
+
   <autotools id="quadrapassel">
     <branch/>
     <dependencies>
+      <dep package="appstream-glib"/>
       <dep package="intltool"/>
       <dep package="gtk+"/>
       <dep package="librsvg"/>
@@ -963,6 +1004,7 @@
   <autotools id="swell-foop">
     <branch/>
     <dependencies>
+      <dep package="appstream-glib"/>
       <dep package="intltool"/>
       <dep package="gtk+"/>
       <dep package="clutter"/>
@@ -975,6 +1017,7 @@
   <autotools id="tali">
     <branch/>
     <dependencies>
+      <dep package="appstream-glib"/>
       <dep package="intltool"/>
       <dep package="librsvg"/>
       <dep package="gtk+"/>
@@ -1141,6 +1184,11 @@
     <dependencies>
       <dep package="gnome-common"/>
       <dep package="yelp-tools"/>
+      <dep package="gettext-bin"/>
+      <dep package="xmlcatalog"/>
+      <dep package="pkg-config"/>
+      <dep package="python2"/>
+      <dep package="cc"/>
     </dependencies>
   </autotools>
 
@@ -1167,6 +1215,7 @@
       <dep package="glade"/>
       <dep package="gnome-boxes"/>
       <dep package="gnome-clocks"/>
+      <dep package="gnome-characters"/>
       <dep package="gnome-chess"/>
       <dep package="gnome-color-manager"/>
       <dep package="gnome-documents"/>

@@ -1200,7 +1200,7 @@
   <autotools id="libxkbcommon" autogenargs="--with-xkb-config-root=/usr/share/X11/xkb --disable-x11">
     <branch repo="github.com" checkoutdir="libxkbcommon" module="xkbcommon/libxkbcommon.git"/>
     <dependencies>
-      <dep package="xorg-macros"/>
+      <dep package="xorg-x11-util-macros"/>
       <dep package="xorg-xproto"/>
       <dep package="xorg-kbproto"/>
       <dep package="libX11"/>
@@ -1310,7 +1310,7 @@
   <!-- OS Core Services dependencies -->
 
   <autotools id="libgusb">
-    <branch repo="gitorious.org" checkoutdir="libgusb" module="gusb/gusb.git"/>
+    <branch repo="github.com" checkoutdir="libgusb" module="hughsie/libgusb.git"/>
     <dependencies>
       <dep package="glib"/>
       <dep package="vala"/>

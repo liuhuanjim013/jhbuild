@@ -215,22 +215,35 @@
     </dependencies>
   </autotools>
 
+  <autotools id="uncrustify">
+    <branch repo="downloads.sourceforge.net"
+            module="project/uncrustify/uncrustify/uncrustify-0.61/uncrustify-0.61.tar.gz"
+            version="0.61"
+            hash="sha256:1df0e5a2716e256f0a4993db12f23d10195b3030326fdf2e07f8e6421e172df9"
+            size="1143946"/>
+    <dependencies>
+      <dep package="c++"/>
+    </dependencies>
+  </autotools>
+
   <autotools id="gnome-builder">
     <branch/>
     <dependencies>
       <dep package="devhelp"/>
       <dep package="glib"/>
+      <dep package="gnome-code-assistance"/>
       <dep package="gtk+"/>
       <dep package="gtksourceview"/>
       <dep package="libgit2-glib"/>
+      <dep package="librsvg"/>
+      <dep package="uncrustify"/>
     </dependencies>
   </autotools>
 
   <autotools id="gnome-calendar">
     <branch/>
     <dependencies>
-      <dep package="clutter"/>
-      <dep package="clutter-gtk"/>
+      <dep package="appstream-glib"/>
       <dep package="evolution-data-server"/>
       <dep package="glib"/>
       <dep package="gtk+"/>
@@ -279,6 +292,17 @@
     </dependencies>
   </autotools>
 
+  <autotools id="gtkhtml">
+    <branch/>
+    <dependencies>
+      <dep package="intltool"/>
+      <dep package="gtk+"/>
+      <dep package="enchant"/>
+      <dep package="iso-codes"/>
+      <dep package="libsoup"/>
+    </dependencies>
+  </autotools>
+
   <autotools id="gxml">
     <branch/>
     <dependencies>
@@ -287,6 +311,16 @@
       <dep package="libgee"/>
       <dep package="libxml2"/>
       <dep package="vala"/>
+    </dependencies>
+  </autotools>
+
+  <autotools id="java-atk-wrapper">
+    <branch/>
+    <dependencies>
+      <dep package="at-spi2-atk"/>
+      <dep package="gobject-introspection"/>
+      <dep package="glib"/>
+      <dep package="gconf"/>
     </dependencies>
   </autotools>
 
@@ -526,8 +560,9 @@
   <autotools id="gstreamer-vaapi">
     <branch repo="gitorious.org" module="vaapi/gstreamer-vaapi"/>
     <dependencies>
-      <dep package="gstreamer-0.10"/>
-      <dep package="gst-plugins-base-0.10"/>
+      <dep package="gstreamer"/>
+      <dep package="gst-plugins-base"/>
+      <dep package="gst-plugins-bad"/>
       <dep package="libva"/>
     </dependencies>
   </autotools>
@@ -2515,6 +2550,7 @@
     <dependencies>
       <dep package="libsoup"/>
       <dep package="libarchive"/>
+      <dep package="libgsystem"/>
     </dependencies>
   </autotools>
 
@@ -2604,6 +2640,15 @@
       <dep package="glib"/>
       <dep package="gtk+"/>
       <dep package="libcanberra"/>
+    </dependencies>
+  </autotools>
+
+  <autotools id="libgnomekbd">
+    <branch/>
+    <dependencies>
+      <dep package="intltool"/>
+      <dep package="gtk+" />
+      <dep package="libxklavier" />
     </dependencies>
   </autotools>
 
@@ -2700,7 +2745,7 @@
       <dep package="dbus"/>
       <dep package="dbus-glib"/>
       <dep package="pygobject"/>
-      <dep package="gnome-icon-theme"/>
+      <dep package="adwaita-icon-theme"/>
       <dep package="libxml2"/>
       <dep package="polkit"/>
     </dependencies>
@@ -3141,6 +3186,47 @@
             size="888240"/>
     <dependencies>
       <dep package="glib"/>
+    </dependencies>
+  </autotools>
+
+  <autotools id="libretro-free"
+             skip-autogen="true">
+    <branch repo="github.com"
+            module="Kekun/libretro-free.git"/>
+    <dependencies>
+    </dependencies>
+  </autotools>
+
+  <autotools id="retro-gobject"
+             skip-autogen="true">
+    <branch repo="github.com"
+            module="Kekun/retro-gobject.git"/>
+    <dependencies>
+      <dep package="glib"/>
+      <dep package="vala"/>
+    </dependencies>
+  </autotools>
+
+  <autotools id="retro-gtk"
+             skip-autogen="true">
+    <branch repo="github.com"
+            module="Kekun/retro-gtk.git"/>
+    <dependencies>
+      <dep package="gtk+"/>
+      <dep package="retro-gtk"/>
+      <dep package="vala"/>
+    </dependencies>
+  </autotools>
+
+  <autotools id="retro-gtk-demo"
+             skip-autogen="true">
+    <branch repo="github.com"
+            module="Kekun/retro-gtk-demo.git"/>
+    <dependencies>
+      <dep package="libretro-free"/>
+      <dep package="retro-gobject"/>
+      <dep package="retro-gtk"/>
+      <dep package="vala"/>
     </dependencies>
   </autotools>
 

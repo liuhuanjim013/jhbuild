@@ -22,7 +22,7 @@
   </systemmodule>
 
   <systemmodule id="bison">
-    <branch repo="system" version="2.0"/>
+    <branch repo="system" version="2.4"/>
     <systemdependencies>
       <dep type="path" name="bison"/>
     </systemdependencies>
@@ -42,10 +42,24 @@
     </systemdependencies>
   </systemmodule>
 
+  <systemmodule id="c++">
+    <branch repo="system"/>
+    <systemdependencies>
+      <dep type="path" name="c++"/>
+    </systemdependencies>
+  </systemmodule>
+
   <systemmodule id="cairomm">
     <pkg-config>cairomm-1.0.pc</pkg-config>
     <branch repo="system"
             version="1.8.4"/>
+  </systemmodule>
+
+  <systemmodule id="cc">
+    <branch repo="system"/>
+    <systemdependencies>
+      <dep type="path" name="cc"/>
+    </systemdependencies>
   </systemmodule>
 
   <systemmodule id="cracklib">
@@ -94,6 +108,13 @@
     <branch repo="system"/>
     <systemdependencies>
       <dep type="c_include" name="libdevmapper.h"/>
+    </systemdependencies>
+  </systemmodule>
+
+  <systemmodule id="docbook-xsl">
+    <branch repo="system"/>
+    <systemdependencies>
+      <dep type="xml" name="http://docbook.sourceforge.net/release/xsl/current/"/>
     </systemdependencies>
   </systemmodule>
 
@@ -202,6 +223,13 @@
     </systemdependencies>
   </systemmodule>
 
+  <systemmodule id="gettext-bin">
+    <branch repo="system"/>
+    <systemdependencies>
+      <dep type="path" name="msgfmt"/>
+    </systemdependencies>
+  </systemmodule>
+
   <systemmodule id="gexiv2">
     <pkg-config>gexiv2.pc</pkg-config>
     <branch repo="system"/>
@@ -265,12 +293,6 @@
     <branch repo="system" version="173"/>
   </systemmodule>
 
-  <systemmodule id="gypsy">
-    <pkg-config>gypsy.pc</pkg-config>
-    <branch repo="system"
-            version="0.8"/>
-  </systemmodule>
-
   <systemmodule id="highlight">
     <branch repo="system"/>
     <systemdependencies>
@@ -294,22 +316,17 @@
     </systemdependencies>
   </systemmodule>
 
-  <systemmodule id="js17">
-    <pkg-config>mozjs-17.0.pc</pkg-config>
-    <branch repo="system"
-            version="17.0.0"/>
-  </systemmodule>
-
   <systemmodule id="json">
     <pkg-config>json-c.pc</pkg-config>
     <branch repo="system"
             version="0.11"/>
   </systemmodule>
 
-  <systemmodule id="lcms2">
-    <pkg-config>lcms2.pc</pkg-config>
-    <branch repo="system"
-            version="2.6"/>
+  <systemmodule id="krb5">
+    <branch repo="system"/>
+    <systemdependencies>
+      <dep type="path" name="krb5-config"/>
+    </systemdependencies>
   </systemmodule>
 
   <systemmodule id="lcov">
@@ -332,10 +349,22 @@
             version="0.30"/>
   </systemmodule>
 
+  <systemmodule id="libcanberra-gtk3">
+    <pkg-config>libcanberra-gtk3.pc</pkg-config>
+    <branch repo="system"/>
+  </systemmodule>
+
   <systemmodule id="libmusicbrainz">
     <pkg-config>libmusicbrainz5.pc</pkg-config>
     <branch repo="system"
             version="5.0"/>
+  </systemmodule>
+
+  <systemmodule id="libtool">
+    <branch repo="system"/>
+    <systemdependencies>
+      <dep type="path" name="libtoolize"/>
+    </systemdependencies>
   </systemmodule>
 
   <systemmodule id="libX11">
@@ -410,8 +439,43 @@
     <branch repo="system"/>
   </systemmodule>
 
+  <systemmodule id="xorg-bigreqsproto">
+    <pkg-config>bigreqsproto.pc</pkg-config>
+    <branch repo="system"/>
+  </systemmodule>
+
   <systemmodule id="xorg-kbproto">
     <pkg-config>kbproto.pc</pkg-config>
+    <branch repo="system"/>
+  </systemmodule>
+
+  <systemmodule id="xorg-presentproto">
+    <pkg-config>presentproto.pc</pkg-config>
+    <branch repo="system"/>
+    </systemmodule>
+
+  <systemmodule id="xorg-resourceproto">
+    <pkg-config>resourceproto.pc</pkg-config>
+    <branch repo="system"/>
+  </systemmodule>
+
+  <systemmodule id="xorg-scrnsaverproto">
+    <pkg-config>scrnsaverproto.pc</pkg-config>
+    <branch repo="system"/>
+  </systemmodule>
+
+  <systemmodule id="xorg-videoproto">
+    <pkg-config>videoproto.pc</pkg-config>
+    <branch repo="system"/>
+    </systemmodule>
+
+  <systemmodule id="xorg-xcmiscproto">
+    <pkg-config>xcmiscproto.pc</pkg-config>
+    <branch repo="system"/>
+  </systemmodule>
+
+  <systemmodule id="xorg-xf86driproto">
+    <pkg-config>xf86driproto.pc</pkg-config>
     <branch repo="system"/>
   </systemmodule>
 
@@ -541,10 +605,19 @@
             version="210"/>
   </systemmodule>
 
+  <systemmodule id="libsystemd-daemon">
+    <pkg-config>libsystemd-daemon.pc</pkg-config>
+    <branch repo="system" version="210"/>
+  </systemmodule>
+
   <systemmodule id="libsystemd-journal">
     <pkg-config>libsystemd-journal.pc</pkg-config>
-    <branch repo="system"
-            version="201"/>
+    <branch repo="system" version="201"/>
+  </systemmodule>
+
+  <systemmodule id="libsystemd-login">
+    <pkg-config>libsystemd-login.pc</pkg-config>
+    <branch repo="system" version="210"/>
   </systemmodule>
 
   <systemmodule id="libtasn1">
@@ -628,10 +701,24 @@
             version="2.7.8"/>
   </systemmodule>
 
+  <systemmodule id="libxml2-python">
+    <branch repo="system"/>
+    <systemdependencies>
+      <dep type="python2" name="libxml2"/>
+    </systemdependencies>
+  </systemmodule>
+
   <systemmodule id="libxslt">
     <pkg-config>libxslt.pc</pkg-config>
     <branch repo="system"
             version="1.1.26"/>
+  </systemmodule>
+
+  <systemmodule id="libyaml">
+    <branch repo="system"/>
+    <systemdependencies>
+      <dep type="c_include" name="yaml.h"/>
+    </systemdependencies>
   </systemmodule>
 
   <systemmodule id="libwebp">
@@ -687,7 +774,7 @@
   <systemmodule id="p11-kit">
     <pkg-config>p11-kit-1.pc</pkg-config>
     <branch repo="system"
-            version="0.20.3"/>
+            version="0.19.0"/>
   </systemmodule>
 
   <systemmodule id="pam">
@@ -697,10 +784,38 @@
     </systemdependencies>
   </systemmodule>
 
+  <systemmodule id="pciaccess">
+    <pkg-config>pciaccess.pc</pkg-config>
+    <branch repo="system" version="0.12.901"/>
+  </systemmodule>
+
   <systemmodule id="pixman">
     <pkg-config>pixman-1.pc</pkg-config>
     <branch repo="system"
             version="0.30"/>
+  </systemmodule>
+
+  <systemmodule id="pkg-config">
+    <branch repo="system"/>
+    <systemdependencies>
+      <dep type="path" name="pkg-config"/>
+    </systemdependencies>
+  </systemmodule>
+
+  <systemmodule id="plymouth">
+    <pkg-config>ply-boot-client.pc</pkg-config>
+    <branch repo="system"
+            version="0.8.9"/>
+  </systemmodule>
+
+  <systemmodule id="polkit-agent">
+    <pkg-config>polkit-agent-1.pc</pkg-config>
+    <branch repo="system" version="0.102"/>
+  </systemmodule>
+
+  <systemmodule id="polkit-gobject">
+    <pkg-config>polkit-gobject-1.pc</pkg-config>
+    <branch repo="system" version="0.103"/>
   </systemmodule>
 
   <systemmodule id="poppler">
@@ -728,6 +843,13 @@
             version="1.10.0"/>
   </systemmodule>
 
+  <systemmodule id="python2">
+    <branch repo="system"/>
+    <systemdependencies>
+      <dep type="path" name="python2"/>
+    </systemdependencies>
+  </systemmodule>
+
   <systemmodule id="python2-devel">
     <pkg-config>python2.pc</pkg-config>
     <branch repo="system"
@@ -745,6 +867,20 @@
     <systemdependencies>
       <dep type="path"
            name="ragel"/>
+    </systemdependencies>
+  </systemmodule>
+
+  <systemmodule id="rapper">
+    <branch repo="system"/>
+    <systemdependencies>
+      <dep type="path" name="rapper"/>
+    </systemdependencies>
+  </systemmodule>
+
+  <systemmodule id="rdflib">
+    <branch repo="system"/>
+    <systemdependencies>
+      <dep type="path" name="rdfpipe"/>
     </systemdependencies>
   </systemmodule>
 
@@ -797,6 +933,13 @@
             version="3.7.3"/>
   </systemmodule>
 
+  <systemmodule id="sqlite3-bin">
+    <branch repo="system"/>
+    <systemdependencies>
+      <dep type="path" name="sqlite3"/>
+    </systemdependencies>
+  </systemmodule>
+
   <systemmodule id="startup-notification">
     <pkg-config>libstartup-notification-1.0.pc</pkg-config>
     <branch repo="system"
@@ -840,6 +983,11 @@
     </systemdependencies>
   </systemmodule>
 
+  <systemmodule id="xcb">
+    <pkg-config>xcb.pc</pkg-config>
+    <branch repo="system" version="1.10"/>
+  </systemmodule>
+
   <systemmodule id="xcb-dri2">
     <pkg-config>xcb-dri2.pc</pkg-config>
     <branch repo="system" version="1.8.1"/>
@@ -848,6 +996,11 @@
   <systemmodule id="xcb-util">
     <pkg-config>xcb-aux.pc</pkg-config>
     <branch repo="system" version="0.1"/>
+  </systemmodule>
+
+  <systemmodule id="xcb-xkb">
+    <pkg-config>xcb-xkb.pc</pkg-config>
+    <branch repo="system" version="1.10"/>
   </systemmodule>
 
   <systemmodule id="xkeyboard-config">
@@ -880,11 +1033,6 @@
 
   <systemmodule id="xfont">
     <pkg-config>xfont.pc</pkg-config>
-    <branch repo="system"/>
-  </systemmodule>
-
-  <systemmodule id="xtrans">
-    <pkg-config>xtrans.pc</pkg-config>
     <branch repo="system"/>
   </systemmodule>
 
@@ -937,5 +1085,38 @@
   <systemmodule id="WebKit1">
     <pkg-config>webkitgtk-3.0.pc</pkg-config>
     <branch repo="system" version="2.0.0"/>
+  </systemmodule>
+
+  <systemmodule id="xmlcatalog">
+    <branch repo="system"/>
+    <systemdependencies>
+      <dep type="path" name="xmlcatalog"/>
+    </systemdependencies>
+  </systemmodule>
+
+  <systemmodule id="xmllint">
+    <branch repo="system"/>
+    <systemdependencies>
+      <dep type="path" name="xmllint"/>
+    </systemdependencies>
+  </systemmodule>
+
+  <systemmodule id="xmlto">
+    <branch repo="system"/>
+    <systemdependencies>
+      <dep type="path" name="xmlto"/>
+    </systemdependencies>
+  </systemmodule>
+
+  <systemmodule id="xsltproc">
+    <branch repo="system"/>
+    <systemdependencies>
+      <dep type="path" name="xsltproc"/>
+    </systemdependencies>
+  </systemmodule>
+
+  <systemmodule id="zlib">
+    <pkg-config>zlib.pc</pkg-config>
+    <branch repo="system"/>
   </systemmodule>
 </moduleset>
