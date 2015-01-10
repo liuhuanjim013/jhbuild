@@ -146,7 +146,10 @@ def parse_cmake(node, config, uri, repositories, default_repo):
     if node.hasAttribute('supports-non-srcdir-builds'):
         instance.supports_non_srcdir_builds = \
                 (node.getAttribute('supports-non-srcdir-builds') != 'no')
-    if node.hasAttribute('cmakeargs'):
+    # liuhuan: override cmakeargs defined in xml if it is specified in .jhbuildrc
+    if config.modulecmakeargs.has_key(instance.name):
+        instance.cmakeargs = config.modulecmakeargs[instance.name]
+    elif node.hasAttribute('cmakeargs'):
         instance.cmakeargs = node.getAttribute('cmakeargs')
     if node.hasAttribute('makeargs'):
         instance.makeargs = node.getAttribute('makeargs')
