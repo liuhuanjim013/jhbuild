@@ -230,11 +230,10 @@ class AutogenModule(MakeModule, DownloadableModule):
             extra_env['ACLOCAL'] = ' '.join((
                 extra_env.get('ACLOCAL', os.environ.get('ACLOCAL', 'aclocal')),
                 extra_env.get('ACLOCAL_FLAGS', os.environ.get('ACLOCAL_FLAGS', ''))))
-            buildscript.execute(['autoreconf', '-fi'], cwd=srcdir,
-                    extra_env=extra_env, expectedreturncode = self.expectedreturncode) # liuhuan: support for non-0 exit value
+            buildscript.execute(['autoreconf', '-fi'], cwd=srcdir, extra_env=extra_env)
             os.chmod(os.path.join(srcdir, 'configure'), 0755)
 
-        buildscript.execute(cmd, cwd = builddir, extra_env = self.extra_env, expectedreturncode = self.expectedreturncode) # liuhuan: support for non-0 exit value
+        buildscript.execute(cmd, cwd = builddir, extra_env = self.extra_env)
     do_configure.depends = [PHASE_CHECKOUT]
     do_configure.error_phases = [PHASE_FORCE_CHECKOUT,
             PHASE_CLEAN, PHASE_DISTCLEAN]
@@ -253,8 +252,7 @@ class AutogenModule(MakeModule, DownloadableModule):
         buildscript.set_action(_('Cleaning'), self)
         makeargs = self.get_makeargs(buildscript)
         cmd = '%s %s clean' % (os.environ.get('MAKE', 'make'), makeargs)
-        buildscript.execute(cmd, cwd = self.get_builddir(buildscript),
-                extra_env = self.extra_env, expectedreturncode = self.expectedreturncode) # liuhuan: support for non-0 exit value
+        buildscript.execute(cmd, cwd = self.get_builddir(buildscript), extra_env = self.extra_env)
     do_clean.depends = [PHASE_CONFIGURE]
     do_clean.error_phases = [PHASE_FORCE_CHECKOUT, PHASE_CONFIGURE]
 
@@ -263,7 +261,7 @@ class AutogenModule(MakeModule, DownloadableModule):
         makeargs = self.get_makeargs(buildscript)
         cmd = '%s%s %s' % (self.static_analyzer_pre_cmd(buildscript), os.environ.get('MAKE', 'make'), makeargs)
         buildscript.execute(cmd, cwd = self.get_builddir(buildscript),
-                extra_env = self.extra_env, expectedreturncode = self.expectedreturncode) # liuhuan: support for non-0 exit value
+                extra_env = self.extra_env)
     do_build.depends = [PHASE_CONFIGURE]
     do_build.error_phases = [PHASE_FORCE_CHECKOUT, PHASE_CONFIGURE,
             PHASE_CLEAN, PHASE_DISTCLEAN]
@@ -298,7 +296,7 @@ class AutogenModule(MakeModule, DownloadableModule):
         cmd = '%s%s %s check' % (self.static_analyzer_pre_cmd(buildscript), os.environ.get('MAKE', 'make'), makeargs)
         try:
             buildscript.execute(cmd, cwd = self.get_builddir(buildscript),
-                    extra_env = self.extra_env, expectedreturncode = self.expectedreturncode) # liuhuan: support for non-0 exit value
+                    extra_env = self.extra_env)
         except CommandError:
             if not buildscript.config.makecheck_advisory:
                 raise
@@ -310,7 +308,7 @@ class AutogenModule(MakeModule, DownloadableModule):
         makeargs = self.get_makeargs(buildscript)
         cmd = '%s %s dist' % (os.environ.get('MAKE', 'make'), makeargs)
         buildscript.execute(cmd, cwd = self.get_builddir(buildscript),
-                    extra_env = self.extra_env, expectedreturncode = self.expectedreturncode) # liuhuan: support for non-0 exit value
+                    extra_env = self.extra_env)
     do_dist.depends = [PHASE_CONFIGURE]
     do_dist.error_phases = [PHASE_FORCE_CHECKOUT, PHASE_CONFIGURE]
 
@@ -319,7 +317,7 @@ class AutogenModule(MakeModule, DownloadableModule):
         makeargs = self.get_makeargs(buildscript)
         cmd = '%s %s distcheck' % (os.environ.get('MAKE', 'make'), makeargs)
         buildscript.execute(cmd, cwd = self.get_builddir(buildscript),
-                    extra_env = self.extra_env, expectedreturncode = self.expectedreturncode) # liuhuan: support for non-0 exit value
+                    extra_env = self.extra_env)
     do_distcheck.depends = [PHASE_DIST]
     do_distcheck.error_phases = [PHASE_FORCE_CHECKOUT, PHASE_CONFIGURE]
 
@@ -340,7 +338,7 @@ class AutogenModule(MakeModule, DownloadableModule):
             cmd = '%s install DESTDIR=%s' % (os.environ.get('MAKE', 'make'),
                                              destdir)
         buildscript.execute(cmd, cwd = self.get_builddir(buildscript),
-                    extra_env = self.extra_env, expectedreturncode = self.expectedreturncode) # liuhuan: support for non-0 exit value
+                    extra_env = self.extra_env)
         self.process_install(buildscript, self.get_revision())
 
     do_install.depends = [PHASE_BUILD]
@@ -370,7 +368,7 @@ class AutogenModule(MakeModule, DownloadableModule):
             makeargs = self.get_makeargs(buildscript)
             cmd = '%s %s distclean' % (os.environ.get('MAKE', 'make'), makeargs)
             buildscript.execute(cmd, cwd = self.get_builddir(buildscript),
-                                extra_env = self.extra_env, expectedreturncode = self.expectedreturncode) # liuhuan: support for non-0 exit value
+                                extra_env = self.extra_env)
     do_distclean.depends = [PHASE_CHECKOUT]
 
     def xml_tag_and_attrs(self):
@@ -386,7 +384,6 @@ class AutogenModule(MakeModule, DownloadableModule):
                  ('skip-build', 'skip_build_phase', False), # liuhuan: support for skipping build
                  ('uninstall-before-install', 'uninstall_before_install', False),
                  ('autogen-sh', 'autogen_sh', 'autogen.sh'),
-                 ('expectedreturncode', 'expectedreturncode', 'expectedreturncode'), # liuhuan: support for non-0 exit value
                  ('makefile', 'makefile', 'Makefile'),
                  ('supports-static-analyzer', 'supports_static_analyzer', True),
                  ('autogen-template', 'autogen_template', None)])
@@ -458,12 +455,6 @@ def parse_autotools(node, config, uri, repositories, default_repo):
         instance.makefile = node.getAttribute('makefile')
     if node.hasAttribute('autogen-template'):
         instance.autogen_template = node.getAttribute('autogen-template')
-    # liuhuan: support for allowing non-0 exit value
-    if node.hasAttribute('expectedreturncode'):
-        instance.expectedreturncode = int(node.getAttribute('expectedreturncode'))
-    else:
-        instance.expectedreturncode = None
 
     return instance
 register_module_type('autotools', parse_autotools)
-

@@ -84,10 +84,10 @@ class TerminalBuildScript(buildscript.BuildScript):
         buildscript.BuildScript.__init__(self, config, module_list, module_set=module_set)
         self.trayicon = trayicon.TrayIcon(config)
         self.notify = notify.Notify(config)
-        
+
     def message(self, msg, module_num=-1):
         '''Display a message to the user'''
-        
+
         if module_num == -1:
             module_num = self.module_num
         if module_num > 0:
@@ -139,8 +139,7 @@ class TerminalBuildScript(buildscript.BuildScript):
             sys.stdout.write('\n')
         sys.stdout.flush()
 
-    # liuhuan: support for allowing non-0 exit value
-    def execute(self, command, hint=None, cwd=None, extra_env=None, expectedreturncode=None):
+    def execute(self, command, hint=None, cwd=None, extra_env=None):
         if not command:
             raise CommandError(_('No command given'))
 
@@ -167,7 +166,7 @@ class TerminalBuildScript(buildscript.BuildScript):
             hint = None
         elif os.name == 'nt':
             # pretty print also doesn't work on Windows;
-            # see https://bugzilla.gnome.org/show_bug.cgi?id=670349 
+            # see https://bugzilla.gnome.org/show_bug.cgi?id=670349
             hint = None
 
         if not self.config.quiet_mode:
@@ -253,9 +252,8 @@ class TerminalBuildScript(buildscript.BuildScript):
                     # process might already be dead.
                     pass
         try:
-            # liuhuan: support for allowing non-0 exit value
             returnvalue = p.wait()
-            if returnvalue != expectedreturncode and returnvalue != 0:
+            if returnvalue != 0:
                 if self.config.quiet_mode:
                     print ''.join(output)
                 raise CommandError(_('########## Error running %s')
