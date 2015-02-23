@@ -50,6 +50,7 @@ class CMakeModule(MakeModule, DownloadableModule):
     def eval_args(self, args):
         args = Package.eval_args(self, args)
         args = args.replace('${libsuffix}', '')
+        # liuhuan: support for custom checkoutroot
         args = args.replace('${checkoutroot}',self.config.checkoutroot)
         return args
 

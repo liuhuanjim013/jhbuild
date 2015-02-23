@@ -425,3 +425,4 @@ def parse_autotools(node, config, uri, repositories, default_repo):
 
     return instance
 register_module_type('autotools', parse_autotools)
+

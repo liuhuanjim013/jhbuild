@@ -18,7 +18,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 import os
-import sys
+import sys 
 import logging
 import shlex
 import subprocess
@@ -366,7 +366,7 @@ class AptSystemInstall(SystemInstall):
             # No idea why the LSB has forks of the pkg-config files
             if path.find('/lsb3') != -1:
                 continue
-
+            
             # otherwise for now, just take the first match
             return name
 
