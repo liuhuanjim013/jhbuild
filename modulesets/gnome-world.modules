@@ -7,9 +7,6 @@
       href="git://git.gnome.org/"/>
   <repository type="svn" name="svn.abisource.com"
       href="http://svn.abisource.com/"/>
-  <repository type="cvs" name="cairo.freedesktop.org"
-      cvsroot=":pserver:anoncvs@anoncvs.freedesktop.org:/cvs/cairo"
-      password=""/>
   <repository type="git" name="gstreamer.freedesktop.org"
       href="git://anongit.freedesktop.org/gstreamer/"/>
   <repository type="git" name="fprint.freedesktop.org"
@@ -62,9 +59,6 @@
     href="http://hg.circular-chaos.org" />
   <repository type="svn" name="transmissionbt.com"
     href="svn://svn.m0k.org/Transmission/" />
-  <repository type="cvs" name="ldtp.freedesktop.org"
-      cvsroot=":pserver:anoncvs@anoncvs.freedesktop.org:/cvs/ldtp"
-      password=""/>
   <repository type="svn" name="svn.async.com.br"
       href="svn://svn.async.com.br/"/>
   <repository type="svn" name="flumotion.code.fluendo.com"
@@ -75,9 +69,6 @@
       href="git://git.fishsoup.net/"/>
   <repository type="git" name="diracvideo.org"
     href="git://diracvideo.org/git/"/>
-  <repository type="cvs" name="cvs.claws-mail"
-      cvsroot=":ext:cvs@scm.dotsrc.org:/srv/cvs/claws-mail"
-      password=""/>
   <repository type="git" name="git.xfce.org"
       href="git://git.xfce.org"/>
   <repository type="git" name="git.dronelabs.com"
@@ -122,6 +113,19 @@
       href="http://downloads.sourceforge.net/"/>
 
   <include href="gnome-apps-3.16.modules"/>
+
+  <autotools id="aisleriot"
+             autogenargs="--with-platform=gtk-only">
+    <branch/>
+    <dependencies>
+      <dep package="intltool"/>
+      <dep package="gconf"/>
+      <dep package="gtk+"/>
+      <dep package="libcanberra"/>
+      <dep package="librsvg"/>
+      <dep package="guile"/>
+    </dependencies>
+  </autotools>
 
   <autotools id="alacarte">
     <branch/>
@@ -240,16 +244,6 @@
     </dependencies>
   </autotools>
 
-  <autotools id="gnome-calendar">
-    <branch/>
-    <dependencies>
-      <dep package="appstream-glib"/>
-      <dep package="evolution-data-server"/>
-      <dep package="glib"/>
-      <dep package="gtk+"/>
-    </dependencies>
-  </autotools>
-
   <autotools id="gnome-chat">
     <branch/>
     <dependencies>
@@ -321,14 +315,6 @@
       <dep package="gobject-introspection"/>
       <dep package="glib"/>
       <dep package="gconf"/>
-    </dependencies>
-  </autotools>
-
-  <autotools id="cairo-gtk-engine">
-    <branch repo="cairo.freedesktop.org"/>
-    <dependencies>
-      <dep package="gtk+-2"/>
-      <dep package="cairo"/>
     </dependencies>
   </autotools>
 
@@ -776,14 +762,6 @@
     </dependencies>
   </autotools>
 
-  <autotools id="libpanelappletmm">
-    <branch/>
-    <dependencies>
-      <dep package="gtkmm"/>
-      <dep package="gnome-panel"/>
-    </dependencies>
-  </autotools>
-
   <autotools id="libgdamm">
     <branch/>
     <dependencies>
@@ -1140,7 +1118,9 @@
   <autotools id="atomix">
     <branch/>
     <dependencies>
-      <dep package="gtk+-2"/>
+      <dep package="gdk-pixbuf"/>
+      <dep package="glib"/>
+      <dep package="gtk+"/>
       <dep package="libxml2"/>
     </dependencies>
   </autotools>
@@ -1249,7 +1229,6 @@
   <autotools id="gnome-main-menu">
     <branch/>
     <dependencies>
-      <dep package="gnome-panel"/>
       <dep package="NetworkManager"/>
     </dependencies>
   </autotools>
@@ -1261,14 +1240,6 @@
       <dep package="gconf"/>
       <dep package="gegl"/>
       <dep package="gimp"/>
-    </dependencies>
-  </autotools>
-
-  <autotools id="gimmie">
-    <branch/>
-    <dependencies>
-      <dep package="gnome-panel"/>
-      <dep package="pygtk"/>
     </dependencies>
   </autotools>
 
@@ -1504,14 +1475,6 @@
     </dependencies>
   </autotools>
 
- <autotools id="netspeed">
-   <branch/>
-   <dependencies>
-     <dep package="gtk+-2"/>
-     <dep package="gnome-panel"/>
-   </dependencies>
- </autotools>
-
  <tarball id="liboil" version="0.3.17">
    <pkg-config>liboil-0.3.pc</pkg-config>
    <source href="http://liboil.freedesktop.org/download/liboil-0.3.17.tar.gz"
@@ -1691,12 +1654,6 @@
     </dependencies>
   </autotools>
 
-  <autotools id="ldtp">
-    <branch repo="ldtp.freedesktop.org" module="ldtp"/>
-    <dependencies>
-    </dependencies>
-  </autotools>
-
   <distutils id="postr">
    <branch/>
    <dependencies>
@@ -1833,29 +1790,6 @@
     </dependencies>
   </autotools>
 
- <autotools id="window-picker-applet">
-    <branch repo="launchpad.net"
-            module="window-picker-applet"/>
-    <dependencies>
-      <dep package="gnome-panel"/>
-      <dep package="gconf"/>
-      <dep package="libwnck-2"/>
-      <dep package="gtk+-2"/>
-    </dependencies>
-  </autotools>
-
- <autotools id="go-home-applet">
-    <branch repo="launchpad.net"
-            module="go-home-applet"/>
-    <dependencies>
-      <dep package="gnome-panel"/>
-      <dep package="gnome-desktop-2"/>
-      <dep package="gconf"/>
-      <dep package="libwnck-2"/>
-      <dep package="gtk+-2"/>
-    </dependencies>
-  </autotools>
-
  <autotools id="netbook-remix-launcher">
     <branch repo="launchpad.net"
             module="netbook-remix-launcher"/>
@@ -1946,15 +1880,6 @@
     <branch/>
     <dependencies>
       <dep package="nautilus"/>
-    </dependencies>
-  </autotools>
-
- <autotools id="quick-lounge-applet">
-    <branch />
-    <dependencies>
-      <dep package="gtk+-2"/>
-      <dep package="gnome-panel"/>
-      <dep package="gnome-menus"/>
     </dependencies>
   </autotools>
 
@@ -2069,21 +1994,6 @@
 
   <!-- ########## End of Pimplico Modules ########## -->
 
-  <autotools id="claws-mail"
-             autogenargs="--disable-libetpan">
-    <branch repo="cvs.claws-mail" revision="gtk2" module="claws" checkoutdir="claws-mail"/>
-    <dependencies>
-      <dep package="gtk+-2"/>
-      <dep package="glib"/>
-      <dep package="enchant"/>
-    </dependencies>
-    <suggests>
-      <dep package="startup-notification"/>
-      <dep package="dbus"/>
-      <dep package="dbus-glib"/>
-    </suggests>
-  </autotools>
-
   <autotools id="midori">
     <branch repo="git.xfce.org" branch="kalikiana/midori"/>
     <dependencies>
@@ -2114,18 +2024,6 @@
       <dep package="mm-common"/>
       <dep package="glibmm"/>
       <dep package="gtkmm"/>
-    </dependencies>
-  </autotools>
-
-  <autotools id="gnome-pilot">
-    <branch/>
-    <dependencies>
-      <dep package="gtk+"/>
-      <dep package="libxml2"/>
-      <dep package="gnome-panel"/>
-      <dep package="gconf"/>
-      <dep package="dbus-glib"/>
-      <dep package="gudev"/>
     </dependencies>
   </autotools>
 
@@ -2232,13 +2130,6 @@
   </autotools>
 
   <!-- Desktop: deprecated libraries -->
-
-  <autotools id="libgail-gnome">
-    <branch/>
-    <dependencies>
-      <dep package="gnome-panel"/>
-    </dependencies>
-  </autotools>
 
   <autotools id="libgnomecups">
     <branch/>
@@ -2545,6 +2436,16 @@
     <branch/>
   </autotools>
 
+  <autotools id="libgsystem">
+    <branch/>
+    <dependencies>
+      <dep package="glib"/>
+      <if condition-set="systemd">
+        <dep package="libsystemd-journal"/>
+      </if>
+    </dependencies>
+  </autotools>
+
   <autotools id="ostree" autogenargs="--with-libarchive --enable-installed-tests">
     <branch/>
     <dependencies>
@@ -2616,7 +2517,7 @@
       <dep package="yelp-tools"/>
     </dependencies>
     <suggests>
-      <dep package="polkit"/>
+      <dep package="polkit-gobject"/>
     </suggests>
   </autotools>
 
@@ -2747,7 +2648,7 @@
       <dep package="pygobject"/>
       <dep package="adwaita-icon-theme"/>
       <dep package="libxml2"/>
-      <dep package="polkit"/>
+      <dep package="polkit-gobject"/>
     </dependencies>
     <after>
       <dep package="gnome-control-center"/>
@@ -3055,9 +2956,6 @@
       <dep package="libxml++"/>
       <dep package="gtkmm"/>
     </dependencies>
-    <suggests>
-      <dep package="libpanelappletmm"/>
-    </suggests>
   </autotools>
 
   <autotools id="gnumeric">
@@ -3342,6 +3240,78 @@
     </dependencies>
     <suggests>
       <dep package="pulseaudio"/>
+    </suggests>
+  </autotools>
+
+  <autotools id="gnome-2048">
+    <branch/>
+    <dependencies>
+      <dep package="clutter"/>
+      <dep package="clutter-gtk"/>
+      <dep package="glib"/>
+      <dep package="gtk+"/>
+      <dep package="libgee"/>
+    </dependencies>
+  </autotools>
+
+  <autotools id="gnome-js-common">
+    <branch/>
+    <dependencies>
+      <dep package="intltool"/>
+    </dependencies>
+    <suggests>
+      <dep package="seed"/>
+      <dep package="gjs"/>
+    </suggests>
+  </autotools>
+
+  <autotools id="seed" autogenargs="--with-webkit=3.0">
+    <branch/>
+    <dependencies>
+      <dep package="gobject-introspection"/>
+      <dep package="WebKit1"/>
+      <dep package="gnome-js-common"/>
+      <dep package="mpfr"/>
+      <dep package="readline"/>
+    </dependencies>
+  </autotools>
+
+  <autotools id="xdg-app" autogenargs="--enable-sudo">
+    <branch repo="github.com"
+            module="alexlarsson/xdg-app"/>
+    <dependencies>
+      <dep package="ostree"/>
+      <dep package="libgsystem"/>
+    </dependencies>
+  </autotools>
+
+  <autotools id="libgames-support">
+    <branch/>
+    <dependencies>
+      <dep package="glib"/>
+      <dep package="gtk+"/>
+      <dep package="libgee"/>
+      <dep package="vala"/>
+    </dependencies>
+  </autotools>
+
+  <autotools id="network-manager-applet"
+             autogenargs="--enable-more-warnings=no --disable-migration --without-bluetooth">
+    <branch revision="nma-0-9-8"/>
+    <dependencies>
+      <dep package="glib"/>
+      <dep package="dbus-glib"/>
+      <dep package="gnome-bluetooth"/>
+      <dep package="gobject-introspection"/>
+      <dep package="gtk+"/>
+      <dep package="gudev"/>
+      <dep package="iso-codes"/>
+      <dep package="libsecret"/>
+      <dep package="NetworkManager"/>
+      <dep package="libnotify"/>
+    </dependencies>
+    <suggests>
+      <dep package="mobile-broadband-provider-info"/>
     </suggests>
   </autotools>
 

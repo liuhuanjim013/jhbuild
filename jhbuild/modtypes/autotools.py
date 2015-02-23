@@ -62,9 +62,10 @@ class AutogenModule(MakeModule, DownloadableModule):
                  makefile='Makefile',
                  autogen_template=None,
                  check_target=True,
-                 supports_static_analyzer=True):
+                 supports_static_analyzer=True,
+                 needs_gmake=True):
         MakeModule.__init__(self, name, branch=branch, makeargs=makeargs,
-                            makeinstallargs=makeinstallargs, makefile=makefile)
+                            makeinstallargs=makeinstallargs, makefile=makefile, needs_gmake=needs_gmake)
         self.autogenargs = autogenargs
         self.supports_non_srcdir_builds = supports_non_srcdir_builds
         self.skip_autogen = skip_autogen
@@ -115,6 +116,9 @@ class AutogenModule(MakeModule, DownloadableModule):
 
         autogenargs = self.autogenargs + ' ' + self.config.module_autogenargs.get(
                 self.name, self.config.autogenargs)
+
+        if self.config.disable_Werror:
+            autogenargs = autogenargs + ' ' + '--disable-Werror'
 
         vars = {'prefix': os.path.splitdrive(buildscript.config.prefix)[1],
                 'autogen-sh': self.autogen_sh,
@@ -221,18 +225,6 @@ class AutogenModule(MakeModule, DownloadableModule):
         except:
             pass
 
-        if self.autogen_sh == 'autoreconf':
-            # autoreconf doesn't honour ACLOCAL_FLAGS, therefore we pass
-            # a crafted ACLOCAL variable.  (GNOME bug 590064)
-            extra_env = {}
-            if self.extra_env:
-                extra_env = self.extra_env.copy()
-            extra_env['ACLOCAL'] = ' '.join((
-                extra_env.get('ACLOCAL', os.environ.get('ACLOCAL', 'aclocal')),
-                extra_env.get('ACLOCAL_FLAGS', os.environ.get('ACLOCAL_FLAGS', ''))))
-            buildscript.execute(['autoreconf', '-fi'], cwd=srcdir, extra_env=extra_env)
-            os.chmod(os.path.join(srcdir, 'configure'), 0755)
-
         buildscript.execute(cmd, cwd = builddir, extra_env = self.extra_env)
     do_configure.depends = [PHASE_CHECKOUT]
     do_configure.error_phases = [PHASE_FORCE_CHECKOUT,
@@ -250,18 +242,13 @@ class AutogenModule(MakeModule, DownloadableModule):
 
     def do_clean(self, buildscript):
         buildscript.set_action(_('Cleaning'), self)
-        makeargs = self.get_makeargs(buildscript)
-        cmd = '%s %s clean' % (os.environ.get('MAKE', 'make'), makeargs)
-        buildscript.execute(cmd, cwd = self.get_builddir(buildscript), extra_env = self.extra_env)
+        self.make(buildscript, 'clean')
     do_clean.depends = [PHASE_CONFIGURE]
     do_clean.error_phases = [PHASE_FORCE_CHECKOUT, PHASE_CONFIGURE]
 
     def do_build(self, buildscript):
         buildscript.set_action(_('Building'), self)
-        makeargs = self.get_makeargs(buildscript)
-        cmd = '%s%s %s' % (self.static_analyzer_pre_cmd(buildscript), os.environ.get('MAKE', 'make'), makeargs)
-        buildscript.execute(cmd, cwd = self.get_builddir(buildscript),
-                extra_env = self.extra_env)
+        self.make(buildscript, pre=self.static_analyzer_pre_cmd(buildscript))
     do_build.depends = [PHASE_CONFIGURE]
     do_build.error_phases = [PHASE_FORCE_CHECKOUT, PHASE_CONFIGURE,
             PHASE_CLEAN, PHASE_DISTCLEAN]
@@ -292,11 +279,8 @@ class AutogenModule(MakeModule, DownloadableModule):
 
     def do_check(self, buildscript):
         buildscript.set_action(_('Checking'), self)
-        makeargs = self.get_makeargs(buildscript, add_parallel=False)
-        cmd = '%s%s %s check' % (self.static_analyzer_pre_cmd(buildscript), os.environ.get('MAKE', 'make'), makeargs)
         try:
-            buildscript.execute(cmd, cwd = self.get_builddir(buildscript),
-                    extra_env = self.extra_env)
+            self.make(buildscript, 'check', pre=self.static_analyzer_pre_cmd(buildscript))
         except CommandError:
             if not buildscript.config.makecheck_advisory:
                 raise
@@ -305,19 +289,13 @@ class AutogenModule(MakeModule, DownloadableModule):
 
     def do_dist(self, buildscript):
         buildscript.set_action(_('Creating tarball for'), self)
-        makeargs = self.get_makeargs(buildscript)
-        cmd = '%s %s dist' % (os.environ.get('MAKE', 'make'), makeargs)
-        buildscript.execute(cmd, cwd = self.get_builddir(buildscript),
-                    extra_env = self.extra_env)
+        self.make(buildscript, 'dist')
     do_dist.depends = [PHASE_CONFIGURE]
     do_dist.error_phases = [PHASE_FORCE_CHECKOUT, PHASE_CONFIGURE]
 
     def do_distcheck(self, buildscript):
         buildscript.set_action(_('Dist checking'), self)
-        makeargs = self.get_makeargs(buildscript)
-        cmd = '%s %s distcheck' % (os.environ.get('MAKE', 'make'), makeargs)
-        buildscript.execute(cmd, cwd = self.get_builddir(buildscript),
-                    extra_env = self.extra_env)
+        self.make(buildscript, 'distcheck')
     do_distcheck.depends = [PHASE_DIST]
     do_distcheck.error_phases = [PHASE_FORCE_CHECKOUT, PHASE_CONFIGURE]
 
@@ -330,15 +308,7 @@ class AutogenModule(MakeModule, DownloadableModule):
 
         buildscript.set_action(_('Installing'), self)
         destdir = self.prepare_installroot(buildscript)
-        if self.makeinstallargs:
-            cmd = '%s %s DESTDIR=%s' % (os.environ.get('MAKE', 'make'),
-                                        self.makeinstallargs,
-                                        destdir)
-        else:
-            cmd = '%s install DESTDIR=%s' % (os.environ.get('MAKE', 'make'),
-                                             destdir)
-        buildscript.execute(cmd, cwd = self.get_builddir(buildscript),
-                    extra_env = self.extra_env)
+        self.make(buildscript, self.makeinstallargs or 'install', makeargs='DESTDIR={}'.format(destdir))
         self.process_install(buildscript, self.get_revision())
 
     do_install.depends = [PHASE_BUILD]
@@ -365,10 +335,7 @@ class AutogenModule(MakeModule, DownloadableModule):
         if hasattr(self.branch, 'delete_unknown_files'):
             self.branch.delete_unknown_files(buildscript)
         else:
-            makeargs = self.get_makeargs(buildscript)
-            cmd = '%s %s distclean' % (os.environ.get('MAKE', 'make'), makeargs)
-            buildscript.execute(cmd, cwd = self.get_builddir(buildscript),
-                                extra_env = self.extra_env)
+            self.make(buildscript, 'distclean')
     do_distclean.depends = [PHASE_CHECKOUT]
 
     def xml_tag_and_attrs(self):
@@ -405,7 +372,7 @@ def collect_args(instance, node, argtype):
 def parse_autotools(node, config, uri, repositories, default_repo):
     instance = AutogenModule.parse_from_xml(node, config, uri, repositories, default_repo)
 
-    instance.dependencies += ['automake', 'libtool', 'make']
+    instance.dependencies += ['automake', 'libtool', instance.get_makecmd(config)]
 
     instance.autogenargs = collect_args (instance, node, 'autogenargs')
     instance.makeargs = collect_args (instance, node, 'makeargs')

@@ -74,7 +74,7 @@ def read_os_release():
     default_conditions.add(fields['ID'])
 
     if 'ID_LIKE' in fields:
-        default_conditions.union(fields['ID_LIKE'].split(' '))
+        default_conditions.update(fields['ID_LIKE'].split(' '))
 
     return True
 
@@ -130,7 +130,7 @@ def ensure_loaded():
     # comes first in the list
     conditions_sets = [
             ('linux', ['linux', 'wayland', 'udev', 'x11', 'systemd', 'gnu-elf']),
-            ('freebsd', ['freebsd', 'x11', 'bsd', 'gnu-elf']),
+            ('freebsd', ['freebsd', 'x11', 'bsd', 'gnu-elf', 'gmake']),
             ('darwin', ['darwin', 'macos', 'quartz']),
 
             # this must be left here so that at least one will be found

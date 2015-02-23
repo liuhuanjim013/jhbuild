@@ -55,10 +55,8 @@
     <branch/>
     <dependencies>
       <dep package="glib"/>
-      <dep package="gtk+"/>
       <dep package="dbus"/>
       <dep package="vala"/>
-      <dep package="libxml2"/>
     </dependencies>
   </autotools>
 
@@ -287,7 +285,6 @@
       <dep package="ibus"/>
       <dep package="cups"/>
       <if condition-set="linux">
-        <dep package="libgsystem"/>
         <dep package="librsvg"/>
         <dep package="libwacom"/>
         <dep package="xorg-wacom"/>
@@ -333,7 +330,6 @@
       <if condition-set="linux">
         <dep package="gnome-bluetooth"/>
         <dep package="NetworkManager"/>
-        <dep package="network-manager-applet"/>
       </if>
       <if condition-set="systemd">
         <dep package="libsystemd-journal"/>
@@ -454,26 +450,6 @@
         <dep package="xwayland"/>
       </if>
     </dependencies>
-  </autotools>
-
-  <autotools id="network-manager-applet"
-             autogenargs="--enable-more-warnings=no --disable-migration --without-bluetooth">
-    <branch revision="nma-0-9-8"/>
-    <dependencies>
-      <dep package="glib"/>
-      <dep package="dbus-glib"/>
-      <dep package="gnome-bluetooth"/>
-      <dep package="gobject-introspection"/>
-      <dep package="gtk+"/>
-      <dep package="gudev"/>
-      <dep package="iso-codes"/>
-      <dep package="libsecret"/>
-      <dep package="NetworkManager"/>
-      <dep package="libnotify"/>
-    </dependencies>
-    <suggests>
-      <dep package="mobile-broadband-provider-info"/>
-    </suggests>
   </autotools>
 
   <autotools id="pulseaudio"
@@ -824,10 +800,11 @@
       <dep package="appstream-glib"/>
       <dep package="cairo"/>
       <dep package="clutter"/>
-      <dep package="clutter-gst"/>
+      <dep package="clutter-gst3"/>
       <dep package="clutter-gtk"/>
       <dep package="gdk-pixbuf"/>
       <dep package="glib"/>
+      <dep package="gnome-desktop"/>
       <dep package="grilo"/>
       <dep package="grilo-plugins"/>
       <dep package="gsettings-desktop-schemas"/>
@@ -841,8 +818,6 @@
       <dep package="libpeas"/>
       <dep package="totem-pl-parser"/>
       <dep package="yelp-tools"/>
-      <dep package="clutter-gst3"/>
-      <dep package="gnome-desktop"/>
     </dependencies>
     <suggests>
       <dep package="zeitgeist"/>
@@ -1204,7 +1179,6 @@
       <dep package="pygobject"/>
       <dep package="gtkmm"/>
       <dep package="java-gnome"/>
-      <dep package="seed"/>
       <if condition-set="linux">
         <dep package="NetworkManager"/>
       </if>

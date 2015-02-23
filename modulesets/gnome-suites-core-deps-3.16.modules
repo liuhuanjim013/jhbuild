@@ -54,8 +54,6 @@
     href="http://ibus.googlecode.com/files/"/>
 <repository type="tarball" name="pyzy"
     href="http://pyzy.googlecode.com/files/"/>
-<repository type="tarball" name="maxmind.com"
-      href="http://www.maxmind.com/download/"/>
 <repository type="tarball" name="ftp.mozilla.org"
       href="http://ftp.mozilla.org/"/>
 <repository type="tarball" name="kernel.org"
@@ -68,6 +66,10 @@
     href="https://launchpad.net/mir/"/>
 <repository type="tarball" name="xorg-tar"
     href="http://xorg.freedesktop.org/"/>
+<repository type="tarball" name="github-tar"
+    href="https://github.com/"/>
+<repository type="tarball" name="libxkbcommon"
+    href="http://xkbcommon.org/download/"/>
 
 <include href="gnome-sysdeps-3.16.modules"/>
 
@@ -134,10 +136,11 @@
   </autotools>
 
   <autotools id="geoip" skip-autogen="never" autogen-sh="autoreconf">
-    <branch repo="maxmind.com"
-            module="geoip/api/c/GeoIP-1.5.1.tar.gz" version="1.5.1"
-            hash="sha256:ec35ee73fcc54c493f4252565d1c81d022b398dd16de3af1522c8cab016f8731"
-            size="1195457">
+    <pkg-config>geoip.pc</pkg-config>
+    <branch repo="github.com"
+            module="maxmind/geoip-api-c" tag="v1.6.4" version="1.6.4"
+            hash="sha256:cfaea3d6510bd623c987d5320757c90cb59ed4732824f68130060a0a1294952d"
+            size="180129">
     </branch>
   </autotools>
 
@@ -216,15 +219,16 @@
     </dependencies>
   </autotools>
 
-  <autotools id="libgsystem">
-    <branch/>
+  <cmake id="libical">
+    <pkg-config>libical.pc</pkg-config>
+    <branch repo="github-tar"
+            module="libical/libical/releases/download/v1.0.1/libical-1.0.1.tar.gz"
+            version="1.0.1"
+            hash="sha256:089ce3c42d97fbd7a5d4b3c70adbdd82115dd306349c1f5c46a8fb3f8c949592"
+            size="720618"/>
     <dependencies>
-      <dep package="glib"/>
-      <if condition-set="systemd">
-        <dep package="libsystemd-journal"/>
-      </if>
     </dependencies>
-  </autotools>
+  </cmake>
 
   <autotools id="libmbim">
     <branch repo="git.freedesktop.org"
@@ -535,7 +539,7 @@
   </autotools>
 
   <autotools id="clutter-gst3">
-    <branch revision="master" module="clutter-gst" checkoutdir="clutter-gst3"/>
+    <branch revision="clutter-gst-3.0" module="clutter-gst" checkoutdir="clutter-gst3"/>
     <dependencies>
       <dep package="cogl"/>
       <dep package="clutter"/>
@@ -550,8 +554,8 @@
   <autotools id="farstream" autogenargs="--disable-python">
     <branch repo="freedesktop.org"
             module="farstream/releases/farstream/farstream-${version}.tar.gz"
-            version="0.2.5.1"
-            hash="sha256:f0acf7ef47e3217d405d350a57bc7e7cd2cfddd3064f3b1d9ea00aad3c7102d2"/>
+            version="0.2.7"
+            hash="sha256:dad0ed43cf94e71df558c23825abe57db59d1ee8d970ffaec5e2dbc2e7acbf7d"/>
     <dependencies>
       <dep package="glib"/>
       <dep package="gobject-introspection"/>
@@ -570,7 +574,8 @@
     </dependencies>
   </autotools>
 
-  <autotools id="folks" autogenargs="--enable-eds-backend --disable-libsocialweb-backend --disable-fatal-warnings">
+  <autotools id="folks" autogenargs="--enable-eds-backend --disable-libsocialweb-backend --disable-fatal-warnings"
+             uninstall-before-install="true">
     <branch/>
     <dependencies>
       <dep package="dbus"/>
@@ -585,17 +590,6 @@
     </dependencies>
     <suggests>
       <dep package="telepathy-logger"/>
-    </suggests>
-  </autotools>
-
-  <autotools id="gnome-js-common">
-    <branch/>
-    <dependencies>
-      <dep package="intltool"/>
-    </dependencies>
-    <suggests>
-      <dep package="seed"/>
-      <dep package="gjs"/>
     </suggests>
   </autotools>
 
@@ -732,17 +726,6 @@
       <if condition-set="coverage">
         <dep package="lcov"/>
       </if>
-    </dependencies>
-  </autotools>
-
-  <autotools id="seed" autogenargs="--with-webkit=3.0">
-    <branch/>
-    <dependencies>
-      <dep package="gobject-introspection"/>
-      <dep package="WebKit1"/>
-      <dep package="gnome-js-common"/>
-      <dep package="mpfr"/>
-      <dep package="readline"/>
     </dependencies>
   </autotools>
 
@@ -1094,7 +1077,6 @@
       <dep package="gjs"/>
       <dep package="glade"/>
       <dep package="pygobject"/>
-      <dep package="seed"/>
     </suggests>
   </autotools>
 
@@ -1240,9 +1222,13 @@
   </autotools>
 
   <autotools id="libepoxy">
-    <branch repo="github.com"
-            checkoutdir="libepoxy"
-            module="anholt/libepoxy.git"/>
+    <pkg-config>epoxy.pc</pkg-config>
+    <branch repo="github-tar"
+            module="anholt/libepoxy/archive/v${version}.tar.gz"
+            version="1.2"
+            checkoutdir="libepoxy-${version}"
+            hash="sha256:42c328440f60a5795835c5ec4bdfc1329e75bba16b6e22b3a87ed17e9679e8f6"
+            size="267110"/>
     <dependencies>
       <dep package="xtrans"/>
       <dep package="egl"/>
@@ -1267,7 +1253,11 @@
   </autotools>
 
   <autotools id="libxkbcommon" autogenargs="--with-xkb-config-root=/usr/share/X11/xkb">
-    <branch repo="github.com" checkoutdir="libxkbcommon" module="xkbcommon/libxkbcommon.git"/>
+    <branch repo="libxkbcommon"
+            module="http://xkbcommon.org/download/libxkbcommon-${version}.tar.xz"
+            version="0.5.0"
+            hash="sha256:90bd7824742b9a6f52a6cf80e2cadd6f5349cf600a358d08260772615b89d19c"
+            size="615504"/>
     <dependencies>
       <dep package="xorg-macros"/>
       <dep package="xorg-xproto"/>
@@ -1314,6 +1304,7 @@
       <dep package="xorg-xf86driproto"/>
       <dep package="xorg-presentproto"/>
       <dep package="xorg-videoproto"/>
+      <dep package="xcb-keysyms"/>
       <if condition-set="systemd">
         <dep package="libsystemd-daemon"/>
       </if>
@@ -1323,9 +1314,9 @@
   <cmake id="WebKit" cmakeargs="-DPORT=GTK -DCMAKE_BUILD_TYPE=Release">
     <pkg-config>webkit2gtk-4.0.pc</pkg-config>
     <branch repo="webkitgtk.org"
-            module="webkitgtk-2.7.3.tar.xz" version="2.7.3"
-            hash="sha256:06243dfda689e83d170a31d6ea288f51790ddc596faa8a6b44f464006528b7f8"
-            size="10370268">
+            module="webkitgtk-2.7.90.tar.xz" version="2.7.90"
+            hash="sha256:3f64a85a60aa6dc7a11db0b9b8556d9def96415cfd880ab5972ac39234ac253a"
+            size="10423116">
     </branch>
     <dependencies>
       <dep package="c++"/>
