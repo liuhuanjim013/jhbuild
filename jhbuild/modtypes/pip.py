@@ -21,6 +21,7 @@ __metaclass__ = type
 
 import os
 import tempfile
+import shutil
 
 from jhbuild.errors import BuildStateError, SkipToEnd
 from jhbuild.modtypes import \
@@ -57,10 +58,13 @@ class PipModule(Package, DownloadableModule):
         cmd.extend(['install',
                     '--ignore-installed',
                     '--build', os.path.join(tempdir, 'build'),
+                    '--src', os.path.join(tempdir, 'src'),
                     '--root', os.path.join(tempdir, 'root'),
-                    self.name + '==' + self.branch.version])
+                    self.branch.version])
         buildscript.execute(cmd, cwd = tempdir, extra_env = self.extra_env)
         self.process_install(buildscript, self.branch.version)
+
+        shutil.rmtree(tempdir)
 
     def xml_tag_and_attrs(self):
         return 'pip', [('id', 'name', None)]
