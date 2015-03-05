@@ -58,7 +58,8 @@ virtual_sysdeps = [
     'make',
     'pkg-config',
     'svn',
-    'xmlcatalog'
+    'xmlcatalog',
+    'pip',
 ]
 
 _default_repo = None
