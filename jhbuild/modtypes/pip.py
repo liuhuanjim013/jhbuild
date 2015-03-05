@@ -58,8 +58,9 @@ class PipModule(Package, DownloadableModule):
         cmd.extend(['install',
                     '--ignore-installed',
                     '--build', os.path.join(tempdir, 'build'),
+                    '--src', os.path.join(tempdir, 'src'),
                     '--root', os.path.join(tempdir, 'root'),
-                    self.name + '==' + self.branch.version])
+                    self.branch.version])
         buildscript.execute(cmd, cwd = tempdir, extra_env = self.extra_env)
         self.process_install(buildscript, self.branch.version)
 
