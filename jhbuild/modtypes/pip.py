@@ -22,7 +22,7 @@ __metaclass__ = type
 import os
 import tempfile
 
-from jhbuild.errors import BuildStateError
+from jhbuild.errors import BuildStateError, SkipToEnd
 from jhbuild.modtypes import \
      Package, DownloadableModule, register_module_type
 
@@ -39,6 +39,9 @@ class PipModule(Package, DownloadableModule):
         self.supports_install_destdir = True
 
     def do_install(self, buildscript):
+        if self.check_build_policy(buildscript) == self.PHASE_DONE:
+            raise SkipToEnd()
+
         buildscript.set_action(_('Installing'), self)
         destdir = self.prepare_installroot(buildscript)
 
