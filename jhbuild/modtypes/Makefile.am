@@ -5,6 +5,7 @@ app_PYTHON = \
 	autotools.py \
 	cmake.py \
 	distutils.py \
+	pip.py \
 	linux.py \
 	perl.py \
 	systemmodule.py \

@@ -46,14 +46,8 @@
     href="http://files.itstool.org/itstool/"/>
 <repository type="tarball" name="libpwquality"
     href="https://fedorahosted.org/releases/l/i/libpwquality/"/>
-<repository type="tarball" name="anthy"
-    href="http://ftp.jaist.ac.jp/pub/sourceforge.jp/anthy/37536/"/>
-<repository type="tarball" name="libhangul"
-    href="http://libhangul.googlecode.com/files/"/>
 <repository type="tarball" name="ibus"
     href="http://ibus.googlecode.com/files/"/>
-<repository type="tarball" name="pyzy"
-    href="http://pyzy.googlecode.com/files/"/>
 <repository type="tarball" name="ftp.mozilla.org"
       href="http://ftp.mozilla.org/"/>
 <repository type="tarball" name="kernel.org"
@@ -137,10 +131,10 @@
 
   <autotools id="geoip" skip-autogen="never" autogen-sh="autoreconf">
     <pkg-config>geoip.pc</pkg-config>
-    <branch repo="github.com"
-            module="maxmind/geoip-api-c" tag="v1.6.4" version="1.6.4"
-            hash="sha256:cfaea3d6510bd623c987d5320757c90cb59ed4732824f68130060a0a1294952d"
-            size="180129">
+    <branch repo="github-tar"
+            version="1.6.5"
+            module="maxmind/geoip-api-c/releases/download/v${version}/GeoIP-${version}.tar.gz"
+            hash="sha256:0ae1c95e69ad627d3a45cb897f79ce0c30f13fcd4b4a0dda073be0c9552521b3">
     </branch>
   </autotools>
 
@@ -323,7 +317,6 @@
     <dependencies>
       <dep package="glib"/>
       <dep package="gobject-introspection"/>
-      <dep package="gnome-common"/>
       <dep package="gtk-doc"/>
     </dependencies>
   </autotools>
@@ -333,7 +326,7 @@
       <autogenargs value="--enable-wayland-egl-platform --enable-wayland-egl-server --enable-kms-egl-platform"/>
     </if>
     <pkg-config>cogl-1.0.pc</pkg-config>
-    <branch revision="cogl-1.18"/>
+    <branch revision="cogl-1.20"/>
     <dependencies>
       <dep package="glib"/>
       <dep package="gtk-doc"/>
@@ -915,22 +908,6 @@
     </dependencies>
   </autotools>
 
-  <autotools id="js24" check-target="false"
-      autogenargs="--enable-threadsafe --with-system-nspr --enable-debug --disable-tests --disable-strip --enable-ctypes --enable-system-ffi --disable-intl-api">
-    <pkg-config>mozjs-24.pc</pkg-config>
-    <branch repo="ftp.mozilla.org"
-            module="pub/mozilla.org/js/mozjs-24.2.0.tar.bz2"
-            version="24.2.0"
-            hash="sha256:e62f3f331ddd90df1e238c09d61a505c516fe9fd8c5c95336611d191d18437d8"
-            checkoutdir="js24-24.2.0">
-      <patch file="js24-buildapi.patch" strip="1"/>
-      <patch file="js24-prettyprinters.patch" strip="1"/>
-    </branch>
-    <dependencies>
-      <dep package="nspr"/>
-    </dependencies>
-  </autotools>
-
   <autotools id="json-glib" autogenargs="--enable-installed-tests">
     <branch/>
     <dependencies>
@@ -1314,9 +1291,10 @@
   <cmake id="WebKit" cmakeargs="-DPORT=GTK -DCMAKE_BUILD_TYPE=Release">
     <pkg-config>webkit2gtk-4.0.pc</pkg-config>
     <branch repo="webkitgtk.org"
-            module="webkitgtk-2.7.90.tar.xz" version="2.7.90"
-            hash="sha256:3f64a85a60aa6dc7a11db0b9b8556d9def96415cfd880ab5972ac39234ac253a"
-            size="10423116">
+            module="webkitgtk-2.7.91.tar.xz" version="2.7.91"
+            hash="sha256:9d2b70a0dba6e2b6f74b82b2ceb92605921ecf0a554633ed98bc277c55b091e1"
+            size="10429304">
+      <patch file="webkitgtk-2.7.91-webview-webcontext-ref.patch" strip="1"/>
     </branch>
     <dependencies>
       <dep package="c++"/>
@@ -1463,13 +1441,12 @@
     </dependencies>
   </autotools>
 
-  <autotools id="ibus" autogenargs="--disable-tests --disable-gconf --enable-dconf --disable-memconf --disable-ui GSETTINGS_SCHEMA_CONVERT=/usr/bin/false">
-    <branch repo="ibus"
-            module="ibus-${version}.tar.gz"
-            version="1.5.5"
-            size="2063794"
-            hash="sha256:02ab36af6048399fedbe8d85074b161219b89df5020932df33cf8829764f8aec">
-      <patch file="ibus.skip-dconf-update-if-DESTDIR-is-set.patch" strip="1"/>
+  <autotools id="ibus"
+             autogenargs="--disable-tests --disable-gconf --enable-dconf --disable-memconf --disable-ui GSETTINGS_SCHEMA_CONVERT=/usr/bin/false --with-python=python3">
+    <branch repo="github-tar"
+            version="1.5.10"
+            module="ibus/ibus/releases/download/${version}/ibus-${version}.tar.gz"
+            hash="sha256:1d01b7806602875a1f3004f32e1000a39be01f59731d6baf36446498e26f5594">
     </branch>
     <dependencies>
       <dep package="dbus"/>
@@ -1480,20 +1457,6 @@
       <dep package="gtk+"/>
     </dependencies>
   </autotools>
-
-  <autotools id="pyzy"
-             autogenargs="--enable-db-open-phrase --disable-db-android">
-    <branch repo="pyzy"
-            module="pyzy-${version}.tar.gz"
-            version="0.1.0"
-            hash="sha256:fe468a4372473d85a56f05d55b14f0e0201fde6f9336a1a2322cf79421c84d9a"/>
-    <dependencies>
-      <dep package="glib"/>
-      <dep package="sqlite3"/>
-      <dep package="sqlite3-bin"/>
-    </dependencies>
-  </autotools>
-
 
   <autotools id="ibus-pinyin"
              makeargs="CFLAGS=-Wno-error">
@@ -1508,12 +1471,6 @@
     </dependencies>
   </autotools>
 
-  <autotools id="anthy">
-    <branch repo="anthy"
-            module="anthy-9100h.tar.gz" version="9100h"
-            hash="sha1:bfea9e74e208c4b976b6bd7ac6784cd290c636fd" size="4446148"/>
-  </autotools>
-
   <autotools id="ibus-anthy" autogenargs="--enable-private-png=yes">
     <branch repo="ibus"
             module="ibus-anthy-${version}.tar.gz"
@@ -1524,22 +1481,6 @@
       <dep package="gobject-introspection"/>
       <dep package="ibus"/>
       <dep package="anthy"/>
-    </dependencies>
-  </autotools>
-
-  <autotools id="libhangul">
-    <branch repo="libhangul"
-            module="libhangul-0.1.0.tar.gz" version="0.1.0"
-            hash="sha1:9c6f3a82f2d4068771215f1b9f13a0d4bdbbfc77" size="2899845"/>
-  </autotools>
-
-  <autotools id="ibus-hangul">
-    <branch repo="ibus"
-            module="ibus-hangul-1.4.1.tar.gz" version="1.4.1"
-            hash="sha1:659899cf942a983fbd2ffbb4bd4f5ecd883f5c0a" size="484065"/>
-    <dependencies>
-      <dep package="ibus"/>
-      <dep package="libhangul"/>
     </dependencies>
   </autotools>
 
@@ -1576,16 +1517,6 @@
       <dep package="intltool"/>
       <dep package="gtk+"/>
       <dep package="startup-notification"/>
-    </dependencies>
-  </autotools>
-
-  <autotools id="sbc">
-    <pkg-config>sbc.pc</pkg-config>
-    <branch repo="kernel.org"
-            module="pub/linux/bluetooth/sbc-${version}.tar.xz"
-            version="1.1"
-            hash="sha256:9a30ad2dc20979a0847a7b1a06ea073498810f358a02fcad68ab414f239cfbc6"/>
-    <dependencies>
     </dependencies>
   </autotools>
 

@@ -11,5 +11,6 @@ app_PYTHON = \
 	mtn.py \
 	svn.py \
 	system.py \
+	pip.py \
 	tarball.py
 

@@ -15,6 +15,12 @@
             version="1.0.19"/>
   </systemmodule>
 
+  <systemmodule id="anthy">
+    <pkg-config>anthy.pc</pkg-config>
+    <branch repo="system"
+            version="9100h"/>
+  </systemmodule>
+
   <systemmodule id="avahi">
     <pkg-config>avahi-gobject.pc</pkg-config>
     <branch repo="system"
@@ -300,6 +306,14 @@
     </systemdependencies>
   </systemmodule>
 
+  <systemmodule id="ibus-hangul">
+    <branch repo="system"/>
+    <systemdependencies>
+    <dep type="path"
+         name="ibus-setup-hangul"/>
+    </systemdependencies>
+  </systemmodule>
+
   <systemmodule id="intltool">
     <branch repo="system"
             version="0.50"/>
@@ -320,6 +334,12 @@
     <pkg-config>json-c.pc</pkg-config>
     <branch repo="system"
             version="0.11"/>
+  </systemmodule>
+
+  <systemmodule id="js24">
+    <pkg-config>mozjs-24.pc</pkg-config>
+    <branch repo="system"
+            version="24.2"/>
   </systemmodule>
 
   <systemmodule id="krb5">
@@ -861,6 +881,12 @@
             version="3.2"/>
   </systemmodule>
 
+  <systemmodule id="pyzy">
+    <pkg-config>pyzy-1.0.pc</pkg-config>
+    <branch repo="system"
+            version="0.1.0"/>
+  </systemmodule>
+
   <systemmodule id="ragel">
     <branch repo="system"/>
     <systemdependencies>
@@ -897,6 +923,12 @@
     </systemdependencies>
   </systemmodule>
 
+  <systemmodule id="sbc">
+    <pkg-config>sbc.pc</pkg-config>
+    <branch repo="system"
+            version="1.1"/>
+  </systemmodule>
+
   <systemmodule id="shared-mime-info">
     <pkg-config>shared-mime-info.pc</pkg-config>
     <branch repo="system"
@@ -930,13 +962,6 @@
     <pkg-config>sqlite3.pc</pkg-config>
     <branch repo="system"
             version="3.7.3"/>
-  </systemmodule>
-
-  <systemmodule id="sqlite3-bin">
-    <branch repo="system"/>
-    <systemdependencies>
-      <dep type="path" name="sqlite3"/>
-    </systemdependencies>
   </systemmodule>
 
   <systemmodule id="startup-notification">
