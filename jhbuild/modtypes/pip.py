@@ -56,6 +56,7 @@ class PipModule(Package, DownloadableModule):
         pip = os.environ.get('PIP', 'pip')
         cmd = [pip]
         cmd.extend(['install',
+                    '--ignore-installed',
                     '--build', os.path.join(tempdir, 'build'),
                     '--src', os.path.join(tempdir, 'src'),
                     '--root', os.path.join(tempdir, 'root'),
