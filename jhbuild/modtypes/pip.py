@@ -71,6 +71,7 @@ class PipModule(Package, DownloadableModule):
 
 def parse_pip(node, config, uri, repositories, default_repo):
     instance = PipModule.parse_from_xml(node, config, uri, repositories, default_repo)
+    instance.dependencies += ['pip']
     return instance
 
 register_module_type('pip', parse_pip)

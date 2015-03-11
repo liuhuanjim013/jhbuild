@@ -50,6 +50,7 @@ virtual_sysdeps = [
     'automake',
     'bzr',
     'cmake',
+    'qmake',
     'cvs',
     'git',
     'gmake',
