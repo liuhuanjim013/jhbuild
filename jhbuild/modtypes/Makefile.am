@@ -4,6 +4,7 @@ app_PYTHON = \
 	__init__.py \
 	autotools.py \
 	cmake.py \
+	qmake.py \
 	distutils.py \
 	pip.py \
 	linux.py \
