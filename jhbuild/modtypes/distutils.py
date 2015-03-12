@@ -61,6 +61,7 @@ class DistutilsModule(Package, DownloadableModule):
         cmd = [python, 'setup.py', 'build']
         if srcdir != builddir:
             cmd.extend(['--build-base', builddir])
+        cmd.extend(['build_py', '--optimize', '2'])
         buildscript.execute(cmd, cwd = srcdir, extra_env = self.extra_env)
     do_build.depends = [PHASE_CHECKOUT]
     do_build.error_phase = [PHASE_FORCE_CHECKOUT]
@@ -74,6 +75,7 @@ class DistutilsModule(Package, DownloadableModule):
         cmd = [python, 'setup.py']
         if srcdir != builddir:
             cmd.extend(['build', '--build-base', builddir])
+        cmd.extend(['build_py', '--optimize', '2'])
         cmd.extend(['install', 
                     '--prefix', buildscript.config.prefix,
                     '--root', destdir])
