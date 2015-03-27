@@ -58,6 +58,10 @@ class QMakeModule(MakeModule, DownloadableModule):
         if not inpath('qmake', os.environ['PATH'].split(os.pathsep)):
             raise CommandError(_('%s not found') % 'qmake')
 
+        # qmake leaves Makefiles that cannot be updated
+        if hasattr(self.branch, 'delete_unknown_files'):
+            self.branch.delete_unknown_files(buildscript)
+
         qmakeargs = self.eval_args(self.qmakeargs)
         qmakeargs = qmakeargs.replace('${destdir}', destdir)
         cmd = 'qmake %s' % qmakeargs
