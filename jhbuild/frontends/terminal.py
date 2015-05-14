@@ -76,6 +76,14 @@ phase_map = {
     'install':        'install.png',
     }
 
+# teamcity stuff
+is_teamcity = os.environ.get('TEAMCITY_VERSION', '') != ''
+if is_teamcity:
+    is_xterm = False
+    t_colour = [''] * 16
+    t_bold = ''
+    t_reset = ''
+
 class TerminalBuildScript(buildscript.BuildScript):
     triedcheckout = None
     is_end_of_build = False
@@ -94,6 +102,9 @@ class TerminalBuildScript(buildscript.BuildScript):
             progress = ' [%d/%d]' % (module_num, len(self.modulelist))
         else:
             progress = ''
+
+        if is_teamcity:
+            uprint('##teamcity[progressMessage \'%s%s\']' % (msg, progress))
 
         if not (self.config.quiet_mode and self.config.progress_bar):
             uprint('%s*** %s ***%s%s' % (t_bold, msg, progress, t_reset))
