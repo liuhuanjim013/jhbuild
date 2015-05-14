@@ -84,6 +84,10 @@ if is_teamcity:
     t_bold = ''
     t_reset = ''
 
+teamcity_quote = {"'": "|'", "|": "||", "\n": "|n", "\r": "|r", ']': '|]'}
+def teamcity_escape(value):
+    return ''.join([teamcity_quote.get(x, x) for x in value])
+
 class TerminalBuildScript(buildscript.BuildScript):
     triedcheckout = None
     is_end_of_build = False
@@ -104,7 +108,7 @@ class TerminalBuildScript(buildscript.BuildScript):
             progress = ''
 
         if is_teamcity:
-            uprint('##teamcity[progressMessage \'%s%s\']' % (msg, progress))
+            uprint('##teamcity[progressMessage \'%s%s\']' % (teamcity_escape(msg), teamcity_escape(progress)))
 
         if not (self.config.quiet_mode and self.config.progress_bar):
             uprint('%s*** %s ***%s%s' % (t_bold, msg, progress, t_reset))
