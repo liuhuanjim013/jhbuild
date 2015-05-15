@@ -290,7 +290,7 @@ class TerminalBuildScript(buildscript.BuildScript):
     def end_module(self, module, failed):
         if failed:
             teamcity_message('message', text='failed to build', status='ERROR')
-        teamcity_message('compilationFinished' compiler='jhbuild.%s' % module)
+        teamcity_message('compilationFinished', compiler='jhbuild.%s' % module)
 
     def start_phase(self, module, phase):
         self.notify.clear()
