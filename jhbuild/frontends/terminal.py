@@ -78,15 +78,21 @@ phase_map = {
 
 # teamcity stuff
 is_teamcity = os.environ.get('TEAMCITY_VERSION', '') != ''
-if is_teamcity:
-    is_xterm = False
-    t_colour = [''] * 16
-    t_bold = ''
-    t_reset = ''
 
 teamcity_quote = {"'": "|'", "|": "||", "\n": "|n", "\r": "|r", ']': '|]'}
 def teamcity_escape(value):
     return ''.join([teamcity_quote.get(x, x) for x in value])
+
+def teamcity_message(name, arg, **kwargs):
+    if not is_teamcity:
+        return
+    message = name
+    if arg is not None:
+        message += ' \'%s\'' % teamcity_escape(arg)
+    for key, value in kwargs.iteritems():
+        message += ' %s=\'%s\'' % (key, teamcity_escape(value))
+    sys.stdout.write('##teamcity[%s]' % message)
+    sys.stdout.flush()
 
 class TerminalBuildScript(buildscript.BuildScript):
     triedcheckout = None
@@ -107,8 +113,7 @@ class TerminalBuildScript(buildscript.BuildScript):
         else:
             progress = ''
 
-        if is_teamcity:
-            uprint('##teamcity[progressMessage \'%s%s\']' % (teamcity_escape(msg), teamcity_escape(progress)))
+        teamcity_message('progressMessage', '%s%s' % (msg, progress))
 
         if not (self.config.quiet_mode and self.config.progress_bar):
             uprint('%s*** %s ***%s%s' % (t_bold, msg, progress, t_reset))
@@ -280,33 +285,28 @@ class TerminalBuildScript(buildscript.BuildScript):
 
     def start_module(self, module):
         self.triedcheckout = None
-        if is_teamcity:
-            uprint('##teamcity[compilationStarted compiler=\'jhbuild.%s\']' % teamcity_escape(module))
+        teamcity_message('compilationStarted', compiler='jhbuild.%s' % module)
 
     def end_module(self, module, failed):
-        if is_teamcity:
-            if failed:
-                uprint('##teamcity[message text=\'failed to build\' status=\'ERROR\']')
-            uprint('##teamcity[compilationFinished compiler=\'jhbuild.%s\']' % teamcity_escape(module))
+        if failed:
+            teamcity_message('message', text='failed to build', status='ERROR')
+        teamcity_message('compilationFinished' compiler='jhbuild.%s' % module)
 
     def start_phase(self, module, phase):
         self.notify.clear()
 
-        if is_teamcity:
-            uprint('##teamcity[compilationStarted compiler=\'jhbuild.%s.%s\']' % (teamcity_escape(module), teamcity_escape(phase)))
+        teamcity_message('compilationStarted', compiler='jhbuild.%s.%s' % (module, phase))
 
         self.trayicon.set_icon(os.path.join(icondir,
                                phase_map.get(phase, 'build.png')))
 
     def end_phase(self, module, phase, error):
-        if is_teamcity:
-            if error:
-                uprint('##teamcity[message text=\'%s\' status=\'ERROR\']' % teamcity_escape(error))
-            uprint('##teamcity[compilationFinished compiler=\'jhbuild.%s.%s\']' % (teamcity_escape(module), teamcity_escape(phase)))
+        if error:
+            teamcity_message('message', text=error, status='ERROR')
+        teamcity_message('compilationFinished', compiler='jhbuild.%s.%s' % (module, phase))
 
     def start_build(self):
-        if is_teamcity:
-            uprint('##teamcity[compilationStarted compiler=\'jhbuild\']')
+        teamcity_message('compilationStarted', compiler='jhbuild')
 
     def end_build(self, failures):
         self.is_end_of_build = True
@@ -318,10 +318,9 @@ class TerminalBuildScript(buildscript.BuildScript):
                 print module,
             print
 
-        if is_teamcity:
-            for module in failures:
-                uprint('##teamcity[message text=\'failed to build: %s\' status=\'ERROR\']' % teamcity_escape(module))
-            uprint('##teamcity[compilationFinished compiler=\'jhbuild\']')
+        for module in failures:
+            teamcity_message('message', text='failed to build: %s' % module, status='ERROR')
+        teamcity_message('compilationFinished', compiler='jhbuild')
 
     def handle_error(self, module, phase, nextphase, error, altphases):
         '''handle error during build'''
