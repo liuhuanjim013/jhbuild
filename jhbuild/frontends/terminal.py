@@ -83,7 +83,7 @@ teamcity_quote = {"'": "|'", "|": "||", "\n": "|n", "\r": "|r", ']': '|]'}
 def teamcity_escape(value):
     return ''.join([teamcity_quote.get(x, x) for x in value])
 
-def teamcity_message(name, arg, **kwargs):
+def teamcity_message(name, arg=None, **kwargs):
     if not is_teamcity:
         return
     message = name
