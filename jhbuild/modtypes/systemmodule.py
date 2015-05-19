@@ -26,8 +26,8 @@ __all__ = [ 'SystemModule' ]
 
 class SystemModule(Package):
 
-    def __init__(self, name, runtime=False):
-        Package.__init__(self, name)
+    def __init__(self, name, runtime=False, **kwargs):
+        Package.__init__(self, name, **kwargs)
         self.runtime = runtime
 
     @classmethod
