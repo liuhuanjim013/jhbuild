@@ -38,7 +38,11 @@ _jhbuild()
 	update|updateone|build|buildone|list|dot|info|-t|-s|-a|-n|-c)
 		# FIXME: some of these options can take multiple module names
 		# give them a list of modules
-		command_list="`jhbuild list -a`"
+
+        if [ -z "${_jhbuild_list}" ]; then
+            _jhbuild_list=$(jhbuild list -a)
+        fi
+		command_list="${_jhbuild_list}"
 		;;
 	run)
 		# give them a list of commands
