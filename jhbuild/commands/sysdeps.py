@@ -37,6 +37,12 @@ class cmd_sysdeps(cmd_build):
 
     def __init__(self):
         Command.__init__(self, [
+            make_option('--dump-build',
+                        action='store_true', default = False,
+                        help=_('Machine readable list of package names needed for build')),
+            make_option('--dump-runtime',
+                        action='store_true', default = False,
+                        help=_('Machine readable list of package names needed for runtime')),
             make_option('--dump',
                         action='store_true', default = False,
                         help=_('Machine readable list of missing sysdeps')),
@@ -118,6 +124,27 @@ class cmd_sysdeps(cmd_build):
                 return 1
 
             return
+
+        if options.dump_build:
+            for module, (req_version, installed_version, new_enough, systemmodule) in module_state.iteritems():
+                if systemmodule or config.partial_build:
+                    assert (module.pkg_config or module.systemdependencies)
+                    print '{0}={1}'.format(module.name, req_version or 'any')
+            return
+
+        if options.dump_runtime:
+            for module, (req_version, installed_version, new_enough, systemmodule) in module_state.iteritems():
+                if systemmodule or config.partial_build:
+                    assert (module.pkg_config or module.systemdependencies)
+                    if systemmodule and module.runtime:
+                        # if a system module is marked as required in runtime, we will list it here
+                        print '{0}={1}'.format(module.name, req_version or 'any')
+                    elif config.partial_build and new_enough:
+                        # if a package is new enough such that we don't compile the tarball,
+                        # we will list it as runtime sysdeps otherwise it is not available in runtime
+                        print '{0}={1}'.format(module.name, req_version or 'any')
+            return
+
 
         print _('System installed packages which are new enough:')
         for module,(req_version, installed_version, new_enough, systemmodule) in module_state.iteritems():

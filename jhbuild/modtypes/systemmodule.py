@@ -25,6 +25,11 @@ __all__ = [ 'SystemModule' ]
 
 
 class SystemModule(Package):
+
+    def __init__(self, name, runtime=False):
+        Package.__init__(self, name)
+        self.runtime = runtime
+
     @classmethod
     def create_virtual(cls, name, branch, deptype, value):
         return cls(name, branch=branch, systemdependencies=[(deptype, value)])
@@ -35,6 +40,9 @@ def parse_systemmodule(node, config, uri, repositories, default_repo):
 
     if any(deptype == 'xml' for deptype, value in instance.systemdependencies):
         instance.dependencies += ['xmlcatalog']
+
+    if node.hasAttribute('runtime'):
+        instance.runtime = node.getAttribute('runtime') == 'true'
 
     return instance
 
