@@ -37,10 +37,10 @@ class cmd_sysdeps(cmd_build):
 
     def __init__(self):
         Command.__init__(self, [
-            make_option('--dump-build',
+            make_option('--dump-packages',
                         action='store_true', default = False,
-                        help=_('Machine readable list of package names needed for build')),
-            make_option('--dump-runtime',
+                        help=_('Machine readable list of package names needed')),
+            make_option('--dump-runtime-packages',
                         action='store_true', default = False,
                         help=_('Machine readable list of package names needed for runtime')),
             make_option('--dump',
@@ -55,7 +55,7 @@ class cmd_sysdeps(cmd_build):
 
     def run(self, config, options, args, help=None):
 
-        def fmt_name(name, version):
+        def fmt_package(name, version):
             if version:
                 return '{0}={1}'.format(name, version)
             return name
@@ -130,24 +130,24 @@ class cmd_sysdeps(cmd_build):
 
             return
 
-        if options.dump_build:
+        if options.dump_packages:
             for module, (req_version, installed_version, new_enough, systemmodule) in module_state.iteritems():
                 if systemmodule or config.partial_build:
                     assert (module.pkg_config or module.systemdependencies)
-                    print fmt_name(module.name, req_version)
+                    print fmt_package(module.name, req_version)
             return
 
-        if options.dump_runtime:
+        if options.dump_runtime_packages:
             for module, (req_version, installed_version, new_enough, systemmodule) in module_state.iteritems():
                 if systemmodule or config.partial_build:
                     assert (module.pkg_config or module.systemdependencies)
                     if systemmodule and module.runtime:
                         # if a system module is marked as required in runtime, we will list it here
-                        print fmt_name(module.name, req_version)
+                        print fmt_package(module.name, req_version)
                     elif config.partial_build and new_enough:
                         # if a package is new enough such that we don't compile the tarball,
                         # we will list it as runtime sysdeps otherwise it is not available in runtime
-                        print fmt_name(module.name, req_version)
+                        print fmt_package(module.name, req_version)
             return
 
 
