@@ -55,6 +55,11 @@ class cmd_sysdeps(cmd_build):
 
     def run(self, config, options, args, help=None):
 
+        def fmt_name(name, version):
+            if version:
+                return '{0}={1}'.format(name, version)
+            return name
+
         def fmt_details(pkg_config, req_version, installed_version):
             fmt_list = []
             if pkg_config:
@@ -129,7 +134,7 @@ class cmd_sysdeps(cmd_build):
             for module, (req_version, installed_version, new_enough, systemmodule) in module_state.iteritems():
                 if systemmodule or config.partial_build:
                     assert (module.pkg_config or module.systemdependencies)
-                    print '{0}={1}'.format(module.name, req_version or 'any')
+                    print fmt_name(module.name, req_version)
             return
 
         if options.dump_runtime:
@@ -138,11 +143,11 @@ class cmd_sysdeps(cmd_build):
                     assert (module.pkg_config or module.systemdependencies)
                     if systemmodule and module.runtime:
                         # if a system module is marked as required in runtime, we will list it here
-                        print '{0}={1}'.format(module.name, req_version or 'any')
+                        print fmt_name(module.name, req_version)
                     elif config.partial_build and new_enough:
                         # if a package is new enough such that we don't compile the tarball,
                         # we will list it as runtime sysdeps otherwise it is not available in runtime
-                        print '{0}={1}'.format(module.name, req_version or 'any')
+                        print fmt_name(module.name, req_version)
             return
 
 
