@@ -26,7 +26,7 @@ __all__ = [ 'SystemModule' ]
 
 class SystemModule(Package):
 
-    def __init__(self, name, runtime=True, **kwargs):
+    def __init__(self, name, runtime=False, **kwargs):
         Package.__init__(self, name, **kwargs)
         self.runtime = runtime
 
@@ -41,6 +41,9 @@ def parse_systemmodule(node, config, uri, repositories, default_repo):
     if any(deptype == 'xml' for deptype, value in instance.systemdependencies):
         instance.dependencies += ['xmlcatalog']
 
+    # for sysdeps specified in modules files, assume they are needed for runtime
+    # package maintainers can choose to exclude them from being installed to runtime
+    instance.runtime = True
     if node.hasAttribute('runtime'):
         instance.runtime = node.getAttribute('runtime') != 'no'
 
