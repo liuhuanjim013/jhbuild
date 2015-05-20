@@ -26,7 +26,7 @@ __all__ = [ 'SystemModule' ]
 
 class SystemModule(Package):
 
-    def __init__(self, name, runtime=False, **kwargs):
+    def __init__(self, name, runtime=True, **kwargs):
         Package.__init__(self, name, **kwargs)
         self.runtime = runtime
 
@@ -42,7 +42,7 @@ def parse_systemmodule(node, config, uri, repositories, default_repo):
         instance.dependencies += ['xmlcatalog']
 
     if node.hasAttribute('runtime'):
-        instance.runtime = node.getAttribute('runtime') == 'true'
+        instance.runtime = node.getAttribute('runtime') != 'no'
 
     return instance
 
