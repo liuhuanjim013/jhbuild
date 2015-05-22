@@ -28,7 +28,7 @@ class SystemModule(Package):
 
     def __init__(self, name, apt_package=None, apt_runtime=None, apt_source=None, apt_key=None, **kwargs):
         Package.__init__(self, name, **kwargs)
-        self.apt_package = apt_pacakge
+        self.apt_package = apt_package
         self.apt_runtime = apt_runtime
         self.apt_source = apt_source
         self.apt_key = apt_key
