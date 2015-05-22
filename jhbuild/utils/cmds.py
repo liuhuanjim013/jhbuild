@@ -246,6 +246,9 @@ def compare_version(version, minver):
             version[i] = None
         else:
             version[i] = int(part)
+
+    # remove debian epoch and revision in version
+    minver = minver.split(':', 1)[-1].split('-', 1)[0]
     minver = minver.split('.')
     for i, ver in enumerate(minver):
         part = re.sub(r'^[^\d]*(\d*).*$', r'\1', ver)
