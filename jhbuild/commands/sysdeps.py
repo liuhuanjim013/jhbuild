@@ -20,6 +20,7 @@
 from optparse import make_option
 import logging
 import os.path
+import subprocess
 
 import jhbuild.moduleset
 from jhbuild.errors import FatalError
@@ -37,6 +38,9 @@ class cmd_sysdeps(cmd_build):
 
     def __init__(self):
         Command.__init__(self, [
+            make_option('--install-packages',
+                        action='store_true', default = False,
+                        help=_('Install exact versions of packages')),
             make_option('--dump-packages',
                         action='store_true', default = False,
                         help=_('Machine readable list of package names needed')),
@@ -150,6 +154,42 @@ class cmd_sysdeps(cmd_build):
                         print fmt_package(module.name, req_version)
             return
 
+        if options.install_packages:
+            if not cmds.has_command('apt-get'):
+                raise FatalError(_('This system is not supported.'))
+            if not cmds.has_command('sudo'):
+                raise FatalError(_('This system does not have sudo command.'))
+
+            for module, (req_version, installed_version, new_enough, systemmodule) in module_state.iteritems():
+                if not systemmodule or not module.apt_source:
+                    continue
+
+                # add source.list
+                p = subprocess.Popen(['sudo', 'tee', os.path.sep + os.path.join('etc', 'apt', 'sources.list.d', '%s.list' % module.name)], stdin=subprocess.PIPE)
+                p.stdin.write(module.apt_source)
+                p.communicate()
+                p.stdin.close()
+                p.wait()
+
+                if not module.apt_key:
+                    continue
+
+                # add apt key
+                subprocess.check_call(['sudo', 'gpg', '--keyserver', module.apt_key_server or 'pgp.mit.edu', '--recv-keys', module.apt_key])
+                subprocess.check_call(['sudo', 'sh', '-c', 'gpg -a --export %s | apt-key add -' % module.apt_key])
+
+            # do a apt-get update
+            subprocess.check_call(['sudo', 'apt-get', 'update'])
+
+            packages_to_install = []
+            for module, (req_version, installed_version, new_enough, systemmodule) in module_state.iteritems():
+                if systemmodule or config.partial_build:
+                    assert (module.pkg_config or module.systemdependencies)
+                    packages_to_install.append(fmt_package(module.name, req_version))
+
+            # apt-get install
+            subprocess.check_call(['sudo', 'apt-get', 'install', '-y', '--force-yes', '--no-install-recommends', '-t', 'wheezy-backports'] + packages_to_install)
+            return
 
         print _('System installed packages which are new enough:')
         for module,(req_version, installed_version, new_enough, systemmodule) in module_state.iteritems():
