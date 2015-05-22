@@ -201,7 +201,7 @@ class cmd_sysdeps(cmd_build):
                     continue
 
                 # add apt key
-                subprocess.check_call(['sudo', 'gpg', '--keyserver', 'pgp.mit.edu', '--recv-keys', module.apt_key])
+                subprocess.check_call(['sudo', 'gpg', '--keyserver', 'hkp://keys.gnupg.net', '--recv-keys', module.apt_key])
                 subprocess.check_call(['sudo', 'sh', '-c', 'gpg -a --export %s | apt-key add -' % module.apt_key])
 
             # do a apt-get update
