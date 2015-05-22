@@ -45,7 +45,7 @@ def parse_systemmodule(node, config, uri, repositories, default_repo):
         instance.dependencies += ['xmlcatalog']
 
     if node.hasAttribute('apt-package'):
-        instance.apt = node.getAttribute('apt-package')
+        instance.apt_package = node.getAttribute('apt-package')
 
     # for sysdeps specified in modules files, assume they are needed for runtime
     # package maintainers can choose to exclude them from being installed to runtime
