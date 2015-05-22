@@ -26,17 +26,16 @@ __all__ = [ 'SystemModule' ]
 
 class SystemModule(Package):
 
-    def __init__(self, name, virtual=False, runtime=False, apt_source=None, apt_key=None, apt_key_server=None, **kwargs):
+    def __init__(self, name, apt_package=None, apt_runtime=None, apt_source=None, apt_key=None, **kwargs):
         Package.__init__(self, name, **kwargs)
-        self.virtual = virtual
-        self.runtime = runtime
+        self.apt_package = apt_pacakge
+        self.apt_runtime = apt_runtime
         self.apt_source = apt_source
         self.apt_key = apt_key
-        self.apt_key_server = apt_key_server
 
     @classmethod
     def create_virtual(cls, name, branch, deptype, value):
-        return cls(name, virtual=True, branch=branch, systemdependencies=[(deptype, value)])
+        return cls(name, branch=branch, systemdependencies=[(deptype, value)])
 
 def parse_systemmodule(node, config, uri, repositories, default_repo):
     instance = SystemModule.parse_from_xml(node, config, uri, repositories,
@@ -45,11 +44,14 @@ def parse_systemmodule(node, config, uri, repositories, default_repo):
     if any(deptype == 'xml' for deptype, value in instance.systemdependencies):
         instance.dependencies += ['xmlcatalog']
 
+    if node.hasAttribute('apt-package'):
+        instance.apt = node.getAttribute('apt-package')
+
     # for sysdeps specified in modules files, assume they are needed for runtime
     # package maintainers can choose to exclude them from being installed to runtime
-    instance.runtime = True
-    if node.hasAttribute('runtime'):
-        instance.runtime = node.getAttribute('runtime') != 'no'
+    instance.apt_runtime = True
+    if node.hasAttribute('apt-runtime'):
+        instance.apt_runtime = node.getAttribute('apt-runtime') != 'no'
 
     # for packages that requires a special apt source, they can be specified via
     # apt-source and apt-key attributes
@@ -59,9 +61,7 @@ def parse_systemmodule(node, config, uri, repositories, default_repo):
     if node.hasAttribute('apt-key'):
         instance.apt_key = node.getAttribute('apt-key')
 
-    if node.hasAttribute('apt-key-server'):
-        instance.apt_key_server = node.getAttribute('apt-key-server')
-
     return instance
 
 register_module_type('systemmodule', parse_systemmodule)
+

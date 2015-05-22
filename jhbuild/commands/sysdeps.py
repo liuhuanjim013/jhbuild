@@ -38,31 +38,38 @@ class cmd_sysdeps(cmd_build):
 
     def __init__(self):
         Command.__init__(self, [
-            make_option('--install-packages',
-                        action='store_true', default = False,
+            make_option('--install-apt-packages',
+                        action='store_true', default=False,
                         help=_('Install exact versions of packages')),
-            make_option('--dump-packages',
-                        action='store_true', default = False,
+            make_option('--dump-apt-packages',
+                        action='store_true', default=False,
                         help=_('Machine readable list of package names needed')),
-            make_option('--dump-runtime-packages',
-                        action='store_true', default = False,
+            make_option('--dump-runtime-apt-packages',
+                        action='store_true', default=False,
                         help=_('Machine readable list of package names needed for runtime')),
+            make_option('--dump-apt-sources',
+                        action='store_true', default=False,
+                        help=_('Machine readable list of package sources needed')),
+            make_option('--dump-runtime-apt-sources',
+                        action='store_true', default=False,
+                        help=_('Machine readable list of package sources needed for runtime')),
+            make_option('--dump-apt-keys',
+                        action='store_true', default=False,
+                        help=_('Machine readable list of package keys needed')),
+            make_option('--dump-runtime-apt-keys',
+                        action='store_true', default=False,
+                        help=_('Machine readable list of package keys needed for runtime')),
             make_option('--dump',
-                        action='store_true', default = False,
+                        action='store_true', default=False,
                         help=_('Machine readable list of missing sysdeps')),
             make_option('--dump-all',
-                        action='store_true', default = False,
+                        action='store_true', default=False,
                         help=_('Machine readable list of all sysdeps')),
             make_option('--install',
-                        action='store_true', default = False,
+                        action='store_true', default=False,
                         help=_('Install pkg-config modules via system'))])
 
     def run(self, config, options, args, help=None):
-
-        def fmt_package(name, version):
-            if version:
-                return '{0}={1}'.format(name, version)
-            return name
 
         def fmt_details(pkg_config, req_version, installed_version):
             fmt_list = []
@@ -134,35 +141,59 @@ class cmd_sysdeps(cmd_build):
 
             return
 
-        if options.dump_packages:
+        if options.dump_apt_packages:
             for module, (req_version, installed_version, new_enough, systemmodule) in module_state.iteritems():
-                if not systemmodule or module.virtual:
-                    continue
-                print fmt_package(module.name, req_version)
+                if systemmodule and module.apt_package:
+                    print module.apt_package
             return
 
-        if options.dump_runtime_packages:
+        if options.dump_runtime_apt_packages:
             for module, (req_version, installed_version, new_enough, systemmodule) in module_state.iteritems():
-                if not systemmodule or module.virtual or not module.runtime:
-                    continue
-                # if a system module is marked as required in runtime, we will list it here
-                print fmt_package(module.name, req_version)
+                if systemmodule and module.apt_package and module.apt_runtime:
+                    print module.apt_package
             return
 
-        if options.install_packages:
+        if options.dump_apt_sources:
+            for module, (req_version, installed_version, new_enough, systemmodule) in module_state.iteritems():
+                if systemmodule and module.apt_package and module.apt_source:
+                    for line in module.apt_source.split(','):
+                        print line.strip()
+            return
+
+        if options.dump_runtime_apt_sources:
+            for module, (req_version, installed_version, new_enough, systemmodule) in module_state.iteritems():
+                if systemmodule and module.apt_package and module.apt_source and module.apt_runtime:
+                    for line in module.apt_source.split(','):
+                        print line.strip()
+            return
+
+        if options.dump_apt_keys:
+            for module, (req_version, installed_version, new_enough, systemmodule) in module_state.iteritems():
+                if systemmodule and module.apt_package and module.apt_source and module.apt_key:
+                    print module.apt_key
+            return
+
+        if options.dump_runtime_apt_keys:
+            for module, (req_version, installed_version, new_enough, systemmodule) in module_state.iteritems():
+                if systemmodule and module.apt_package and module.apt_source and module.apt_key and module.apt_runtime:
+                    print module.apt_key
+            return
+
+        if options.install_apt_packages:
             if not cmds.has_command('apt-get'):
                 raise FatalError(_('This system is not supported.'))
             if not cmds.has_command('sudo'):
                 raise FatalError(_('This system does not have sudo command.'))
 
             for module, (req_version, installed_version, new_enough, systemmodule) in module_state.iteritems():
-                if not systemmodule or module.virtual or not module.apt_source:
+                if not systemmodule or not module.apt_package or not module.apt_source:
                     continue
 
                 # add source.list
                 p = subprocess.Popen(['sudo', 'tee', os.path.sep + os.path.join('etc', 'apt', 'sources.list.d', '%s.list' % module.name)], stdin=subprocess.PIPE)
-                p.stdin.write(module.apt_source)
-                p.communicate()
+                for line in module.apt_source.split(','):
+                    p.stdin.write(line.strip() + '\n')
+                    p.communicate()
                 p.stdin.close()
                 p.wait()
 
@@ -170,7 +201,7 @@ class cmd_sysdeps(cmd_build):
                     continue
 
                 # add apt key
-                subprocess.check_call(['sudo', 'gpg', '--keyserver', module.apt_key_server or 'pgp.mit.edu', '--recv-keys', module.apt_key])
+                subprocess.check_call(['sudo', 'gpg', '--keyserver', 'pgp.mit.edu', '--recv-keys', module.apt_key])
                 subprocess.check_call(['sudo', 'sh', '-c', 'gpg -a --export %s | apt-key add -' % module.apt_key])
 
             # do a apt-get update
@@ -178,9 +209,9 @@ class cmd_sysdeps(cmd_build):
 
             packages_to_install = []
             for module, (req_version, installed_version, new_enough, systemmodule) in module_state.iteritems():
-                if not systemmodule or module.virtual:
+                if not systemmodule or not module.apt_package:
                     continue
-                packages_to_install.append(fmt_package(module.name, req_version))
+                packages_to_install.append(module.apt_package)
 
             # apt-get install
             subprocess.check_call(['sudo', 'apt-get', 'install', '-y', '--force-yes', '--no-install-recommends', '-t', 'wheezy-backports'] + packages_to_install)
