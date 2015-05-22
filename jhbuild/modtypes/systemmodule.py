@@ -26,8 +26,9 @@ __all__ = [ 'SystemModule' ]
 
 class SystemModule(Package):
 
-    def __init__(self, name, runtime=False, apt_source=None, apt_key=None, apt_key_server=None, **kwargs):
+    def __init__(self, name, virtual=False, runtime=False, apt_source=None, apt_key=None, apt_key_server=None, **kwargs):
         Package.__init__(self, name, **kwargs)
+        self.virtual = virtual
         self.runtime = runtime
         self.apt_source = apt_source
         self.apt_key = apt_key
@@ -35,7 +36,7 @@ class SystemModule(Package):
 
     @classmethod
     def create_virtual(cls, name, branch, deptype, value):
-        return cls(name, branch=branch, systemdependencies=[(deptype, value)])
+        return cls(name, virtual=True, branch=branch, systemdependencies=[(deptype, value)])
 
 def parse_systemmodule(node, config, uri, repositories, default_repo):
     instance = SystemModule.parse_from_xml(node, config, uri, repositories,

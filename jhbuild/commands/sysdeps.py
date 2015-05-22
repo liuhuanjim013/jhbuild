@@ -136,22 +136,17 @@ class cmd_sysdeps(cmd_build):
 
         if options.dump_packages:
             for module, (req_version, installed_version, new_enough, systemmodule) in module_state.iteritems():
-                if systemmodule or config.partial_build:
-                    assert (module.pkg_config or module.systemdependencies)
-                    print fmt_package(module.name, req_version)
+                if not systemmodule or module.virtual:
+                    continue
+                print fmt_package(module.name, req_version)
             return
 
         if options.dump_runtime_packages:
             for module, (req_version, installed_version, new_enough, systemmodule) in module_state.iteritems():
-                if systemmodule or config.partial_build:
-                    assert (module.pkg_config or module.systemdependencies)
-                    if systemmodule and module.runtime:
-                        # if a system module is marked as required in runtime, we will list it here
-                        print fmt_package(module.name, req_version)
-                    elif config.partial_build and new_enough:
-                        # if a package is new enough such that we don't compile the tarball,
-                        # we will list it as runtime sysdeps otherwise it is not available in runtime
-                        print fmt_package(module.name, req_version)
+                if not systemmodule or module.virtual or not module.runtime:
+                    continue
+                # if a system module is marked as required in runtime, we will list it here
+                print fmt_package(module.name, req_version)
             return
 
         if options.install_packages:
@@ -161,7 +156,7 @@ class cmd_sysdeps(cmd_build):
                 raise FatalError(_('This system does not have sudo command.'))
 
             for module, (req_version, installed_version, new_enough, systemmodule) in module_state.iteritems():
-                if not systemmodule or not module.apt_source:
+                if not systemmodule or module.virtual or not module.apt_source:
                     continue
 
                 # add source.list
@@ -183,9 +178,9 @@ class cmd_sysdeps(cmd_build):
 
             packages_to_install = []
             for module, (req_version, installed_version, new_enough, systemmodule) in module_state.iteritems():
-                if systemmodule or config.partial_build:
-                    assert (module.pkg_config or module.systemdependencies)
-                    packages_to_install.append(fmt_package(module.name, req_version))
+                if not systemmodule or module.virtual:
+                    continue
+                packages_to_install.append(fmt_package(module.name, req_version))
 
             # apt-get install
             subprocess.check_call(['sudo', 'apt-get', 'install', '-y', '--force-yes', '--no-install-recommends', '-t', 'wheezy-backports'] + packages_to_install)
