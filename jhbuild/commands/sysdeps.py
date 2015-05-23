@@ -306,6 +306,7 @@ class cmd_sysdeps(cmd_build):
 
                 # do a apt-get update
                 subprocess.check_call(['sudo', 'apt-get', 'update'])
+                subprocess.check_call(['sudo', 'apt-file', 'update'])
 
             logging.info(_("Installing dependencies on system: %s") % \
                            ' '.join(pkg[0] for pkg in uninstalled))
