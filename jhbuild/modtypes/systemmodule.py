@@ -59,7 +59,7 @@ def parse_systemmodule(node, config, uri, repositories, default_repo):
         instance.apt_source = node.getAttribute('apt-source')
 
     if node.hasAttribute('apt-key'):
-        instance.apt_key = node.getAttribute('apt-key')
+        instance.apt_key = node.getAttribute('apt-key').upper()
 
     return instance
 

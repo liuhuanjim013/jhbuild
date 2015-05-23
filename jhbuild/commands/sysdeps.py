@@ -38,9 +38,6 @@ class cmd_sysdeps(cmd_build):
 
     def __init__(self):
         Command.__init__(self, [
-            make_option('--install-apt-packages',
-                        action='store_true', default=False,
-                        help=_('Install exact versions of packages')),
             make_option('--dump-apt-packages',
                         action='store_true', default=False,
                         help=_('Machine readable list of package names needed')),
@@ -142,79 +139,59 @@ class cmd_sysdeps(cmd_build):
             return
 
         if options.dump_apt_packages:
+            apt_packages = set()
             for module, (req_version, installed_version, new_enough, systemmodule) in module_state.iteritems():
                 if systemmodule and module.apt_package:
-                    print module.apt_package
+                    apt_packages.add(module.apt_package)
+            for apt_package in apt_packages:
+                print apt_package
             return
 
         if options.dump_runtime_apt_packages:
+            apt_packages = set()
             for module, (req_version, installed_version, new_enough, systemmodule) in module_state.iteritems():
                 if systemmodule and module.apt_package and module.apt_runtime:
-                    print module.apt_package
+                    apt_packages.add(module.apt_package)
+            for apt_package in apt_packages:
+                print apt_package
             return
 
         if options.dump_apt_sources:
+            apt_sources = set()
             for module, (req_version, installed_version, new_enough, systemmodule) in module_state.iteritems():
                 if systemmodule and module.apt_package and module.apt_source:
                     for line in module.apt_source.split(','):
-                        print line.strip()
+                        apt_sources.add(line.strip())
+            for apt_source in apt_sources:
+                print apt_source
             return
 
         if options.dump_runtime_apt_sources:
+            apt_sources = set()
             for module, (req_version, installed_version, new_enough, systemmodule) in module_state.iteritems():
                 if systemmodule and module.apt_package and module.apt_source and module.apt_runtime:
                     for line in module.apt_source.split(','):
-                        print line.strip()
+                        apt_sources.add(line.strip())
+            for apt_source in apt_sources:
+                print apt_source
             return
 
         if options.dump_apt_keys:
+            apt_keys = set()
             for module, (req_version, installed_version, new_enough, systemmodule) in module_state.iteritems():
                 if systemmodule and module.apt_package and module.apt_source and module.apt_key:
-                    print module.apt_key
+                    apt_keys.add(module.apt_key)
+            for apt_key in apt_keys:
+                print apt_key
             return
 
         if options.dump_runtime_apt_keys:
+            apt_keys = set()
             for module, (req_version, installed_version, new_enough, systemmodule) in module_state.iteritems():
                 if systemmodule and module.apt_package and module.apt_source and module.apt_key and module.apt_runtime:
-                    print module.apt_key
-            return
-
-        if options.install_apt_packages:
-            if not cmds.has_command('apt-get'):
-                raise FatalError(_('This system is not supported.'))
-            if not cmds.has_command('sudo'):
-                raise FatalError(_('This system does not have sudo command.'))
-
-            for module, (req_version, installed_version, new_enough, systemmodule) in module_state.iteritems():
-                if not systemmodule or not module.apt_package or not module.apt_source:
-                    continue
-
-                # add source.list
-                p = subprocess.Popen(['sudo', 'tee', os.path.sep + os.path.join('etc', 'apt', 'sources.list.d', '%s.list' % module.name)], stdin=subprocess.PIPE)
-                for line in module.apt_source.split(','):
-                    p.stdin.write(line.strip() + '\n')
-                    p.communicate()
-                p.stdin.close()
-                p.wait()
-
-                if not module.apt_key:
-                    continue
-
-                # add apt key
-                subprocess.check_call(['sudo', 'gpg', '--keyserver', 'hkp://keys.gnupg.net', '--recv-keys', module.apt_key])
-                subprocess.check_call(['sudo', 'sh', '-c', 'gpg -a --export %s | apt-key add -' % module.apt_key])
-
-            # do a apt-get update
-            subprocess.check_call(['sudo', 'apt-get', 'update'])
-
-            packages_to_install = []
-            for module, (req_version, installed_version, new_enough, systemmodule) in module_state.iteritems():
-                if not systemmodule or not module.apt_package:
-                    continue
-                packages_to_install.append(module.apt_package)
-
-            # apt-get install
-            subprocess.check_call(['sudo', 'apt-get', 'install', '-y', '--force-yes', '--no-install-recommends', '-t', 'wheezy-backports'] + packages_to_install)
+                    apt_keys.add(module.apt_key)
+            for apt_key in apt_keys:
+                print apt_key
             return
 
         print _('System installed packages which are new enough:')
@@ -299,9 +276,39 @@ class cmd_sysdeps(cmd_build):
 
             if len(uninstalled) == 0:
                 logging.info(_("No uninstalled system dependencies to install for modules: %r") % (modules, ))
-            else:
-                logging.info(_("Installing dependencies on system: %s") % \
-                               ' '.join(pkg[0] for pkg in uninstalled))
-                installer.install(uninstalled)
+                return
+
+            if cmds.has_command('apt-get') and cmds.has_command('sudo'):
+
+                # collect apt sources and keys from modules
+                apt_sources = set()
+                apt_keys = set()
+                for module, (req_version, installed_version, new_enough, systemmodule) in module_state.iteritems():
+                    if not systemmodule or not module.apt_package or not module.apt_source:
+                        continue
+                    for apt_source in module.apt_source.split(','):
+                        apt_sources.add(apt_source.strip())
+                    if module.apt_key:
+                        apt_keys.add(module.apt_key)
+
+                # add source.list
+                p = subprocess.Popen(['sudo', 'tee', os.path.sep + os.path.join('etc', 'apt', 'sources.list.d', 'jhbuild.list')], stdin=subprocess.PIPE)
+                for apt_source in apt_sources:
+                    p.stdin.write(apt_source + '\n')
+                    p.communicate()
+                p.stdin.close()
+                p.wait()
+
+                # add apt key
+                for apt_key in apt_keys:
+                    subprocess.check_call(['sudo', 'gpg', '--keyserver', 'hkp://keys.gnupg.net', '--recv-keys', apt_key])
+                    subprocess.check_call(['sudo', 'sh', '-c', 'gpg -a --export %s | apt-key add -' % apt_key])
+
+                # do a apt-get update
+                subprocess.check_call(['sudo', 'apt-get', 'update'])
+
+            logging.info(_("Installing dependencies on system: %s") % \
+                           ' '.join(pkg[0] for pkg in uninstalled))
+            installer.install(uninstalled)
 
 register_command(cmd_sysdeps)
