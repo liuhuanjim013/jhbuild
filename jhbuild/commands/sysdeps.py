@@ -205,6 +205,8 @@ class cmd_sysdeps(cmd_build):
         if not have_new_enough:
             print _('  (none)')
 
+        uninstalled = []
+
         print _('Required packages:')
         print _('  System installed packages which are too old:')
         for module, (req_version, installed_version, new_enough, systemmodule) in module_state.iteritems():
@@ -214,11 +216,15 @@ class cmd_sysdeps(cmd_build):
                                       fmt_details(module.pkg_config,
                                                   req_version,
                                                   installed_version)))
+                if module.pkg_config is not None:
+                    uninstalled.append((module.name, 'pkgconfig', module.pkg_config[:-3])) # remove .pc
+                elif module.systemdependencies is not None:
+                    for dep_type, value in module.systemdependencies:
+                        uninstalled.append((module.name, dep_type, value))
         if not have_too_old:
             print _('    (none)')
 
         print _('  No matching system package installed:')
-        uninstalled = []
         for module, (req_version, installed_version, new_enough, systemmodule) in module_state.iteritems():
             if installed_version is None and (not new_enough) and systemmodule:
                 print ('    %s %s' % (module.name,
@@ -245,6 +251,8 @@ class cmd_sysdeps(cmd_build):
                                           fmt_details(module.pkg_config,
                                                       req_version,
                                                       installed_version)))
+                    if module.pkg_config is not None:
+                        uninstalled.append((module.name, 'pkgconfig', module.pkg_config[:-3])) # remove .pc
             if not have_too_old:
                 print _('    (none)')
 
@@ -313,3 +321,4 @@ class cmd_sysdeps(cmd_build):
             installer.install(uninstalled)
 
 register_command(cmd_sysdeps)
+
