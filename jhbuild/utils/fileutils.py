@@ -22,6 +22,7 @@
 import os
 import sys
 import errno
+import codecs
 
 def _accumulate_dirtree_contents_recurse(path, contents):
     names = os.listdir(path)
@@ -129,7 +130,7 @@ class SafeWriter(object):
     def __init__(self, filename):
         self.filename = filename
         self.tmpname = filename + '.tmp'
-        self.fp = open(self.tmpname, 'w')
+        self.fp = codecs.open(self.tmpname, 'w', 'utf-8')
 
     def commit(self):
         self.fp.flush()
