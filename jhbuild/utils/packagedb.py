@@ -61,7 +61,7 @@ class PackageEntry:
             return None
         self._manifest = []
         for line in file(os.path.join(self.dirname, 'manifests', self.package)):
-            self._manifest.append(line.strip())
+            self._manifest.append(line.strip().decode('utf-8'))
         return self._manifest
 
     def set_manifest(self, value):
