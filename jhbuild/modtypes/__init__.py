@@ -217,7 +217,7 @@ class Package:
     def _clean_la_files_in_dir(self, buildscript, path):
         for name in os.listdir(path):
             subpath = os.path.join(path, name)
-            if os.path.isdir(subpath):
+            if os.path.isdir(subpath) and not os.path.islink(subpath):
                 self._clean_la_files_in_dir(buildscript, subpath)
             elif name.endswith('.la'):
                     try:
@@ -231,7 +231,7 @@ class Package:
         assert os.path.isabs(installroot)
         assert os.path.isabs(buildscript.config.prefix)
         prefixdir = os.path.join(installroot, buildscript.config.prefix[1:])
-        if os.path.isdir(prefixdir):
+        if os.path.isdir(prefixdir) and not os.path.islink(prefixdir):
             self._clean_la_files_in_dir(self, prefixdir)
 
     def _process_install_files(self, installroot, curdir, prefix, errors):
