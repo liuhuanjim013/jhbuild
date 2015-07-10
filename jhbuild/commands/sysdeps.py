@@ -301,7 +301,7 @@ class cmd_sysdeps(cmd_build):
 
                 # add source.list
                 p = subprocess.Popen(['sudo', 'tee', os.path.sep + os.path.join('etc', 'apt', 'sources.list.d', 'jhbuild.list')], stdin=subprocess.PIPE)
-                p.communicate('\n'.join(apt_sources))
+                p.communicate('\n'.join(apt_sources) + '\n')
                 p.wait()
 
                 # add apt key
