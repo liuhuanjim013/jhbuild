@@ -29,13 +29,13 @@ from jhbuild.modtypes import \
 
 __all__ = [ 'PipModule' ]
 
-class PipModule(Package, DownloadableModule):
+class PipModule(Package):
     """Base type for modules that are distributed with python pip"""
     type = 'pip'
 
     PHASE_INSTALL = 'install'
 
-    def __init__(self, name, branch=None, supports_non_srcdir_builds = True):
+    def __init__(self, name, branch=None, supports_non_srcdir_builds=True):
         Package.__init__(self, name, branch=branch)
         self.supports_install_destdir = True
 
@@ -60,7 +60,7 @@ class PipModule(Package, DownloadableModule):
                     '--build', os.path.join(tempdir, 'build'),
                     '--src', os.path.join(tempdir, 'src'),
                     '--root', os.path.join(tempdir, 'root')] + self.branch.version.split())
-        buildscript.execute(cmd, cwd = tempdir, extra_env = self.extra_env)
+        buildscript.execute(cmd, cwd=tempdir, extra_env=self.extra_env)
         self.process_install(buildscript, self.branch.version)
 
         shutil.rmtree(tempdir)
