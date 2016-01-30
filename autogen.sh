@@ -13,14 +13,14 @@
 # ./autogen.sh [OPTION]
 #    Available OPTION are:
 #      --simple-install   Configure without using autotools. This setting is
-#                         set automatically if gnome-common and yelp-tools
+#                         set automatically if autotools and yelp-tools
 #                         are not installed.
 #      --prefix=PREFIX    Install JHBuild to PREFIX. Defaults to ~/.local
 #
-# If gnome-common and yelp-tools are available, this configuration script
+# If autotools and yelp-tools are available, this configuration script
 # will configure JHBuild to install via autotools.
 #
-# If gnome-common and yelp-tools are not available, this configuration
+# If autotools and yelp-tools are not available, this configuration
 # script will configure JHBuild to install via a plain Makefile.
 #
 # autogen.sh is used to configure JHBuild because the most common way to obtain
@@ -135,6 +135,9 @@ configure_without_autotools()
   echo "bindir=$bindir" >> $srcdir/Makefile.inc
   echo "datarootdir=$datarootdir" >> $srcdir/Makefile.inc
   echo "desktopdir=$desktopdir" >> $srcdir/Makefile.inc
+  if [ $msgfmtl_available -ne 0 ]; then
+      echo "DISABLE_GETTEXT=yes" >> $srcdir/Makefile.inc
+  fi
 
   if [ ! -f $makefile ]; then
     eval_gettext "Unable to read file \$makefile"; echo
@@ -155,12 +158,35 @@ configure_with_autotools()
 {
   test -d m4 || mkdir m4
   test -d build-aux || mkdir build-aux
-  export PKG_NAME
-  REQUIRED_AUTOCONF_VERSION=2.57 \
-  REQUIRED_AUTOMAKE_VERSION=1.8 \
-  REQUIRED_INTLTOOL_VERSION=0.35.0 \
-  REQUIRED_PKG_CONFIG_VERSION=0.16.0 \
-  gnome-autogen.sh $@
+
+  (test -f $srcdir/configure.ac) || {
+    echo "**Error**: Directory "\`$srcdir\'" does not look like the top-level project directory"
+    exit 1
+  }
+
+  if [ "$#" = 0 -a "x$NOCONFIGURE" = "x" ]; then
+    echo "**Warning**: I am going to run \`configure' with no arguments." >&2
+    echo "If you wish to pass any to it, please specify them on the" >&2
+    echo \`$0\'" command line." >&2
+    echo "" >&2
+  fi
+
+  set -x
+
+  aclocal --install || exit 1
+  autoreconf --verbose --force --install -Wno-portability || exit 1
+
+  if [ "$NOCONFIGURE" = "" ]; then
+    $srcdir/configure "$@" || exit 1
+
+    if [ "$1" = "--help" ]; then exit 0 else
+      echo "Now type \`make\' to compile $PKG_NAME" || exit 1
+    fi
+  else
+    echo "Skipping configure process."
+  fi
+
+  set +x
 }
 
 # Check for make. make is required to provide i18n for this script and to
@@ -186,10 +212,19 @@ if [ ! -f $srcdir/jhbuild/main.py ]; then
   exit 1
 fi
 
-# Check gnome-common package is installed. gnome-common depends on autoconf,
-# automake and pkgconfig so no need to check them explicitly.
-hash gnome-autogen.sh 2>&-
-gnome_autogen_available=$?
+# Check autotools is installed: autoconf, automake and pkgconfig.
+hash aclocal 2>& -
+autoconf_available=$?
+
+hash automake 2>& -
+automake_available=$?
+
+hash pkg-config 2>& -
+pkg_config_available=$?
+
+# Check autopoint is installed.
+hash autopoint 2>& -
+autopoint_available=$?
 
 # Check yelp-tools is installed.
 hash yelp-build 2>&-
@@ -198,7 +233,10 @@ yelp_tools_available=$?
 parse_commandline $*
 
 autotools_dependencies_met=$FALSE
-if [ $gnome_autogen_available -eq $TRUE -a \
+if [ $autoconf_available -eq $TRUE -a \
+     $automake_available -eq $TRUE -a \
+     $pkg_config_available -eq $TRUE -a \
+     $autopoint_available -eq $TRUE -a \
      $yelp_tools_available -eq $TRUE ]; then
     autotools_dependencies_met=$TRUE
 fi
@@ -222,8 +260,17 @@ fi
 if [ $use_autotools -eq $TRUE ]; then
   configure_with_autotools $*
 else
-  if [ $gnome_autogen_available -ne $TRUE ]; then
-    gettext "WARNING: gnome-autogen.sh not available (usually part of package 'gnome-common')"; echo
+  if [ $autoconf_available -ne $TRUE ]; then
+    gettext "WARNING: aclocal not available (usually part of package 'autoconf')"; echo
+  fi
+  if [ $automake_available -ne $TRUE ]; then
+    gettext "WARNING: automake not available (usually part of package 'automake')"; echo
+  fi
+  if [ $autopoint_available -ne $TRUE ]; then
+    gettext "WARNING: autopoint not available (usually part of package 'gettext')"; echo
+  fi
+  if [ $pkg_config_available -ne $TRUE ]; then
+    gettext "WARNING: pkg-config not available (usually part of package 'pkgconfig')"; echo
   fi
   if [ $yelp_tools_available -ne $TRUE ]; then
     gettext "WARNING: yelp-tools not available (usually part of package 'yelp-tools')"; echo

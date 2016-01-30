@@ -225,6 +225,10 @@ class AutogenModule(MakeModule, DownloadableModule):
         except:
             pass
 
+        if self.autogen_sh == 'autoreconf':
+            buildscript.execute(['autoreconf', '-fi'], cwd=srcdir)
+            os.chmod(os.path.join(srcdir, 'configure'), 0755)
+
         buildscript.execute(cmd, cwd = builddir, extra_env = self.extra_env)
     do_configure.depends = [PHASE_CHECKOUT]
     do_configure.error_phases = [PHASE_FORCE_CHECKOUT,
@@ -405,8 +409,8 @@ def parse_autotools(node, config, uri, repositories, default_repo):
 
     if node.hasAttribute('check-target'):
         instance.check_target = (node.getAttribute('check-target') == 'true')
-    if node.hasAttribute('static-analyzer'):
-        instance.supports_static_analyzer = (node.getAttribute('static-analyzer') == 'true')
+    if node.hasAttribute('supports-static-analyzer'):
+        instance.supports_static_analyzer = (node.getAttribute('supports-static-analyzer') == 'true')
 
     from jhbuild.versioncontrol.tarball import TarballBranch
     if node.hasAttribute('autogen-sh'):

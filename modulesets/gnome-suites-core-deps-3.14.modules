@@ -677,7 +677,7 @@
   </autotools>
 
   <autotools id="gobject-introspection">
-    <branch/>
+    <branch revision="gnome-3-14"/>
     <dependencies>
       <dep package="bison"/>
       <dep package="flex"/>
@@ -1014,7 +1014,7 @@
   </autotools>
 
   <autotools id="libgweather">
-    <branch/>
+    <branch revision="gnome-3-14"/>
     <dependencies>
       <dep package="intltool"/>
       <dep package="libxml2"/>
@@ -1109,7 +1109,7 @@
   </autotools>
 
   <autotools id="libsoup" autogenargs="--disable-tls-check">
-    <branch/>
+    <branch revision="gnome-3-14"/>
     <dependencies>
       <dep package="glib"/>
       <dep package="libxml2"/>
@@ -1315,9 +1315,10 @@
     </dependencies>
   </autotools>
 
-  <autotools id="libxkbcommon" autogenargs="--with-xkb-config-root=/usr/share/X11/xkb">
+  <autotools id="libxkbcommon">
     <branch repo="github.com" checkoutdir="libxkbcommon" module="xkbcommon/libxkbcommon.git"/>
     <dependencies>
+      <dep package="xkeyboard-config"/>
       <dep package="xorg-x11-util-macros"/>
       <dep package="xorg-xproto"/>
       <dep package="xorg-kbproto"/>
@@ -1350,9 +1351,9 @@
   <cmake id="WebKit" cmakeargs="-DPORT=GTK -DCMAKE_BUILD_TYPE=Release">
     <pkg-config>webkit2gtk-4.0.pc</pkg-config>
     <branch repo="webkitgtk.org"
-            module="webkitgtk-2.6.5.tar.xz" version="2.6.5"
-            hash="sha256:b1658017cea7cc545b9e01f22af585986e21e4242825e215bc5f8e0c0dc67593"
-            size="10000124">
+            module="webkitgtk-2.6.6.tar.xz" version="2.6.6"
+            hash="sha256:541e114a203b0f649e89b3ad6b6fdeea1726739320a6b6a52b464cb66ea38eb9"
+            size="10000888">
     </branch>
     <dependencies>
       <dep package="at-spi2-core"/>

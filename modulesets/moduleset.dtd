@@ -1,4 +1,4 @@
-<!ELEMENT moduleset (repository|include|autotools|metamodule|tarball|distutils|perl|linux|testmodule|cvsroot|cvsmodule|waf|cmake|systemmodule)+>
+<!ELEMENT moduleset (redirect|repository|include|autotools|metamodule|tarball|distutils|perl|linux|testmodule|cvsroot|cvsmodule|waf|cmake|systemmodule)+>
 <!ATTLIST moduleset
 	name     CDATA  #IMPLIED>
 
@@ -10,7 +10,7 @@
      DTD also appears to be incapable of describing the fact that
      exactly one of condition-set='' and condition-unset='' is required.
 -->
-<!ELEMENT if (if|dep|autogenargs|makeargs|makeinstallargs)+>
+<!ELEMENT if (if|dep|autogenargs|cmakeargs|makeargs|makeinstallargs)+>
 <!ATTLIST if
 	condition-set	CDATA	#IMPLIED
 	condition-unset	CDATA	#IMPLIED>
@@ -46,6 +46,9 @@
 
 <!ELEMENT include EMPTY>
 <!ATTLIST include href CDATA #REQUIRED>
+
+<!ELEMENT redirect EMPTY>
+<!ATTLIST redirect href CDATA #REQUIRED>
 
 <!ELEMENT autotools (if*,autogenargs*,makeargs*,makeinstallargs*,pkg-config?,branch,dependencies?,suggests?,after?)>
 <!-- Note: Here the ID type is not used as some existing IDs in modsets are not
@@ -99,12 +102,15 @@
 	id	ID	#REQUIRED
 	supports-non-srcdir-builds (yes|no) "yes">
 
-<!ELEMENT cmake (pkg-config?,branch?,dependencies?,suggests?,after?)>
+<!ELEMENT cmake (if*,cmakeargs*,makeargs*,pkg-config?,branch?,dependencies?,suggests?,after?)>
 <!ATTLIST cmake
 	id		CDATA	#REQUIRED
 	cmakeargs	CDATA	#IMPLIED
 	makeargs	CDATA	#IMPLIED
 	supports-non-srcdir-builds (yes|no) "yes">
+
+<!ELEMENT cmakeargs EMPTY>
+<!ATTLIST cmakeargs value CDATA #REQUIRED>
 
 <!ELEMENT perl (pkg-config?,branch?,dependencies?,after?)>
 <!ATTLIST perl
@@ -174,12 +180,17 @@
 <!ELEMENT suggests (dep|if)*>
 <!ELEMENT after (dep*)>
 <!ELEMENT systemdependencies (dep*)>
-<!ELEMENT dep EMPTY>
+<!ELEMENT dep (altdep*)>
 <!-- This is actually 2 different types of element: <dep package=""/> as used in <dependencies>
      and <dep type="" name=""/> as used in <systemdependencies>. The DTD can't specify both
      separately since they have the same element name. -->
 <!ATTLIST dep
 	package	CDATA	#IMPLIED
+	type	CDATA	#IMPLIED
+	name	CDATA	#IMPLIED>
+<!-- <altdep> is only used in <systemdependencies> to specify alternative dependencies. -->
+<!ELEMENT altdep EMPTY>
+<!ATTLIST altdep
 	type	CDATA	#IMPLIED
 	name	CDATA	#IMPLIED>
 

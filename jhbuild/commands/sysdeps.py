@@ -21,6 +21,7 @@ from optparse import make_option
 import logging
 import os.path
 import subprocess
+import sys
 
 import jhbuild.moduleset
 from jhbuild.errors import FatalError
@@ -97,8 +98,11 @@ class cmd_sysdeps(cmd_build):
                         print 'pkgconfig:{0}'.format(module.pkg_config[:-3]) # remove .pc
 
                     if module.systemdependencies is not None:
-                        for dep_type, value in module.systemdependencies:
-                            print '{0}:{1}'.format(dep_type, value)
+                        for dep_type, value, altdeps in module.systemdependencies:
+                            sys.stdout.write('{0}:{1}'.format(dep_type, value))
+                            for dep_type, value, empty in altdeps:
+                                sys.stdout.write(',{0}:{1}'.format(dep_type, value))
+                            sys.stdout.write('\n')
 
             return
 
@@ -130,8 +134,11 @@ class cmd_sysdeps(cmd_build):
                         print 'pkgconfig:{0}'.format(module.pkg_config[:-3]) # remove .pc
 
                     if module.systemdependencies is not None:
-                        for dep_type, value in module.systemdependencies:
-                            print '{0}:{1}'.format(dep_type, value)
+                        for dep_type, value, altdeps in module.systemdependencies:
+                            sys.stdout.write('{0}:{1}'.format(dep_type, value))
+                            for dep_type, value, empty in altdeps:
+                                sys.stdout.write(',{0}:{1}'.format(dep_type, value))
+                            sys.stdout.write('\n')
 
             if have_too_old:
                 return 1
@@ -234,7 +241,7 @@ class cmd_sysdeps(cmd_build):
                 if module.pkg_config is not None:
                     uninstalled.append((module.name, 'pkgconfig', module.pkg_config[:-3])) # remove .pc
                 elif module.systemdependencies is not None:
-                    for dep_type, value in module.systemdependencies:
+                    for dep_type, value, altdeps in module.systemdependencies:
                         uninstalled.append((module.name, dep_type, value))
         if len(uninstalled) == 0:
             print _('    (none)')

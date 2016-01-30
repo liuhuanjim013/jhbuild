@@ -23,7 +23,7 @@ __all__ = [
     'register_module_type',
     'parse_xml_node',
     'Package',
-    'get_dependencies'
+    'get_dependencies',
     'get_branch'
     ]
 
@@ -78,9 +78,9 @@ def get_dependencies(node):
                             node.getAttribute('id'))
                 list.append(package)
 
-    def add_to_system_dependencies(lst, childnode):
+    def add_to_system_dependencies(lst, childnode, tag='dep'):
         for dep in childnode.childNodes:
-            if dep.nodeType == dep.ELEMENT_NODE and dep.nodeName == 'dep':
+            if dep.nodeType == dep.ELEMENT_NODE and dep.nodeName == tag:
                 typ = dep.getAttribute('type')
                 if not typ:
                     raise FatalError(_('%(node)s node for %(module)s module is'
@@ -95,7 +95,10 @@ def get_dependencies(node):
                                      {'node_name'   : 'dep',
                                       'module_name' : node.getAttribute('id'),
                                       'attribute'   : 'name'})
-                lst.append((typ, name))
+                altdeps = []
+                if dep.childNodes:
+                    add_to_system_dependencies(altdeps, dep, 'altdep')
+                lst.append((typ, name, altdeps))
 
     for childnode in node.childNodes:
         if childnode.nodeType != childnode.ELEMENT_NODE: continue
@@ -234,6 +237,20 @@ class Package:
         if os.path.isdir(prefixdir) and not os.path.islink(prefixdir):
             self._clean_la_files_in_dir(self, prefixdir)
 
+    def _clean_texinfo_dir_files(self, buildscript, installroot):
+        """This method removes GNU Texinfo dir files."""
+        assert os.path.isabs(installroot)
+        assert os.path.isabs(buildscript.config.prefix)
+        prefixdir = os.path.join(installroot, buildscript.config.prefix[1:])
+        if os.path.isdir(prefixdir):
+            dirfile = os.path.join(prefixdir, 'share/info/dir')
+            if os.path.isfile(dirfile):
+                try:
+                    logging.info(_('Deleting dir file: %r') % (dirfile, ))
+                    os.unlink(dirfile)
+                except OSError:
+                    pass
+
     def _process_install_files(self, installroot, curdir, prefix, errors):
         """Strip the prefix from all files in the install root, and move
 them into the prefix."""
@@ -287,6 +304,7 @@ them into the prefix."""
         assert self.supports_install_destdir
         destdir = self.get_destdir(buildscript)
         self._clean_la_files(buildscript, destdir)
+        self._clean_texinfo_dir_files(buildscript, destdir)
 
         prefix_without_drive = os.path.splitdrive(buildscript.config.prefix)[1]
         stripped_prefix = prefix_without_drive[1:]

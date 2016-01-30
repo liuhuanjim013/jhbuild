@@ -55,16 +55,33 @@
     </systemdependencies>
   </systemmodule>
 
-  <systemmodule id="cairomm">
-    <pkg-config>cairomm-1.0.pc</pkg-config>
-    <branch repo="system"
-            version="1.8.4"/>
-  </systemmodule>
-
   <systemmodule id="cc">
     <branch repo="system"/>
     <systemdependencies>
       <dep type="path" name="cc"/>
+    </systemdependencies>
+  </systemmodule>
+
+  <systemmodule id="clang">
+    <branch repo="system"/>
+    <systemdependencies>
+      <dep type="path" name="llvm-config">
+        <!-- Debian -->
+        <altdep type="path" name="llvm-config-3.9"/>
+        <altdep type="path" name="llvm-config-3.8"/>
+        <altdep type="path" name="llvm-config-3.7"/>
+        <altdep type="path" name="llvm-config-3.6"/>
+        <altdep type="path" name="llvm-config-3.5"/>
+        <altdep type="path" name="llvm-config-3.4"/>
+        <!-- FreeBSD -->
+        <altdep type="path" name="llvm-config39"/>
+        <altdep type="path" name="llvm-config38"/>
+        <altdep type="path" name="llvm-config37"/>
+        <altdep type="path" name="llvm-config36"/>
+        <altdep type="path" name="llvm-config35"/>
+        <altdep type="path" name="llvm-config34"/>
+        <altdep type="path" name="llvm-config-devel"/>
+      </dep>
     </systemdependencies>
   </systemmodule>
 
@@ -115,6 +132,12 @@
     <systemdependencies>
       <dep type="c_include" name="libdevmapper.h"/>
     </systemdependencies>
+  </systemmodule>
+
+  <systemmodule id="dleyna-renderer">
+    <pkg-config>dleyna-renderer-service-1.0.pc</pkg-config>
+    <branch repo="system"
+            version="0.4"/>
   </systemmodule>
 
   <systemmodule id="docbook-xml">
@@ -313,6 +336,13 @@
     </systemdependencies>
   </systemmodule>
 
+  <systemmodule id="hyphen">
+    <branch repo="system"/>
+    <systemdependencies>
+      <dep type="c_include" name="hyphen.h"/>
+    </systemdependencies>
+  </systemmodule>
+
   <systemmodule id="intltool">
     <branch repo="system"
             version="0.50"/>
@@ -370,6 +400,11 @@
 
   <systemmodule id="libcanberra-gtk3">
     <pkg-config>libcanberra-gtk3.pc</pkg-config>
+    <branch repo="system"/>
+  </systemmodule>
+
+  <systemmodule id="libdmapsharing">
+    <pkg-config>libdmapsharing-3.0.pc</pkg-config>
     <branch repo="system"/>
   </systemmodule>
 
@@ -439,6 +474,11 @@
     <branch repo="system" version="1.3"/>
   </systemmodule>
 
+  <systemmodule id="libXrender">
+    <pkg-config>xrender.pc</pkg-config>
+    <branch repo="system"/>
+  </systemmodule>
+
   <systemmodule id="libXt">
     <pkg-config>xt.pc</pkg-config>
     <branch repo="system"/>
@@ -456,11 +496,6 @@
 
   <systemmodule id="xorg-macros">
     <pkg-config>xorg-macros.pc</pkg-config>
-    <branch repo="system"/>
-  </systemmodule>
-
-  <systemmodule id="xorg-xproto">
-    <pkg-config>xproto.pc</pkg-config>
     <branch repo="system"/>
   </systemmodule>
 
@@ -682,11 +717,6 @@
     </systemdependencies>
   </systemmodule>
 
-  <systemmodule id="libusb1">
-    <pkg-config>libusb-1.0.pc</pkg-config>
-    <branch repo="system"/>
-  </systemmodule>
-
   <systemmodule id="libuuid">
     <pkg-config>uuid.pc</pkg-config>
     <branch repo="system"/>
@@ -724,12 +754,6 @@
             version="5.0"/>
   </systemmodule>
 
-  <systemmodule id="libxml2">
-    <pkg-config>libxml-2.0.pc</pkg-config>
-    <branch repo="system"
-            version="2.7.8"/>
-  </systemmodule>
-
   <systemmodule id="libxml2-python">
     <branch repo="system"/>
     <systemdependencies>
@@ -755,6 +779,29 @@
     <systemdependencies>
       <dep type="c_include" name="webp/decode.h"/>
       </systemdependencies>
+  </systemmodule>
+
+  <systemmodule id="llvm">
+    <branch repo="system"/>
+    <systemdependencies>
+      <dep type="c_include" name="llvm-c/Core.h">
+        <!-- Debian -->
+        <altdep type="c_include" name="llvm-c-3.9/llvm-c/Core.h"/>
+        <altdep type="c_include" name="llvm-c-3.8/llvm-c/Core.h"/>
+        <altdep type="c_include" name="llvm-c-3.7/llvm-c/Core.h"/>
+        <altdep type="c_include" name="llvm-c-3.6/llvm-c/Core.h"/>
+        <altdep type="c_include" name="llvm-c-3.5/llvm-c/Core.h"/>
+        <altdep type="c_include" name="llvm-c-3.4/llvm-c/Core.h"/>
+        <!-- FreeBSD -->
+        <altdep type="c_include" name="../llvm39/include/llvm-c/Core.h"/>
+        <altdep type="c_include" name="../llvm38/include/llvm-c/Core.h"/>
+        <altdep type="c_include" name="../llvm37/include/llvm-c/Core.h"/>
+        <altdep type="c_include" name="../llvm36/include/llvm-c/Core.h"/>
+        <altdep type="c_include" name="../llvm35/include/llvm-c/Core.h"/>
+        <altdep type="c_include" name="../llvm34/include/llvm-c/Core.h"/>
+        <altdep type="c_include" name="../llvm-devel/include/llvm-c/Core.h"/>
+      </dep>
+    </systemdependencies>
   </systemmodule>
 
   <systemmodule id="mesa-libGLES">
@@ -860,12 +907,6 @@
     </systemdependencies>
   </systemmodule>
 
-  <systemmodule id="py2cairo">
-    <pkg-config>pycairo.pc</pkg-config>
-    <branch repo="system"
-            version="1.8.2"/>
-  </systemmodule>
-
   <systemmodule id="py3cairo">
     <pkg-config>py3cairo.pc</pkg-config>
     <branch repo="system"
@@ -880,9 +921,9 @@
   </systemmodule>
 
   <systemmodule id="python2-devel">
-    <pkg-config>python2.pc</pkg-config>
+    <pkg-config>python-2.7.pc</pkg-config>
     <branch repo="system"
-            version="2.5"/>
+            version="2.7"/>
   </systemmodule>
 
   <systemmodule id="python-devel">

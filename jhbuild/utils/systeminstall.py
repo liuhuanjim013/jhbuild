@@ -24,6 +24,7 @@ import shlex
 import subprocess
 import pipes
 import imp
+import time
 from StringIO import StringIO
 
 import cmds
@@ -128,11 +129,12 @@ def systemdependencies_met(module_name, sysdeps, config):
         return paths
 
     c_include_search_paths = None
-    for dep_type, value in sysdeps:
+    for dep_type, value, altdeps in sysdeps:
+        dep_met = True
         if dep_type.lower() == 'path':
             if os.path.split(value)[0]:
                 if not os.path.isfile(value) and not os.access(value, os.X_OK):
-                    return False
+                    dep_met = False
             else:
                 pathdirs = set(os.environ.get('PATH', '').split(os.pathsep))
                 pathdirs.update(['/sbin', '/usr/sbin'])
@@ -141,7 +143,7 @@ def systemdependencies_met(module_name, sysdeps, config):
                     if os.path.isfile(filename) and os.access(filename, os.X_OK):
                         break
                 else:
-                    return False
+                    dep_met = False
         elif dep_type.lower() == 'c_include':
             if c_include_search_paths is None:
                 c_include_search_paths = get_c_include_search_paths(config)
@@ -152,28 +154,39 @@ def systemdependencies_met(module_name, sysdeps, config):
                     found = True
                     break
             if not found:
-                return False
+                dep_met = False
 
         elif dep_type == 'python2':
             try:
                 imp.find_module(value)
             except:
-                return False
+                dep_met = False
 
         elif dep_type == 'xml':
-            for d in os.environ['XDG_DATA_DIRS'].split(':'):
-                xml_catalog = os.path.join(d, 'xml', 'catalog')
-                if os.path.exists(xml_catalog):
-                    break
-            else:
-                xml_catalog = '/etc/xml/catalog'
+            xml_catalog = '/etc/xml/catalog'
+
+            if not os.path.exists(xml_catalog):
+                for d in os.environ['XDG_DATA_DIRS'].split(':'):
+                    xml_catalog = os.path.join(d, 'xml', 'catalog')
+                    if os.path.exists(xml_catalog):
+                        break
 
             try:
                 # no xmlcatalog installed will (correctly) fail the check
                 subprocess.check_output(['xmlcatalog', xml_catalog, value])
 
             except:
-                return False
+                dep_met = False
+
+        # check alternative dependencies
+        if not dep_met and altdeps:
+            for altdep in altdeps:
+                if systemdependencies_met(module_name, [ altdep ], config):
+                    dep_met = True
+                    break
+
+        if not dep_met:
+            return False
 
     return True
 
@@ -321,6 +334,70 @@ class PKSystemInstall(SystemInstall):
     def detect(cls):
         return cmds.has_command('pkcon')
 
+class PacmanSystemInstall(SystemInstall):
+    def __init__(self):
+        SystemInstall.__init__(self)
+        self._pacman_install_args = ['pacman', '-S', '--asdeps', '--needed', '--quiet', '--noconfirm']
+
+    def _maybe_update_pkgfile(self):
+        if not cmds.has_command('pkgfile'):
+            logging.info(_('pkgfile not found, automatically installing'))
+            if subprocess.call(self._root_command_prefix_args + self._pacman_install_args + ['pkgfile',]):
+                logging.error(_('Failed to install pkgfile'))
+                raise SystemExit
+
+        # Update the pkgfile cache if it is older than 1 day.
+        cacheexists = bool(os.listdir('/var/cache/pkgfile'))
+        if not cacheexists or os.stat('/var/cache/pkgfile').st_mtime < time.time() - 86400:
+            logging.info(_('pkgfile cache is old or doesn\'t exist, automatically updating'))
+            result = subprocess.call(self._root_command_prefix_args + ['pkgfile', '--update'])
+            if result and not cacheexists:
+                logging.error(_('Failed to create pkgfile cache'))
+                raise SystemExit
+            elif result:
+                logging.warning(_('Failed to update pkgfile cache'))
+            else:
+                logging.info(_('Successfully updated pkgfile cache'))
+
+    def install(self, uninstalled):
+        uninstalled_pkgconfigs, uninstalled_filenames = get_uninstalled_pkgconfigs_and_filenames(uninstalled)
+        logging.info(_('Using pacman to install packages.  Please wait.'))
+        package_names = set()
+
+        if not uninstalled_filenames and not uninstalled_pkgconfigs:
+            logging.info(_('Nothing to install'))
+            return
+
+        self._maybe_update_pkgfile()
+
+        for name, pkgconfig in uninstalled_pkgconfigs:
+            # Just throw the pkgconfigs in the normal file list
+            uninstalled_filenames.append((None, '/usr/lib/pkgconfig/%s.pc' %pkgconfig))
+
+        for name, filename in uninstalled_filenames:
+            try:
+                result = subprocess.check_output(['pkgfile', '--raw', filename])
+                if result:
+                    package_names.add(result.split('\n')[0])
+            except subprocess.CalledProcessError:
+                logging.warning(_('Provider for "%s" was not found, ignoring' %(name if name else filename)))
+
+        if not package_names:
+            logging.info(_('Nothing to install'))
+            return
+
+        logging.info('Installing:\n  %s' %('\n  '.join(package_names)))
+        if subprocess.call(self._root_command_prefix_args + self._pacman_install_args + list(package_names)):
+            logging.error(_('Install failed'))
+        else:
+            logging.info(_('Completed!'))
+
+    @classmethod
+    def detect(cls):
+        if cmds.has_command('pacman'):
+            return True
+        return False
+
 class YumSystemInstall(SystemInstall):
     def __init__(self):
         SystemInstall.__init__(self)
@@ -399,7 +476,7 @@ class AptSystemInstall(SystemInstall):
         return cmds.has_command('apt-file')
 
 # Ordered from best to worst
-_classes = [AptSystemInstall, PKSystemInstall, YumSystemInstall]
+_classes = [AptSystemInstall, PacmanSystemInstall, PKSystemInstall, YumSystemInstall]
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)

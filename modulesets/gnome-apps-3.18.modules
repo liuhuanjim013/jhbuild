@@ -17,8 +17,6 @@
       href="git://git.fedorahosted.org/git/"/>
   <repository type="git" name="wayland"
       href="git://anongit.freedesktop.org/git/wayland"/>
-  <repository type="git" name="github-01org"
-    href="git://github.com/01org/"/>
 
 <!-- tarball repos -->
   <repository type="tarball" name="gnome.org"
@@ -33,8 +31,10 @@
       href="http://devel.freebsoft.org/pub/projects/speechd/"/>
   <repository type="tarball" name="tarball.github.com"
     href="https://github.com/"/>
+  <repository type="tarball" name="downloads.sourceforge.net"
+      href="http://downloads.sourceforge.net/"/>
 
-  <include href="gnome-suites-core-3.16.modules"/>
+  <include href="gnome-suites-core-3.18.modules"/>
 
   <!-- NOTE: gnome-suites-core-* and gnome-suites-core-deps-*
        are supposed to remain self-contained. If apps have dependencies
@@ -53,12 +53,14 @@
       <dep package="cairo"/>
       <dep package="gdk-pixbuf"/>
       <dep package="pango"/>
+      <dep package="libjpeg"/>
+      <dep package="libpng"/>
       <dep package="librsvg"/>
     </dependencies>
   </autotools>
 
   <autotools id="bijiben">
-    <branch revision="gnome-3-16"/>
+    <branch revision="gnome-3-18"/>
     <dependencies>
       <dep package="appstream-glib"/>
       <dep package="tracker"/>
@@ -75,7 +77,7 @@
   </autotools>
 
   <autotools id="dconf-editor">
-    <branch revision="gnome-3-16"/>
+    <branch revision="gnome-3-18"/>
     <dependencies>
       <dep package="glib"/>
       <dep package="dconf"/>
@@ -86,9 +88,21 @@
   </autotools>
 
   <autotools id="gnome-calendar">
-    <branch revision="gnome-3-16"/>
+    <branch revision="gnome-3-18"/>
     <dependencies>
       <dep package="appstream-glib"/>
+      <dep package="gnome-online-accounts"/>
+      <dep package="evolution-data-server"/>
+      <dep package="glib"/>
+      <dep package="gtk+"/>
+    </dependencies>
+  </autotools>
+
+  <autotools id="gnome-todo">
+    <branch revision="gnome-3-18"/>
+    <dependencies>
+      <dep package="appstream-glib"/>
+      <dep package="gnome-online-accounts"/>
       <dep package="evolution-data-server"/>
       <dep package="glib"/>
       <dep package="gtk+"/>
@@ -238,6 +252,15 @@
     </dependencies>
   </autotools>
 
+  <autotools id="libgovirt">
+    <branch/>
+    <dependencies>
+      <dep package="librest"/>
+      <dep package="intltool"/>
+      <dep package="gobject-introspection"/>
+    </dependencies>
+  </autotools>
+
   <autotools id="libosinfo"
              autogenargs="--enable-tests=no --enable-werror=no">
     <branch repo="fedorahosted.org" module="libosinfo.git"/>
@@ -260,6 +283,16 @@
     </dependencies>
   </autotools>
 
+  <autotools id="phodav">
+    <branch/>
+    <dependencies>
+      <dep package="glib"/>
+      <dep package="libsoup"/>
+      <dep package="avahi"/>
+      <dep package="libxml2"/>
+    </dependencies>
+  </autotools>
+
   <autotools id="pyatspi2" autogenargs="--with-python=python3" >
     <branch/>
     <dependencies>
@@ -273,9 +306,9 @@
   <autotools id="qqwing">
     <branch repo="qqwing"
             module="qqwing-${version}.tar.gz"
-            version="1.2.0"
-            hash="sha256:b9de6cc596049cf852d17a37014f9a4b0cac1682bd8ccff5def4433b0b52d1e1"
-            size="350915"/>
+            version="1.3.4"
+            hash="sha256:1753736c31feea0085f5cfac33143743204f8a7e66b81ccd17e249ecafba802f"
+            size="352060"/>
     <dependencies>
       <dep package="c++"/>
     </dependencies>
@@ -302,15 +335,15 @@
     </dependencies>
   </autotools>
 
-  <autotools id="spice-gtk" autogenargs="--disable-smartcard --enable-vala --enable-static">
+  <autotools id="spice-gtk" autogenargs="--disable-smartcard --enable-vala --enable-webdav --enable-static">
     <if condition-set="freebsd">
       <autogenargs value="SSL_CFLAGS=' ' SSL_LIBS='-lssl'"/>
     </if>
     <branch repo="spice"
-            module="gtk/spice-gtk-0.28.tar.bz2"
-            version="0.28"
-            hash="sha256:15aeeb63422cb3bfaa2edbf4602ed2025baa4455abfd1677f631245a0d0f81c4"
-            size="1274095"/>
+            module="gtk/spice-gtk-0.29.tar.bz2"
+            version="0.29"
+            hash="sha256:44c7e22713246a2054c3c3b6e0280fd4c1fdbd2c8d33e5eb95bcda4748d5e973"
+            size="1277160"/>
     <dependencies>
       <dep package="cairo"/>
       <dep package="cyrus-sasl"/>
@@ -320,6 +353,7 @@
       <dep package="libjpeg"/>
       <dep package="openssl"/>
       <dep package="opus"/>
+      <dep package="phodav"/>
       <dep package="pixman"/>
       <dep package="pulseaudio"/>
       <dep package="spice-protocol"/>
@@ -331,16 +365,16 @@
 
   <autotools id="spice-protocol">
     <branch repo="spice"
-            module="releases/spice-protocol-0.12.7.tar.bz2"
-            version="0.12.7"
-            hash="sha256:96c6cb73361816ed19bfd8536f65d4547da35709aa00af1380e650c1174916c2"
-            size="71276"/>
+            module="releases/spice-protocol-0.12.9.tar.bz2"
+            version="0.12.9"
+            hash="sha256:290cf834dd156014d229b474e98006265ab9c5f63b4c471ea3b2cf8b2ff37876"
+            size="71766"/>
     <dependencies>
     </dependencies>
   </autotools>
 
   <autotools id="gdl">
-    <branch revision="gnome-3-16"/>
+    <branch revision="gnome-3-18"/>
     <dependencies>
       <dep package="intltool"/>
       <dep package="librsvg"/>
@@ -383,8 +417,8 @@
          cmakeargs="-DTHREADSAFE:BOOL=1">
     <branch repo="tarball.github.com"
             module="libgit2/libgit2/archive/v${version}.tar.gz"
-            version="0.22.0"
-            hash="b70965b35e6d0adc891ba2edb28d982cb27729a3f2bb02186084f692e94922b2"
+            version="0.23.1"
+            hash="113748018e5876bea84af5c749af25b62f58cb4ca82730dcbffaac90c87f7056"
             checkoutdir="libgit2-${version}">
     </branch>
     <dependencies>
@@ -398,6 +432,17 @@
       <dep package="libgit2"/>
       <dep package="glib"/>
       <dep package="gobject-introspection"/>
+    </dependencies>
+  </autotools>
+
+  <autotools id="uncrustify">
+    <branch repo="downloads.sourceforge.net"
+            module="project/uncrustify/uncrustify/uncrustify-0.61/uncrustify-0.61.tar.gz"
+            version="0.61"
+            hash="sha256:1df0e5a2716e256f0a4993db12f23d10195b3030326fdf2e07f8e6421e172df9"
+            size="1143946"/>
+    <dependencies>
+      <dep package="c++"/>
     </dependencies>
   </autotools>
 
@@ -417,7 +462,7 @@
   </autotools>
 
   <autotools id="gnome-documents">
-    <branch revision="gnome-3-16"/>
+    <branch revision="gnome-3-18"/>
     <dependencies>
       <dep package="evince"/>
       <dep package="gjs"/>
@@ -436,7 +481,7 @@
   </autotools>
 
   <autotools id="gnome-maps">
-    <branch revision="gnome-3-16"/>
+    <branch revision="gnome-3-18"/>
     <dependencies>
       <dep package="clutter-gtk"/>
       <dep package="gjs"/>
@@ -450,6 +495,8 @@
       <dep package="gnome-online-accounts"/>
       <dep package="libgfbgraph"/>
       <dep package="gnome-themes-standard"/>
+      <dep package="folks"/>
+      <dep package="libgee"/>
     </dependencies>
   </autotools>
 
@@ -487,7 +534,7 @@
   </autotools>
 
   <autotools id="gnome-color-manager">
-    <branch revision="gnome-3-16"/>
+    <branch revision="gnome-3-18"/>
     <dependencies>
       <dep package="exiv2"/>
       <dep package="glib"/>
@@ -512,7 +559,7 @@
   </autotools>
 
   <autotools id="rygel">
-    <branch revision="rygel-0-26"/>
+    <branch revision="rygel-0-28"/>
     <dependencies>
       <dep package="vala"/>
       <dep package="gupnp"/>
@@ -526,7 +573,7 @@
   </autotools>
 
   <autotools id="gnome-sound-recorder">
-    <branch revision="gnome-3-16"/>
+    <branch/>
     <dependencies>
       <dep package="gjs"/>
       <dep package="glib"/>
@@ -538,7 +585,7 @@
 <!-- Featured Apps -->
 
   <autotools id="anjuta">
-    <branch revision="gnome-3-16"/>
+    <branch revision="gnome-3-18"/>
     <dependencies>
       <dep package="intltool"/>
       <dep package="glib"/>
@@ -558,7 +605,7 @@
   </autotools>
 
   <autotools id="cheese">
-    <branch revision="gnome-3-16"/>
+    <branch revision="gnome-3-18"/>
     <dependencies>
       <dep package="appstream-glib"/>
       <dep package="intltool"/>
@@ -568,7 +615,7 @@
       <dep package="gst-plugins-bad"/>
       <dep package="gst-plugins-base"/>
       <dep package="gst-plugins-good"/>
-      <dep package="clutter-gst"/>
+      <dep package="clutter-gst3"/>
       <dep package="clutter-gtk"/>
       <dep package="libcanberra"/>
       <dep package="vala"/>
@@ -582,7 +629,7 @@
   </autotools>
 
   <autotools id="evolution" autogenargs="--disable-autoar --disable-libcryptui --disable-pst-import">
-    <branch revision="gnome-3-16"/>
+    <branch revision="gnome-3-18"/>
     <dependencies>
       <dep package="atk"/>
       <dep package="bogofilter"/>
@@ -632,8 +679,30 @@
     </dependencies>
   </autotools>
 
+
+
+  <autotools id="fwupd"
+             autogenargs="--disable-colorhug --disable-uefi">
+    <branch repo="tarball.github.com"
+            module="hughsie/fwupd/archive/${version}.tar.gz"
+            version="0.1.5"
+            hash="35f7e8c7b169c58b2e34391ea4dd0c99001ecfe2c767df2861159f05a43b9be1"
+            checkoutdir="fwupd-${version}"/>
+    <dependencies>
+      <dep package="appstream-glib"/>
+      <dep package="gcab"/>
+      <dep package="glib"/>
+      <dep package="gudev"/>
+      <dep package="libarchive"/>
+      <dep package="libgusb"/>
+      <dep package="libsoup"/>
+      <dep package="polkit-gobject"/>
+      <dep package="sqlite3"/>
+    </dependencies>
+  </autotools>
+
   <autotools id="gedit">
-    <branch revision="gnome-3-16"/>
+    <branch revision="gnome-3-18"/>
     <dependencies>
       <dep package="intltool"/>
       <dep package="libpeas"/>
@@ -649,7 +718,7 @@
   </autotools>
 
   <autotools id="gitg">
-    <branch/>
+    <branch revision="gnome-3-18"/>
     <dependencies>
       <dep package="gtk+"/>
       <dep package="glib"/>
@@ -671,7 +740,7 @@
   </autotools>
 
   <autotools id="gnome-boxes" autogenargs="--enable-vala">
-    <branch revision="gnome-3-16"/>
+    <branch revision="gnome-3-18"/>
     <dependencies>
       <dep package="glib"/>
       <dep package="libxml2"/>
@@ -690,6 +759,26 @@
     </dependencies>
   </autotools>
 
+  <autotools id="gnome-builder">
+    <branch/>
+    <dependencies>
+      <dep package="clang"/>
+      <dep package="devhelp"/>
+      <dep package="gjs"/>
+      <dep package="glib"/>
+      <dep package="gnome-code-assistance"/>
+      <dep package="gtk+"/>
+      <dep package="gtksourceview"/>
+      <dep package="libgit2-glib"/>
+      <dep package="libpeas"/>
+      <dep package="librsvg"/>
+      <dep package="llvm"/>
+      <dep package="pygobject"/>
+      <dep package="uncrustify"/>
+      <dep package="vte"/>
+    </dependencies>
+  </autotools>
+
   <autotools id="gnome-clocks">
     <branch/>
     <dependencies>
@@ -698,7 +787,6 @@
       <dep package="gsound"/>
       <dep package="gnome-desktop"/>
       <dep package="libgweather"/>
-      <dep package="libnotify"/>
       <dep package="geoclue"/>
       <dep package="geocode-glib"/>
       <dep package="yelp-tools"/>
@@ -746,7 +834,7 @@
   </autotools>
 
   <autotools id="five-or-more">
-    <branch revision="gnome-3-16"/>
+    <branch revision="gnome-3-18"/>
     <dependencies>
       <dep package="appstream-glib"/>
       <dep package="intltool"/>
@@ -758,7 +846,7 @@
   </autotools>
 
   <autotools id="four-in-a-row">
-    <branch revision="gnome-3-16"/>
+    <branch revision="gnome-3-18"/>
     <dependencies>
       <dep package="appstream-glib"/>
       <dep package="intltool"/>
@@ -770,7 +858,7 @@
   </autotools>
 
   <autotools id="gnome-characters">
-    <branch revision="gnome-3-16"/>
+    <branch revision="gnome-3-18"/>
     <dependencies>
       <dep package="appstream-glib"/>
       <dep package="gjs"/>
@@ -779,11 +867,12 @@
   </autotools>
 
   <autotools id="gnome-chess">
-    <branch revision="gnome-3-16"/>
+    <branch revision="gnome-3-18"/>
     <dependencies>
       <dep package="appstream-glib"/>
       <dep package="intltool"/>
       <dep package="librsvg"/>
+      <dep package="m4-common"/>
       <dep package="gtk+"/>
       <dep package="vala"/>
       <dep package="yelp-tools"/>
@@ -792,7 +881,7 @@
   </autotools>
 
   <autotools id="gnome-klotski">
-    <branch revision="gnome-3-16"/>
+    <branch revision="gnome-3-18"/>
     <dependencies>
       <dep package="appstream-glib"/>
       <dep package="intltool"/>
@@ -803,7 +892,7 @@
   </autotools>
 
   <autotools id="gnome-logs">
-    <branch revision="gnome-3-16"/>
+    <branch revision="gnome-3-18"/>
     <dependencies>
       <dep package="appstream-glib"/>
       <dep package="intltool"/>
@@ -815,7 +904,7 @@
   </autotools>
 
   <autotools id="gnome-mahjongg">
-    <branch revision="gnome-3-16"/>
+    <branch revision="gnome-3-18"/>
     <dependencies>
       <dep package="appstream-glib"/>
       <dep package="intltool"/>
@@ -827,7 +916,7 @@
   </autotools>
 
   <autotools id="gnome-mines">
-    <branch revision="gnome-3-16"/>
+    <branch revision="gnome-3-18"/>
     <dependencies>
       <dep package="appstream-glib"/>
       <dep package="intltool"/>
@@ -856,7 +945,7 @@
   </autotools>
 
   <autotools id="gnome-nibbles">
-    <branch revision="gnome-3-16"/>
+    <branch revision="gnome-3-18"/>
     <dependencies>
       <dep package="appstream-glib"/>
       <dep package="intltool"/>
@@ -869,49 +958,12 @@
     </dependencies>
   </autotools>
 
-  <autotools id="dleyna-core">
-    <branch repo="github-01org"/>
-    <dependencies>
-      <dep package="gupnp"/>
-    </dependencies>
-  </autotools>
-
-  <autotools id="dleyna-connector-dbus">
-    <branch repo="github-01org"/>
-    <dependencies>
-      <dep package="dleyna-core"/>
-    </dependencies>
-  </autotools>
-
-  <autotools id="dleyna-renderer">
-    <branch repo="github-01org"/>
-    <dependencies>
-      <dep package="dleyna-connector-dbus"/>
-      <dep package="dleyna-core"/>
-      <dep package="gssdp"/>
-      <dep package="gupnp"/>
-      <dep package="gupnp-av"/>
-      <dep package="gupnp-dlna"/>
-    </dependencies>
-  </autotools>
-
-  <autotools id="dleyna-server">
-    <branch repo="github-01org"/>
-    <dependencies>
-      <dep package="dleyna-core"/>
-      <dep package="gssdp"/>
-      <dep package="gupnp"/>
-      <dep package="gupnp-av"/>
-      <dep package="gupnp-dlna"/>
-    </dependencies>
-  </autotools>
-
   <autotools id="gnome-photos">
-    <branch revision="gnome-3-16"/>
+    <branch revision="gnome-3-18"/>
     <dependencies>
+      <dep package="babl"/>
       <dep package="gegl"/>
       <dep package="cairo"/>
-      <dep package="clutter-gtk"/>
       <dep package="dleyna-renderer"/>
       <dep package="gdk-pixbuf"/>
       <dep package="glib"/>
@@ -922,12 +974,14 @@
       <dep package="grilo"/>
       <dep package="grilo-plugins"/>
       <dep package="gtk+"/>
+      <dep package="libgdata"/>
+      <dep package="libgfbgraph"/>
       <dep package="tracker"/>
     </dependencies>
   </autotools>
 
   <autotools id="gnome-robots">
-    <branch revision="gnome-3-16"/>
+    <branch revision="gnome-3-18"/>
     <dependencies>
       <dep package="appstream-glib"/>
       <dep package="intltool"/>
@@ -939,7 +993,7 @@
   </autotools>
 
   <autotools id="gnome-sudoku">
-    <branch revision="gnome-3-16"/>
+    <branch revision="gnome-3-18"/>
     <dependencies>
       <dep package="appstream-glib"/>
       <dep package="c++"/>
@@ -954,7 +1008,7 @@
   </autotools>
 
   <autotools id="gnome-taquin">
-    <branch revision="gnome-3-16"/>
+    <branch revision="gnome-3-18"/>
     <dependencies>
       <dep package="appstream-glib"/>
       <dep package="intltool"/>
@@ -967,7 +1021,7 @@
   </autotools>
 
   <autotools id="gnome-tetravex">
-    <branch revision="gnome-3-16"/>
+    <branch revision="gnome-3-18"/>
     <dependencies>
       <dep package="appstream-glib"/>
       <dep package="intltool"/>
@@ -979,7 +1033,7 @@
   </autotools>
 
   <autotools id="gnome-tweak-tool">
-    <branch revision="gnome-3-16"/>
+    <branch/>
     <dependencies>
       <dep package="gtk+"/>
       <dep package="pygobject"/>
@@ -995,12 +1049,13 @@
       <dep package="glib"/>
       <dep package="gtk+"/>
       <dep package="intltool"/>
+      <dep package="m4-common"/>
       <dep package="yelp-tools"/>
     </dependencies>
   </autotools>
 
   <autotools id="iagno">
-    <branch revision="gnome-3-16"/>
+    <branch revision="gnome-3-18"/>
     <dependencies>
       <dep package="appstream-glib"/>
       <dep package="intltool"/>
@@ -1013,7 +1068,7 @@
   </autotools>
 
   <autotools id="lightsoff">
-    <branch revision="gnome-3-16"/>
+    <branch/>
     <dependencies>
       <dep package="appstream-glib"/>
       <dep package="intltool"/>
@@ -1027,7 +1082,7 @@
   </autotools>
 
   <autotools id="quadrapassel">
-    <branch revision="gnome-3-16"/>
+    <branch revision="gnome-3-18"/>
     <dependencies>
       <dep package="appstream-glib"/>
       <dep package="intltool"/>
@@ -1042,7 +1097,7 @@
   </autotools>
 
   <autotools id="swell-foop">
-    <branch revision="gnome-3-16"/>
+    <branch/>
     <dependencies>
       <dep package="appstream-glib"/>
       <dep package="intltool"/>
@@ -1055,7 +1110,7 @@
   </autotools>
 
   <autotools id="tali">
-    <branch revision="gnome-3-16"/>
+    <branch revision="gnome-3-18"/>
     <dependencies>
       <dep package="appstream-glib"/>
       <dep package="intltool"/>
@@ -1076,7 +1131,7 @@
   </autotools>
 
   <autotools id="gnome-software">
-    <branch revision="gnome-3-16"/>
+    <branch revision="gnome-3-18"/>
     <dependencies>
       <dep package="appstream-glib"/>
       <dep package="glib"/>
@@ -1086,6 +1141,9 @@
       <dep package="libsoup"/>
       <dep package="PackageKit"/>
       <dep package="sqlite3"/>
+      <if condition-set="linux">
+        <dep package="fwupd"/>
+      </if>
     </dependencies>
   </autotools>
 
@@ -1122,7 +1180,7 @@
   </autotools>
 
   <autotools id="orca">
-    <branch revision="gnome-3-16"/>
+    <branch/>
     <dependencies>
       <dep package="gtk+"/>
       <dep package="at-spi2-atk"/> <!-- to make Orca's gui accessible -->
@@ -1138,18 +1196,20 @@
   </autotools>
 
   <autotools id="polari">
-    <branch revision="gnome-3-16"/>
+    <branch revision="gnome-3-18"/>
     <dependencies>
+      <dep package="appstream-glib"/>
       <dep package="gjs"/>
       <dep package="glib"/>
       <dep package="gobject-introspection"/>
       <dep package="gtk+"/>
+      <dep package="m4-common"/>
       <dep package="telepathy-glib"/>
     </dependencies>
   </autotools>
 
   <autotools id="seahorse">
-    <branch/>
+    <branch revision="gnome-3-18"/>
     <dependencies>
       <dep package="vala"/>
       <dep package="intltool"/>
@@ -1169,7 +1229,7 @@
   </autotools>
 
   <autotools id="vinagre">
-    <branch revision="gnome-3-16"/>
+    <branch revision="gnome-3-18"/>
     <dependencies>
       <dep package="appstream-glib"/>
       <dep package="intltool"/>
@@ -1255,6 +1315,7 @@
       <dep package="gitg"/>
       <dep package="glade"/>
       <dep package="gnome-boxes"/>
+      <dep package="gnome-builder"/>
       <dep package="gnome-clocks"/>
       <dep package="gnome-characters"/>
       <dep package="gnome-chess"/>
@@ -1278,6 +1339,7 @@
       <dep package="gnome-sudoku"/>
       <dep package="gnome-taquin"/>
       <dep package="gnome-tetravex"/>
+      <dep package="gnome-todo"/>
       <dep package="gnome-tweak-tool"/>
       <dep package="gnome-weather"/>
       <dep package="hitori"/>

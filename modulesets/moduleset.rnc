@@ -145,11 +145,14 @@ attlist.distutils &=
   attribute id { xsd:ID },
   [ a:defaultValue = "yes" ]
   attribute supports-non-srcdir-builds { "yes" | "no" }?
-cmake = element cmake { attlist.cmake, pkg-config?, branch?, dependencieselements }
+cmakeargsif = element if { attlist.if, cmakeargsif*, cmakeargs*, makeargs* }
+cmake = element cmake { attlist.cmake, cmakeargsif*, cmakeargs*, makeargs*, pkg-config?, branch?, dependencieselements }
 attlist.cmake &=
   attribute id { text },
   attribute cmakeargs { text }?,
   attribute makeargs { text }?
+cmakeargs = element cmakeargs { attlist.cmakeargs }
+attlist.cmakeargs &= attribute value { text }
 perl = element perl { attlist.perl, branch?, dependencies?, after? }
 attlist.perl &=
   attribute id { text },
@@ -214,9 +217,9 @@ attlist.tested &= attribute package { text }
 # Other children
 attlist.if = attribute condition-set { text } | attribute condition-unset { text }
 depif = element if { attlist.if, depif*, dep* }
-dependencies = element dependencies { attlist.dependencies, depif*, dep* }
+dependencies = element dependencies { attlist.dependencies & depif* & dep* }
 attlist.dependencies &= empty
-suggests = element suggests { attlist.suggests, depif*, dep* }
+suggests = element suggests { attlist.suggests & depif* & dep* }
 attlist.suggests &= empty
 after = element after { attlist.after, dep* }
 attlist.after &= empty
@@ -224,8 +227,9 @@ systemdependencies = element systemdependencies { attlist.systemdependencies, sy
 attlist.systemdependencies &= empty
 dep = element dep { attlist.dep, empty }
 attlist.dep &= attribute package { text }
-sysdep = element dep { attlist.sysdep, empty }
+sysdep = element dep { attlist.sysdep, altdep* }
 attlist.sysdep &= attribute type { text }, attribute name { text }
+altdep = element altdep { attlist.sysdep }
 branch = element branch { attlist.branch, patch*, quilt* }
 attlist.branch &=
   attribute repo { text }?,
