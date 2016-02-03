@@ -23,9 +23,8 @@ import os
 import tempfile
 import shutil
 
-from jhbuild.errors import BuildStateError, SkipToEnd
-from jhbuild.modtypes import \
-     Package, DownloadableModule, register_module_type
+from jhbuild.errors import SkipToEnd
+from jhbuild.modtypes import Package, register_module_type
 
 __all__ = [ 'PipModule' ]
 

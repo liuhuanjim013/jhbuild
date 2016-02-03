@@ -173,7 +173,7 @@ configure_with_autotools()
 
   set -x
 
-  aclocal --install || exit 1
+  aclocal --install || true
   autoreconf --verbose --force --install -Wno-portability || exit 1
 
   if [ "$NOCONFIGURE" = "" ]; then
