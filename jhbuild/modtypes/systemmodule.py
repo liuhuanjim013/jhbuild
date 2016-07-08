@@ -26,12 +26,10 @@ __all__ = [ 'SystemModule' ]
 
 class SystemModule(Package):
 
-    def __init__(self, name, apt_package=None, apt_runtime=None, apt_source=None, apt_key=None, **kwargs):
+    def __init__(self, name, apt_package=None, apt_runtime=None, **kwargs):
         Package.__init__(self, name, **kwargs)
         self.apt_package = apt_package
         self.apt_runtime = apt_runtime
-        self.apt_source = apt_source
-        self.apt_key = apt_key
 
     @classmethod
     def create_virtual(cls, name, branch, deptype, value):
@@ -52,14 +50,6 @@ def parse_systemmodule(node, config, uri, repositories, default_repo):
     instance.apt_runtime = True
     if node.hasAttribute('apt-runtime'):
         instance.apt_runtime = node.getAttribute('apt-runtime') != 'no'
-
-    # for packages that requires a special apt source, they can be specified via
-    # apt-source and apt-key attributes
-    if node.hasAttribute('apt-source'):
-        instance.apt_source = node.getAttribute('apt-source')
-
-    if node.hasAttribute('apt-key'):
-        instance.apt_key = node.getAttribute('apt-key').upper()
 
     return instance
 
