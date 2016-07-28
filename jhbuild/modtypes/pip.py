@@ -37,6 +37,7 @@ class PipModule(Package):
     def __init__(self, name, branch=None, supports_non_srcdir_builds=True):
         Package.__init__(self, name, branch=branch)
         self.supports_install_destdir = True
+        self.python = [os.environ.get('PYTHON', 'python')]
 
     def do_install(self, buildscript):
         if self.check_build_policy(buildscript) == self.PHASE_DONE:
@@ -45,6 +46,9 @@ class PipModule(Package):
         buildscript.set_action(_('Installing'), self)
         destdir = self.prepare_installroot(buildscript)
 
+        # here we are making a fake location for pip to install to
+        # pip usually install into /usr/local/...
+        # so we symlink that folder to our jhbuild build root
         tempdir = tempfile.mkdtemp()
         os.makedirs(os.path.join(tempdir, 'root', 'usr'))
 
@@ -52,15 +56,17 @@ class PipModule(Package):
         os.makedirs(prefixdir)
         os.symlink(prefixdir, os.path.join(tempdir, 'root', 'usr', 'local'))
 
-        pip = os.environ.get('PIP', 'pip')
-        cmd = [pip]
-        cmd.extend(['install',
+        for python in self.python:
+            cmd = [python, '-m', 'pip']
+            cmd.extend(['install',
                     '--no-dependencies',
                     '--ignore-installed',
+                    '--prefix', '/usr/local',
                     '--build', os.path.join(tempdir, 'build'),
                     '--src', os.path.join(tempdir, 'src'),
                     '--root', os.path.join(tempdir, 'root')] + self.branch.version.split())
-        buildscript.execute(cmd, cwd=tempdir, extra_env=self.extra_env)
+            buildscript.execute(cmd, cwd=tempdir, extra_env=self.extra_env)
+
         self.process_install(buildscript, self.branch.version)
 
         shutil.rmtree(tempdir)
@@ -71,6 +77,11 @@ class PipModule(Package):
 def parse_pip(node, config, uri, repositories, default_repo):
     instance = PipModule.parse_from_xml(node, config, uri, repositories, default_repo)
     instance.dependencies += ['pip']
+
+    # allow to specify python executable separated by space
+    if node.hasAttribute('python'):
+        instance.python = node.getAttribute('python').split()
+
     return instance
 
 register_module_type('pip', parse_pip)
