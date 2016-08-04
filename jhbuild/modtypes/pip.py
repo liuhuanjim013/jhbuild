@@ -45,26 +45,17 @@ class PipModule(Package):
 
         buildscript.set_action(_('Installing'), self)
         destdir = self.prepare_installroot(buildscript)
-
-        # here we are making a fake location for pip to install to
-        # pip usually install into /usr/local/...
-        # so we symlink that folder to our jhbuild build root
         tempdir = tempfile.mkdtemp()
-        os.makedirs(os.path.join(tempdir, 'root', 'usr'))
-
-        prefixdir = os.path.join(destdir, buildscript.config.prefix[1:])
-        os.makedirs(prefixdir)
-        os.symlink(prefixdir, os.path.join(tempdir, 'root', 'usr', 'local'))
 
         for python in self.python:
             cmd = [python, '-m', 'pip']
             cmd.extend(['install',
                     '--no-dependencies',
                     '--ignore-installed',
-                    '--prefix', '/usr/local',
+                    '--prefix', buildscript.config.prefix,
                     '--build', os.path.join(tempdir, 'build'),
                     '--src', os.path.join(tempdir, 'src'),
-                    '--root', os.path.join(tempdir, 'root')] + self.branch.version.split())
+                    '--root', destdir] + self.branch.version.split())
             buildscript.execute(cmd, cwd=tempdir, extra_env=self.extra_env)
 
         self.process_install(buildscript, self.branch.version)
