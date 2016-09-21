@@ -177,6 +177,12 @@ def systemdependencies_met(module_name, sysdeps, config):
 
             except:
                 dep_met = False
+        elif dep_type == 'version':
+            try: # apt-show-versions should not crash. Just to be safe
+                if value not in subprocess.check_output(['apt-show-versions', module_name]):
+                    dep_met = False
+            except:
+                dep_met = False
 
         # check alternative dependencies
         if not dep_met and altdeps:

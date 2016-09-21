@@ -42,6 +42,9 @@ def parse_systemmodule(node, config, uri, repositories, default_repo):
     if any(deptype == 'xml' for deptype, value, altdeps in instance.systemdependencies):
         instance.dependencies += ['xmlcatalog']
 
+    if any(deptype == 'version' for deptype, value, altdeps in instance.systemdependencies):
+        instance.dependencies += ['apt-show-versions']
+
     if node.hasAttribute('apt-package'):
         instance.apt_package = node.getAttribute('apt-package')
 
