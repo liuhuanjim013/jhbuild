@@ -66,17 +66,31 @@ def get_installed_pkgconfigs(config):
 
 def get_uninstalled_pkgconfigs_and_filenames(uninstalled):
     uninstalled_pkgconfigs = []
-    uninstalled_filenames = []
+    uninstalled_dict = {}
 
     for module_name, dep_type, value in uninstalled:
+        version = ""
+        val = ""
         if dep_type == 'pkgconfig':
             uninstalled_pkgconfigs.append((module_name, value))
+            continue
         elif dep_type.lower() == 'path':
-            uninstalled_filenames.append((module_name, os.path.join('/usr/bin', value)))
+            val = os.path.join('/usr/bin', value)
         elif dep_type.lower() == 'c_include':
-            uninstalled_filenames.append((module_name, os.path.join('/usr/include', value)))
+            val = os.path.join('/usr/include', value)
+        elif dep_type.lower() == 'version':
+            version = value
+        else:
+            continue
 
-    return uninstalled_pkgconfigs, uninstalled_filenames
+        if module_name not in uninstalled_dict:
+            uninstalled_dict[module_name] = [val, version]
+        elif val:
+            uninstalled_dict[module_name][0] = val
+        else: # version
+            uninstalled_dict[module_name][1] = version
+
+    return uninstalled_pkgconfigs, uninstalled_dict
 
 def systemdependencies_met(module_name, sysdeps, config):
     '''Returns True of the system dependencies are met for module_name'''
@@ -178,11 +192,12 @@ def systemdependencies_met(module_name, sysdeps, config):
             except:
                 dep_met = False
         elif dep_type == 'version':
-            try: # apt-show-versions should not crash. Just to be safe
+            try:
                 if value not in subprocess.check_output(['apt-show-versions', module_name]):
                     dep_met = False
             except:
-                dep_met = False
+                # If apt-show-versions is not installed, just ignore for now
+                pass
 
         # check alternative dependencies
         if not dep_met and altdeps:
@@ -454,24 +469,46 @@ class AptSystemInstall(SystemInstall):
             return name
 
     def install(self, uninstalled):
-        uninstalled_pkgconfigs, uninstalled_filenames = get_uninstalled_pkgconfigs_and_filenames(uninstalled)
+        uninstalled_pkgconfigs, uninstalled_dict = get_uninstalled_pkgconfigs_and_filenames(uninstalled)
         logging.info(_('Using apt-file to search for providers; this may be slow.  Please wait.'))
         native_packages = []
         pkgconfigs = [(modname, '/%s.pc' % pkg) for modname, pkg in
                       uninstalled_pkgconfigs]
-        for modname, filename in pkgconfigs + uninstalled_filenames:
+
+        for modname, filename in pkgconfigs:
+            print(modname, filename)
+
             native_pkg = self._get_package_for(filename)
             if native_pkg:
+                print(native_pkg)
                 native_packages.append(native_pkg)
             else:
                 logging.info(_('No native package found for %(id)s '
                                '(%(filename)s)') % {'id'       : modname,
                                                    'filename' : filename})
 
+        for modname, t in uninstalled_dict.iteritems():
+            filename, version = t
+
+            if version:
+                # Assume modname=packagename when version is specified
+                native_packages.append(modname + "=" + version)
+            else:
+                # Try to look for the package containing filename
+                native_pkg = self._get_package_for(filename)
+                if native_pkg:
+                    print(native_pkg)
+                    native_packages.append(native_pkg)
+                else:
+                    logging.info(_('No native package found for %(id)s '
+                                   '(%(filename)s)') % {'id'       : modname,
+                                                       'filename' : filename})
+
         if native_packages:
             logging.info(_('Installing: %(pkgs)s') % {'pkgs': ' '.join(native_packages)})
             args = self._root_command_prefix_args + ['apt-get', 'install', '-y', '--force-yes', '--no-install-recommends']
             args.extend(native_packages)
+            print(native_packages)
             subprocess.check_call(args)
         else:
             logging.info(_('Nothing to install'))
