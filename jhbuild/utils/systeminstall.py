@@ -193,7 +193,7 @@ def systemdependencies_met(module_name, sysdeps, config):
                 dep_met = False
         elif dep_type == 'version':
             try:
-                if value not in subprocess.check_output(['apt-show-versions', module_name]):
+                if value not in subprocess.check_output(['dpkg', '-l', module_name]):
                     dep_met = False
             except:
                 # If apt-show-versions is not installed, just ignore for now
