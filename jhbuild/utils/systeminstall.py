@@ -196,8 +196,7 @@ def systemdependencies_met(module_name, sysdeps, config):
                 if value not in subprocess.check_output(['dpkg', '-l', module_name]):
                     dep_met = False
             except:
-                # If apt-show-versions is not installed, just ignore for now
-                pass
+                dep_met = False
 
         # check alternative dependencies
         if not dep_met and altdeps:
