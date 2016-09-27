@@ -475,11 +475,8 @@ class AptSystemInstall(SystemInstall):
                       uninstalled_pkgconfigs]
 
         for modname, filename in pkgconfigs:
-            print(modname, filename)
-
             native_pkg = self._get_package_for(filename)
             if native_pkg:
-                print(native_pkg)
                 native_packages.append(native_pkg)
             else:
                 logging.info(_('No native package found for %(id)s '
@@ -496,7 +493,6 @@ class AptSystemInstall(SystemInstall):
                 # Try to look for the package containing filename
                 native_pkg = self._get_package_for(filename)
                 if native_pkg:
-                    print(native_pkg)
                     native_packages.append(native_pkg)
                 else:
                     logging.info(_('No native package found for %(id)s '
@@ -507,7 +503,6 @@ class AptSystemInstall(SystemInstall):
             logging.info(_('Installing: %(pkgs)s') % {'pkgs': ' '.join(native_packages)})
             args = self._root_command_prefix_args + ['apt-get', 'install', '-y', '--force-yes', '--no-install-recommends']
             args.extend(native_packages)
-            print(native_packages)
             subprocess.check_call(args)
         else:
             logging.info(_('Nothing to install'))
