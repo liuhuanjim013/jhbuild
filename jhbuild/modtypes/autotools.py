@@ -312,7 +312,9 @@ class AutogenModule(MakeModule, DownloadableModule):
 
         buildscript.set_action(_('Installing'), self)
         destdir = self.prepare_installroot(buildscript)
-        self.make(buildscript, self.makeinstallargs or 'install', makeargs='DESTDIR={}'.format(destdir))
+        self.make(buildscript, (self.makeinstallargs or 'install DESTDIR=%(destdir)s') % {
+            'destdir': destdir,
+        }, makeargs='')
         self.process_install(buildscript, self.get_revision())
 
     do_install.depends = [PHASE_BUILD]
