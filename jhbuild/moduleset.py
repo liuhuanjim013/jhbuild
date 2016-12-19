@@ -61,6 +61,7 @@ virtual_sysdeps = [
     'svn',
     'xmlcatalog',
     'pip',
+    'ninja'
 ]
 
 _default_repo = None
