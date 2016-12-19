@@ -92,6 +92,8 @@ class CMakeModule(MakeModule, DownloadableModule):
         # and "MinGW Makefiles" could also work (each is a bit different).
         if os.name == 'nt' and os.getenv("MSYSCON") and '-G' not in cmakeargs:
             baseargs += ' -G "MSYS Makefiles"'
+        elif '-G' not in cmakeargs:
+            baseargs += ' -G Ninja'
         cmd = 'cmake %s %s %s' % (baseargs, cmakeargs, srcdir)
         if os.path.exists(os.path.join(builddir, 'CMakeCache.txt')):
             # remove that file, as it holds the result of a previous cmake
@@ -129,7 +131,7 @@ class CMakeModule(MakeModule, DownloadableModule):
         buildscript.set_action(_('Installing'), self)
         builddir = self.get_builddir(buildscript)
         destdir = self.prepare_installroot(buildscript)
-        self.make(buildscript, 'install DESTDIR={}'.format(destdir))
+        self.make(buildscript, 'install', extra_env={"DESTDIR" : destdir})
         self.process_install(buildscript, self.get_revision())
     do_install.depends = [PHASE_BUILD]
 

@@ -543,9 +543,9 @@ class MakeModule(Package):
         if self.needs_gmake and 'gmake' in config.conditions:
             return 'gmake'
         else:
-            return 'make'
+            return 'ninja'
 
-    def make(self, buildscript, target='', pre='', makeargs=None):
+    def make(self, buildscript, target='', pre='', makeargs=None, extra_env=None):
         makecmd = os.environ.get('MAKE', self.get_makecmd(buildscript.config))
 
         if makeargs is None:
@@ -555,7 +555,13 @@ class MakeModule(Package):
                                                         make=makecmd,
                                                         makeargs=makeargs,
                                                         target=target)
-        buildscript.execute(cmd, cwd = self.get_builddir(buildscript), extra_env = self.extra_env)
+        env = {}
+        if self.extra_env:
+            env.update(self.extra_env)
+        if extra_env:
+            env.update(extra_env)
+
+        buildscript.execute(cmd, cwd = self.get_builddir(buildscript), extra_env = env)
 
 class DownloadableModule:
     PHASE_CHECKOUT = 'checkout'
