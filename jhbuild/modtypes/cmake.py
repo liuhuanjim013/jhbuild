@@ -161,6 +161,9 @@ def parse_cmake(node, config, uri, repositories, default_repo):
     # liuhuan: override cmakeargs defined in xml if it is specified in .jhbuildrc
     if config.modulecmakeargs.has_key(instance.name):
         instance.cmakeargs = config.modulecmakeargs[instance.name]
+    # woody: option to append to cmakeargs defined in .modulesets
+    elif config.appendmodulecmakeargs.has_key(instance.name):
+        instance.cmakeargs += " " + config.appendmodulecmakeargs[instance.name]
     elif node.hasAttribute('cmakeargs'):
         instance.cmakeargs = node.getAttribute('cmakeargs')
     if node.hasAttribute('makeargs'):
