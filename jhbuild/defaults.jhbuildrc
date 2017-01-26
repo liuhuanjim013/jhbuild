@@ -239,3 +239,6 @@ help_website = ('Gnome Live!',
 
 # Whether '--disable-Werror' should be passed to automake modules
 disable_Werror = True
+
+modulecmakeargs = {}
+appendmodulecmakeargs = {}
