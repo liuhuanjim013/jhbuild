@@ -83,10 +83,10 @@ class GitRepository(Repository):
         # allow user to adjust location of branch.
         self.href = config.repos.get(name, href)
 
-    branch_xml_attrs = ['module', 'subdir', 'checkoutdir', 'revision', 'tag']
+    branch_xml_attrs = ['module', 'subdir', 'checkoutdir', 'revision', 'tag', 'recursive']
 
     def branch(self, name, module = None, subdir="", checkoutdir = None,
-               revision = None, tag = None):
+               revision = None, tag = None, recursive = None):
         if module is None:
             module = name
 
@@ -123,7 +123,7 @@ class GitRepository(Repository):
             return GitBranch(self, mirror_module, subdir, checkoutdir,
                     revision, tag, unmirrored_module=module)
         else:
-            return GitBranch(self, module, subdir, checkoutdir, revision, tag)
+            return GitBranch(self, module, subdir, checkoutdir, revision, tag, recursive)
 
     def to_sxml(self):
         return [sxml.repository(type='git', name=self.name, href=self.href)]
@@ -138,12 +138,13 @@ class GitBranch(Branch):
     dirty_branch_suffix = '-dirty'
 
     def __init__(self, repository, module, subdir, checkoutdir=None,
-                 branch=None, tag=None, unmirrored_module=None):
+                 branch=None, tag=None, unmirrored_module=None, recursive=None):
         Branch.__init__(self, repository, module, checkoutdir)
         self.subdir = subdir
         self.branch = branch
         self.tag = tag
         self.unmirrored_module = unmirrored_module
+        self.recursive = recursive
 
     def get_module_basename(self):
         # prevent basename() from returning empty strings on trailing '/'
@@ -372,10 +373,10 @@ class GitBranch(Branch):
 
     def _update_submodules(self, buildscript):
         if os.path.exists(os.path.join(self.get_checkoutdir(), '.gitmodules')):
-            cmd = ['git', 'submodule', 'init']
+            cmd = ['git', 'submodule', 'init'] + ['--recursive'] if self.recursive else []
             buildscript.execute(cmd, cwd=self.get_checkoutdir(),
                     extra_env=get_git_extra_env())
-            cmd = ['git', 'submodule', 'update']
+            cmd = ['git', 'submodule', 'update'] + ['--recursive'] if self.recursive else []
             buildscript.execute(cmd, cwd=self.get_checkoutdir(),
                     extra_env=get_git_extra_env())
 
