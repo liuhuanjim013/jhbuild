@@ -56,6 +56,8 @@ class PipModule(Package):
                     '--build', os.path.join(tempdir, 'build'),
                     '--src', os.path.join(tempdir, 'src'),
                     '--root', destdir] + self.branch.version.split())
+            if python in ['python', 'python2']:
+                cmd.extend(['--system'])
             buildscript.execute(cmd, cwd=tempdir, extra_env=self.extra_env)
 
         self.process_install(buildscript, self.branch.version)
