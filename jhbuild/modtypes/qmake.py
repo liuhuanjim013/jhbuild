@@ -86,7 +86,12 @@ class QMakeModule(MakeModule, DownloadableModule):
 
     def do_install(self, buildscript):
         buildscript.set_action(_('Installing'), self)
-        self.make(buildscript, 'install')
+        # self.make(buildscript, 'install')
+        # qt5 version of qmake has only one way of controlling the install prefix for the modules, and that is through INSTALL_ROOT
+        destdir = self.prepare_installroot(buildscript)
+        makeargs = self.get_makeargs(self, buildscript) + ' INSTALL_ROOT="' + destdir + '"'
+        self.make(buildscript, 'install', makeargs=makeargs)
+
         self.process_install(buildscript, self.get_revision())
     do_install.depends = [PHASE_BUILD]
 
