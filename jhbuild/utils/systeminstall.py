@@ -195,7 +195,7 @@ class SystemInstall(object):
         if cmds.has_command('pkexec'):
             self._root_command_prefix_args = ['pkexec']
         elif cmds.has_command('sudo'):
-            self._root_command_prefix_args = ['sudo', '--preserve-env']
+            self._root_command_prefix_args = ['sudo', '-E']
         else:
             raise SystemExit, _('No suitable root privilege command found; you should install "pkexec"')
 
