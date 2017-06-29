@@ -429,7 +429,7 @@ class AptSystemInstall(SystemInstall):
         SystemInstall.__init__(self)
 
     def _get_package_for(self, filename):
-        proc = subprocess.Popen(['apt-file', 'search', filename],
+        proc = subprocess.Popen(['apt-file', 'search', '--regexp', filename],
                                 stdout=subprocess.PIPE, close_fds=True)
         stdout = proc.communicate()[0]
         if proc.returncode != 0:
@@ -456,6 +456,7 @@ class AptSystemInstall(SystemInstall):
         for modname, filename in pkgconfigs + uninstalled_filenames:
             native_pkg = self._get_package_for(filename)
             if native_pkg:
+                logging.info(_('Found native package for %(id)s (%(filename)s): %(package)s') % {'id': modname, 'filename': filename, 'package': native_pkg})
                 native_packages.append(native_pkg)
             else:
                 logging.info(_('No native package found for %(id)s '
