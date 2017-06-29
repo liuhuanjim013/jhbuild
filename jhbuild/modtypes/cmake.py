@@ -134,8 +134,14 @@ class CMakeModule(MakeModule, DownloadableModule):
     do_install.depends = [PHASE_BUILD]
 
     def xml_tag_and_attrs(self):
-        return 'cmake', [('id', 'name', None),
-                         ('skip-install', 'skip_install_phase', False)]
+        return 'cmake', [
+            ('id', 'name', None),
+            ('skip-install', 'skip_install_phase', False),
+            ('supports-non-srcdir-builds', 'supports_non_srcdir_builds', None),
+            ('force-non-srcdir-builds', 'force_non_srcdir_builds', None),
+            ('cmakeargs', 'cmakeargs', None),
+            ('makeargs', 'makeargs', None),
+        ]
 
 
 def parse_cmake(node, config, uri, repositories, default_repo):

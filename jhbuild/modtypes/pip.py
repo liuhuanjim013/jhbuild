@@ -63,7 +63,10 @@ class PipModule(Package):
         shutil.rmtree(tempdir)
 
     def xml_tag_and_attrs(self):
-        return 'pip', [('id', 'name', None)]
+        return 'pip', [
+            ('id', 'name', None),
+            ('python', 'python', None),
+        ]
 
 def parse_pip(node, config, uri, repositories, default_repo):
     instance = PipModule.parse_from_xml(node, config, uri, repositories, default_repo)
