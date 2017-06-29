@@ -83,10 +83,10 @@ class GitRepository(Repository):
         # allow user to adjust location of branch.
         self.href = config.repos.get(name, href)
 
-    branch_xml_attrs = ['module', 'subdir', 'checkoutdir', 'revision', 'tag']
+    branch_xml_attrs = ['module', 'subdir', 'checkoutdir', 'revision', 'tag', 'recursive']
 
     def branch(self, name, module = None, subdir="", checkoutdir = None,
-               revision = None, tag = None):
+               revision = None, tag = None, recursive = None):
         if module is None:
             module = name
 
@@ -121,9 +121,9 @@ class GitRepository(Repository):
 
         if mirror_module:
             return GitBranch(self, mirror_module, subdir, checkoutdir,
-                    revision, tag, unmirrored_module=module)
+                             revision, tag, unmirrored_module=module, recursive=recursive)
         else:
-            return GitBranch(self, module, subdir, checkoutdir, revision, tag)
+            return GitBranch(self, module, subdir, checkoutdir, revision, tag, recursive=recursive)
 
     def to_sxml(self):
         return [sxml.repository(type='git', name=self.name, href=self.href)]
@@ -138,12 +138,13 @@ class GitBranch(Branch):
     dirty_branch_suffix = '-dirty'
 
     def __init__(self, repository, module, subdir, checkoutdir=None,
-                 branch=None, tag=None, unmirrored_module=None):
+                 branch=None, tag=None, unmirrored_module=None, recursive=None):
         Branch.__init__(self, repository, module, checkoutdir)
         self.subdir = subdir
         self.branch = branch
         self.tag = tag
         self.unmirrored_module = unmirrored_module
+        self.recursive = recursive
 
     def get_module_basename(self):
         # prevent basename() from returning empty strings on trailing '/'
@@ -152,7 +153,7 @@ class GitBranch(Branch):
         if name.endswith('.git'):
             name = name[:-4]
         return name
- 
+
     def srcdir(self):
         path_elements = [self.checkoutroot]
         if self.checkoutdir:
@@ -372,12 +373,17 @@ class GitBranch(Branch):
 
     def _update_submodules(self, buildscript):
         if os.path.exists(os.path.join(self.get_checkoutdir(), '.gitmodules')):
-            cmd = ['git', 'submodule', 'init']
-            buildscript.execute(cmd, cwd=self.get_checkoutdir(),
-                    extra_env=get_git_extra_env())
-            cmd = ['git', 'submodule', 'update']
-            buildscript.execute(cmd, cwd=self.get_checkoutdir(),
-                    extra_env=get_git_extra_env())
+            if self.recursive == 'true':
+                cmd = ['git', 'submodule', 'update', '--init', '--recursive']
+                buildscript.execute(cmd, cwd=self.get_checkoutdir(),
+                                    extra_env=get_git_extra_env())
+            else:
+                cmd = ['git', 'submodule', 'init']
+                buildscript.execute(cmd, cwd=self.get_checkoutdir(),
+                                    extra_env=get_git_extra_env())
+                cmd = ['git', 'submodule', 'update']
+                buildscript.execute(cmd, cwd=self.get_checkoutdir(),
+                                    extra_env=get_git_extra_env())
 
     def update_dvcs_mirror(self, buildscript):
         if not self.config.dvcs_mirror_dir:
@@ -552,14 +558,14 @@ class GitSvnBranch(GitBranch):
                 else:
                     externals[external[i]] = (external[i+1], None)
                     i = i+2
-        
+
         for extdir in externals.iterkeys():
             uri = externals[extdir][0]
             revision = externals[extdir][1]
             extdir = cwd+os.sep+extdir
             # FIXME: the "right way" is to use submodules
             extbranch = GitSvnBranch(self.repository, uri, extdir, revision)
-            
+
             try:
                 os.stat(extdir)[stat.ST_MODE]
                 extbranch._update(buildscript)
