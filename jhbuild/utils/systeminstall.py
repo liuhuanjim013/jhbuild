@@ -429,7 +429,7 @@ class AptSystemInstall(SystemInstall):
         SystemInstall.__init__(self)
 
     def _get_package_for(self, filename):
-        proc = subprocess.Popen(['apt-file', 'search', '--regexp', filename],
+        proc = subprocess.Popen(['apt-file', 'search', filename],
                                 stdout=subprocess.PIPE, close_fds=True)
         stdout = proc.communicate()[0]
         if proc.returncode != 0:
@@ -443,7 +443,6 @@ class AptSystemInstall(SystemInstall):
             # No idea why the LSB has forks of the pkg-config files
             if path.find('/lsb3') != -1:
                 continue
-            
             # otherwise for now, just take the first match
             return name
 
@@ -465,7 +464,7 @@ class AptSystemInstall(SystemInstall):
 
         if native_packages:
             logging.info(_('Installing: %(pkgs)s') % {'pkgs': ' '.join(native_packages)})
-            args = self._root_command_prefix_args + ['apt-get', 'install', '-y', '-qq', '--force-yes', '--no-install-recommends']
+            args = self._root_command_prefix_args + ['apt-get', 'install', '-y', '-qq']
             args.extend(native_packages)
             subprocess.check_call(args)
         else:

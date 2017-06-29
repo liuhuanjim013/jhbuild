@@ -187,6 +187,9 @@ class cmd_sysdeps(cmd_build):
                 elif module.systemdependencies is not None:
                     for dep_type, value, altdeps in module.systemdependencies:
                         uninstalled.append((module.name, dep_type, value))
+                        for dep_type, value, empty in altdeps:
+                            uninstalled.append((module.name, dep_type, value))
+
         if len(uninstalled) == 0:
             print _('    (none)')
 
