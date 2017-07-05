@@ -50,6 +50,7 @@ class PipModule(Package):
         for python in self.python:
             cmd = [python, '-m', 'pip']
             cmd.extend(['install',
+                    '--verbose',
                     '--no-dependencies',
                     '--ignore-installed',
                     '--prefix', buildscript.config.prefix,
