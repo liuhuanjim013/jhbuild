@@ -83,10 +83,10 @@ class GitRepository(Repository):
         # allow user to adjust location of branch.
         self.href = config.repos.get(name, href)
 
-    branch_xml_attrs = ['module', 'subdir', 'checkoutdir', 'revision', 'tag', 'recursive']
+    branch_xml_attrs = ['module', 'subdir', 'checkoutdir', 'revision', 'tag', 'recursive', 'exclude_submodules']
 
     def branch(self, name, module = None, subdir="", checkoutdir = None,
-               revision = None, tag = None, recursive = None):
+               revision = None, tag = None, recursive = None, exclude_submodules = []):
         if module is None:
             module = name
 
@@ -121,9 +121,10 @@ class GitRepository(Repository):
 
         if mirror_module:
             return GitBranch(self, mirror_module, subdir, checkoutdir,
-                             revision, tag, unmirrored_module=module, recursive=recursive)
+                             revision, tag, unmirrored_module=module, recursive=recursive, exclude_submodules=exclude_submodules)
         else:
-            return GitBranch(self, module, subdir, checkoutdir, revision, tag, recursive=recursive)
+            return GitBranch(self, module, subdir, checkoutdir, revision, tag, recursive=recursive,
+                             exclude_submodules=exclude_submodules)
 
     def to_sxml(self):
         return [sxml.repository(type='git', name=self.name, href=self.href)]
@@ -138,13 +139,14 @@ class GitBranch(Branch):
     dirty_branch_suffix = '-dirty'
 
     def __init__(self, repository, module, subdir, checkoutdir=None,
-                 branch=None, tag=None, unmirrored_module=None, recursive=None):
+                 branch=None, tag=None, unmirrored_module=None, recursive=None, exclude_submodules=[]):
         Branch.__init__(self, repository, module, checkoutdir)
         self.subdir = subdir
         self.branch = branch
         self.tag = tag
         self.unmirrored_module = unmirrored_module
         self.recursive = recursive
+        self.exclude_submodules = exclude_submodules
 
     def get_module_basename(self):
         # prevent basename() from returning empty strings on trailing '/'
@@ -384,6 +386,12 @@ class GitBranch(Branch):
                 cmd = ['git', 'submodule', 'update']
                 buildscript.execute(cmd, cwd=self.get_checkoutdir(),
                                     extra_env=get_git_extra_env())
+
+            if len(self.exclude_submodules) > 0:
+                for submodule in self.exclude_submodules:
+                    cmd = ['git', 'submodule', 'deinit', submodule]
+                    buildscript.execute(cmd, cwd=self.get_checkoutdir(),
+                                        extra_env=get_git_extra_env())
 
     def update_dvcs_mirror(self, buildscript):
         if not self.config.dvcs_mirror_dir:
