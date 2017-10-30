@@ -41,3 +41,7 @@ for path in paths:
     if dirname in ['dist-packages', 'site-packages']:
         site.addsitedir(path)
 
+# change system wide default encoding from ascii to utf-8
+if sys.version_info[0] == 2:
+    sys.setdefaultencoding('utf-8')
+
