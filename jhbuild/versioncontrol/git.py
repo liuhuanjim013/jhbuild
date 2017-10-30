@@ -116,6 +116,10 @@ class GitRepository(Repository):
                         module = new_module
                     # need to disable tag because it will override our branch override
                     tag = None
+        # also allow specifying by the format of repo:module
+        elif ('%s:%s' % (self.name, module)) in self.config.branches:
+            revision = self.config.branches['%s:%s' % (self.name, module)]
+            tag = None
 
         if not (urlparse.urlparse(module)[0] or module[0] == '/'):
             if self.href.endswith('/'):
