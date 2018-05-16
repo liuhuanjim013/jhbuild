@@ -48,8 +48,10 @@ class DistutilsModule(Package, DownloadableModule):
 
     def get_builddir(self, buildscript):
         if buildscript.config.buildroot and self.supports_non_srcdir_builds:
-            d = buildscript.config.builddir_pattern % (
-                self.branch.checkoutdir or self.branch.get_module_basename())
+            # use module name instead of checkoutdir because we use the same checkoutdir for multiple packages
+            d = buildscript.config.builddir_pattern % self.name
+            # d = buildscript.config.builddir_pattern % (
+            #     self.branch.checkoutdir or self.branch.get_module_basename())
             return os.path.join(buildscript.config.buildroot, d)
         else:
             return self.get_srcdir(buildscript)

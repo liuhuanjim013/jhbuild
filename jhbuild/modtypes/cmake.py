@@ -136,8 +136,14 @@ class CMakeModule(MakeModule, DownloadableModule):
     do_install.depends = [PHASE_BUILD]
 
     def xml_tag_and_attrs(self):
-        return 'cmake', [('id', 'name', None),
-                         ('skip-install', 'skip_install_phase', False)]
+        return 'cmake', [
+            ('id', 'name', None),
+            ('skip-install', 'skip_install_phase', False),
+            ('supports-non-srcdir-builds', 'supports_non_srcdir_builds', None),
+            ('force-non-srcdir-builds', 'force_non_srcdir_builds', None),
+            ('cmakeargs', 'cmakeargs', None),
+            ('makeargs', 'makeargs', None),
+        ]
 
 
 def parse_cmake(node, config, uri, repositories, default_repo):
@@ -163,6 +169,9 @@ def parse_cmake(node, config, uri, repositories, default_repo):
     # liuhuan: override cmakeargs defined in xml if it is specified in .jhbuildrc
     if config.modulecmakeargs.has_key(instance.name):
         instance.cmakeargs = config.modulecmakeargs[instance.name]
+    # woody: option to append to cmakeargs defined in .modulesets
+    elif config.appendmodulecmakeargs.has_key(instance.name):
+        instance.cmakeargs += " " + config.appendmodulecmakeargs[instance.name]
     elif node.hasAttribute('cmakeargs'):
         instance.cmakeargs = node.getAttribute('cmakeargs')
     if node.hasAttribute('makeargs'):

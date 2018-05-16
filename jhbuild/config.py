@@ -69,6 +69,7 @@ _known_keys = [ 'moduleset', 'modules', 'skip', 'tags', 'prefix',
                 'disable_Werror', 'xdg_cache_home', 'exit_on_error',
                 'jhhome', # liuhuan: custom path under which we put modulesets, build, install
                 'modulecmakeargs', # liuhuan: custom package specific cmakeargs
+                'appendmodulecmakeargs' # woody: custom package specific appendcmakeargs
               ]
 
 env_prepends = {}

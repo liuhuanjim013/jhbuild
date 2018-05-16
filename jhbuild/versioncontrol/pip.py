@@ -22,6 +22,11 @@ from jhbuild.utils.sxml import sxml
 
 class PipRepository(Repository):
 
+    init_xml_attrs = []
+
+    def __init__(self, config, name):
+        Repository.__init__(self, config, name)
+
     branch_xml_attrs = ['version']
 
     def branch(self, name, version = None):
@@ -45,9 +50,6 @@ class PipBranch(Branch):
         return self.version
 
     def to_sxml(self):
-        return ([sxml.branch(module=self.module,
-                             repo=self.repository,
-                             version=self.version)])
-
+        return ([sxml.branch(repo=self.repository.name, version=self.version)])
 
 register_repo_type('pip', PipRepository)

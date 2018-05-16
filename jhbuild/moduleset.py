@@ -438,7 +438,7 @@ def _handle_conditions(config, element):
     for c in _child_elements(element):
         _handle_conditions(config, c)
 
-def _parse_module_set(config, uri):
+def _parse_module_set(config, uri, create_virtual_sysdeps=True):
     try:
         filename = httpcache.load(uri, nonetwork=config.nonetwork, age=0)
     except Exception, e:
@@ -456,7 +456,7 @@ def _parse_module_set(config, uri):
     for node in _child_elements_matching(document.documentElement, ['redirect']):
         new_url = node.getAttribute('href')
         logging.info('moduleset is now located at %s', new_url)
-        return _parse_module_set(config, new_url)
+        return _parse_module_set(config, new_url, create_virtual_sysdeps=create_virtual_sysdeps)
 
     _handle_conditions(config, document.documentElement)
 
@@ -523,7 +523,7 @@ def _parse_module_set(config, uri):
             href = node.getAttribute('href')
             inc_uri = urlparse.urljoin(uri, href)
             try:
-                inc_moduleset = _parse_module_set(config, inc_uri)
+                inc_moduleset = _parse_module_set(config, inc_uri, create_virtual_sysdeps=False)
             except UndefinedRepositoryError:
                 raise
             except FatalError, e:
@@ -532,7 +532,7 @@ def _parse_module_set(config, uri):
                 # look up in local modulesets
                 inc_uri = os.path.join(os.path.dirname(__file__), '..', 'modulesets',
                                    href)
-                inc_moduleset = _parse_module_set(config, inc_uri)
+                inc_moduleset = _parse_module_set(config, inc_uri, create_virtual_sysdeps=False)
 
             moduleset.modules.update(inc_moduleset.modules)
         elif node.nodeName in ['repository', 'cvsroot', 'svnroot',
@@ -547,16 +547,18 @@ def _parse_module_set(config, uri):
             moduleset.add(module)
 
     # create virtual sysdeps
-    system_repo_class = get_repo_type('system')
-    virtual_repo = system_repo_class(config, 'virtual-sysdeps')
-    virtual_branch = virtual_repo.branch('virtual-sysdeps') # just reuse this
-    for name in virtual_sysdeps:
-        # don't override it if it's already there
-        if name in moduleset.modules:
-            continue
+    # but don't create virtual sysdeps for included module sets, otherwise the virtual sysdeps will override the ones defined in the modulesets
+    if create_virtual_sysdeps:
+        system_repo_class = get_repo_type('system')
+        virtual_repo = system_repo_class(config, 'virtual-sysdeps')
+        virtual_branch = virtual_repo.branch('virtual-sysdeps') # just reuse this
+        for name in virtual_sysdeps:
+            # don't override it if it's already there
+            if name in moduleset.modules:
+                continue
 
-        virtual = SystemModule.create_virtual(name, virtual_branch, 'path', name)
-        moduleset.add (virtual)
+            virtual = SystemModule.create_virtual(name, virtual_branch, 'path', name)
+            moduleset.add (virtual)
 
     # keep default repository around, used when creating automatic modules
     global _default_repo

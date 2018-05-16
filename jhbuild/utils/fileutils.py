@@ -62,10 +62,29 @@ Returns a list, where each item is a 2-tuple:
 
     results = []
 
+    # accumulate both file paths and paths of their parent directories
+    filepaths = set()
+    dirpaths = set()
     for path in reversed(sorted(file_paths)):
+        # strip the slash at the end
+        path = path.rstrip(os.path.sep)
+        filepaths.add(path)
+
+        # recursively add all parent directories
+        while True:
+            previous = len(dirpaths)
+            path = os.path.dirname(path)
+            dirpaths.add(path)
+            if len(dirpaths) == previous:
+                break
+
+    for path in reversed(sorted(filepaths | dirpaths)):
         isdir = os.path.isdir(path) and not os.path.islink(path)
         try:
             if isdir:
+                # remove the debug link
+                if os.path.islink(os.path.join(path, '.debug')):
+                    os.unlink(os.path.join(path, '.debug'))
                 os.rmdir(path)
             else:
                 os.unlink(path)

@@ -195,7 +195,7 @@ class SystemInstall(object):
         if cmds.has_command('pkexec'):
             self._root_command_prefix_args = ['pkexec']
         elif cmds.has_command('sudo'):
-            self._root_command_prefix_args = ['sudo']
+            self._root_command_prefix_args = ['sudo', '-E']
         else:
             raise SystemExit, _('No suitable root privilege command found; you should install "pkexec"')
 
@@ -443,7 +443,6 @@ class AptSystemInstall(SystemInstall):
             # No idea why the LSB has forks of the pkg-config files
             if path.find('/lsb3') != -1:
                 continue
-            
             # otherwise for now, just take the first match
             return name
 
@@ -456,6 +455,7 @@ class AptSystemInstall(SystemInstall):
         for modname, filename in pkgconfigs + uninstalled_filenames:
             native_pkg = self._get_package_for(filename)
             if native_pkg:
+                logging.info(_('Found native package for %(id)s (%(filename)s): %(package)s') % {'id': modname, 'filename': filename, 'package': native_pkg})
                 native_packages.append(native_pkg)
             else:
                 logging.info(_('No native package found for %(id)s '
@@ -464,7 +464,7 @@ class AptSystemInstall(SystemInstall):
 
         if native_packages:
             logging.info(_('Installing: %(pkgs)s') % {'pkgs': ' '.join(native_packages)})
-            args = self._root_command_prefix_args + ['apt-get', 'install', '-y', '--force-yes', '--no-install-recommends']
+            args = self._root_command_prefix_args + ['apt-get', 'install', '-y', '-qq']
             args.extend(native_packages)
             subprocess.check_call(args)
         else:

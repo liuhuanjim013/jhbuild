@@ -1,20 +1,47 @@
-from distutils import sysconfig
-import sys
 import os
+import sys
 
-if 'JHBUILD_PREFIXES' in os.environ:
-    for prefix in reversed(os.environ['JHBUILD_PREFIXES'].split(':')):
-        sitedir = sysconfig.get_python_lib(prefix=prefix)
+# only allow loading python packages from the correct versioned locations
+dirnames = [
+    'python%d.%d' % (sys.version_info[0], sys.version_info[1]),
+    'python%d' % (sys.version_info[0]),
+    'python',
+]
+libpaths = set()
 
-        # if it is in there already, promote it
-        if sitedir in sys.path:
-            sys.path.remove(sitedir)
+pathstoremove = set()
+for path in list(sys.path):
+    for dirname in path.split(os.path.sep):
+        if dirname.startswith('python') and dirname not in dirnames:
+            pathstoremove.add(path)
+            libpaths.add(path.split(dirname)[0])
+            break
 
-        sys.path.insert(1, sitedir)
+# remove paths that are for different version of python
+for path in pathstoremove:
+    while path in sys.path:
+        sys.path.remove(path)
 
-        # work around https://bugzilla.redhat.com/show_bug.cgi?id=1076293
-        sitedir2 = sysconfig.get_python_lib(1, prefix=prefix)
-        if sitedir2 != sitedir:
-            if sitedir2 in sys.path:
-                sys.path.remove(sitedir2)
-            sys.path.insert(1, sitedir2)
+# make sure site-packages and dist-packages are there
+for libpath in libpaths:
+    for subdir in ['dist-packages', 'site-packages']:
+        path = os.path.join(libpath, subdir)
+        if path not in sys.path:
+            sys.path.append(path)
+
+# the deal with this file is that the *.pth files is only executed
+# when it is added as site dir
+# however, python only import the first sitecustomize.py it sees
+# so we need to add all site dirs here
+
+import site
+paths = list(sys.path)
+for path in paths:
+    dirname = path.rsplit(os.path.sep, 1)[-1]
+    if dirname in ['dist-packages', 'site-packages']:
+        site.addsitedir(path)
+
+# change system wide default encoding from ascii to utf-8
+if sys.version_info[0] == 2:
+    sys.setdefaultencoding('utf-8')
+

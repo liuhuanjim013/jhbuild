@@ -26,10 +26,9 @@ __all__ = [ 'SystemModule' ]
 
 class SystemModule(Package):
 
-    def __init__(self, name, apt_package=None, apt_runtime=None, **kwargs):
+    def __init__(self, name, runtime=False, **kwargs):
         Package.__init__(self, name, **kwargs)
-        self.apt_package = apt_package
-        self.apt_runtime = apt_runtime
+        self.runtime = runtime
 
     @classmethod
     def create_virtual(cls, name, branch, deptype, value):
@@ -42,14 +41,11 @@ def parse_systemmodule(node, config, uri, repositories, default_repo):
     if any(deptype == 'xml' for deptype, value, altdeps in instance.systemdependencies):
         instance.dependencies += ['xmlcatalog']
 
-    if node.hasAttribute('apt-package'):
-        instance.apt_package = node.getAttribute('apt-package')
-
     # for sysdeps specified in modules files, assume they are needed for runtime
     # package maintainers can choose to exclude them from being installed to runtime
-    instance.apt_runtime = True
-    if node.hasAttribute('apt-runtime'):
-        instance.apt_runtime = node.getAttribute('apt-runtime') != 'no'
+    instance.runtime = True
+    if node.hasAttribute('runtime'):
+        instance.runtime = node.getAttribute('runtime') != 'no'
 
     return instance
 

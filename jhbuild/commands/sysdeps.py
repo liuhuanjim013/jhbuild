@@ -39,18 +39,15 @@ class cmd_sysdeps(cmd_build):
 
     def __init__(self):
         Command.__init__(self, [
-            make_option('--dump-apt-packages',
-                        action='store_true', default=False,
-                        help=_('Machine readable list of package names needed')),
-            make_option('--dump-runtime-apt-packages',
-                        action='store_true', default=False,
-                        help=_('Machine readable list of package names needed for runtime')),
             make_option('--dump',
                         action='store_true', default=False,
                         help=_('Machine readable list of missing sysdeps')),
             make_option('--dump-all',
                         action='store_true', default=False,
                         help=_('Machine readable list of all sysdeps')),
+            make_option('--dump-runtime',
+                        action='store_true', default=False,
+                        help=_('Machine readable list of runtime sysdeps')),
             make_option('--install',
                         action='store_true', default=False,
                         help=_('Install pkg-config modules via system'))])
@@ -82,6 +79,21 @@ class cmd_sysdeps(cmd_build):
             for module in module_list:
                 if (isinstance(module, SystemModule) or isinstance(module.branch, TarballBranch) and
                                                         module.pkg_config is not None):
+                    if module.pkg_config is not None:
+                        print 'pkgconfig:{0}'.format(module.pkg_config[:-3]) # remove .pc
+
+                    if module.systemdependencies is not None:
+                        for dep_type, value, altdeps in module.systemdependencies:
+                            sys.stdout.write('{0}:{1}'.format(dep_type, value))
+                            for dep_type, value, empty in altdeps:
+                                sys.stdout.write(',{0}:{1}'.format(dep_type, value))
+                            sys.stdout.write('\n')
+
+            return
+
+        if options.dump_runtime:
+            for module in module_list:
+                if isinstance(module, SystemModule) and module.runtime:
                     if module.pkg_config is not None:
                         print 'pkgconfig:{0}'.format(module.pkg_config[:-3]) # remove .pc
 
@@ -133,24 +145,6 @@ class cmd_sysdeps(cmd_build):
 
             return
 
-        if options.dump_apt_packages:
-            apt_packages = set()
-            for module, (req_version, installed_version, new_enough, systemmodule) in module_state.iteritems():
-                if systemmodule and module.apt_package:
-                    apt_packages.add(module.apt_package)
-            for apt_package in apt_packages:
-                print apt_package
-            return
-
-        if options.dump_runtime_apt_packages:
-            apt_packages = set()
-            for module, (req_version, installed_version, new_enough, systemmodule) in module_state.iteritems():
-                if systemmodule and module.apt_package and module.apt_runtime:
-                    apt_packages.add(module.apt_package)
-            for apt_package in apt_packages:
-                print apt_package
-            return
-
         print _('System installed packages which are new enough:')
         for module,(req_version, installed_version, new_enough, systemmodule) in module_state.iteritems():
             if (installed_version is not None) and new_enough and (config.partial_build or systemmodule):
@@ -193,6 +187,9 @@ class cmd_sysdeps(cmd_build):
                 elif module.systemdependencies is not None:
                     for dep_type, value, altdeps in module.systemdependencies:
                         uninstalled.append((module.name, dep_type, value))
+                        for dep_type, value, empty in altdeps:
+                            uninstalled.append((module.name, dep_type, value))
+
         if len(uninstalled) == 0:
             print _('    (none)')
 
