@@ -376,7 +376,7 @@ them into the prefix."""
                 assert to_delete == set(fileutils.filter_files_by_prefix(self.config, to_delete))
 
                 logging.info(_('%d files remaining from previous build') % (len(to_delete),))
-                for (path, was_deleted, error_string) in fileutils.remove_files_and_dirs(to_delete, allow_nonempty_dirs=True):
+                for (path, was_deleted, error_string) in fileutils.remove_files_and_dirs(to_delete, self.config, allow_nonempty_dirs=True):
                     if was_deleted:
                         logging.info(_('Deleted: %(file)r') % { 'file': path, })
                     elif error_string is None:

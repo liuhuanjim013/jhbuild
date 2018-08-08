@@ -52,7 +52,7 @@ in the returned list is relative to the root path."""
         contents[i] = subpath[pathlen:]
     return contents
 
-def remove_files_and_dirs(file_paths, allow_nonempty_dirs=False):
+def remove_files_and_dirs(file_paths, config, allow_nonempty_dirs=False):
     """Given a list of file paths in any order, attempt to delete
 them.  The main intelligence in this function is removing files
 in a directory before removing the directory.
@@ -78,7 +78,9 @@ Returns a list, where each item is a 2-tuple:
             if len(dirpaths) == previous:
                 break
 
-    for path in reversed(sorted(filepaths | dirpaths)):
+    # only delete the file_paths under the prefix
+    to_delete = filter_files_by_prefix(config, filepaths | dirpaths)
+    for path in reversed(sorted(to_delete)):
         isdir = os.path.isdir(path) and not os.path.islink(path)
         try:
             if isdir:
