@@ -257,10 +257,13 @@ class GitBranch(Branch):
         assert(current_branch and wanted_branch)
         # If the current branch is not tracking a remote branch it is assumed to
         # be a local work branch, and it won't be considered for a change.
-        if current_branch != wanted_branch \
-                and self.is_tracking_a_remote_branch(current_branch):
-            return wanted_branch
+        # if current_branch != wanted_branch \
+        #         and self.is_tracking_a_remote_branch(current_branch):
+        #     return wanted_branch
 
+        # custom behavior, switch branch anyway if we are on untracked branch
+        if current_branch != wanted_branch:
+            return wanted_branch
         return None
 
     def switch_branch_if_necessary(self, buildscript):
