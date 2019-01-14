@@ -293,11 +293,29 @@ class GitBranch(Branch):
             buildscript.execute(switch_command, cwd=self.get_checkoutdir(),
                     extra_env=get_git_extra_env())
 
+    def has_diverged_from_remote_branch(self, branch):
+        git_extra_args = {
+            'cwd': self.get_checkoutdir(),
+            'extra_env': get_git_extra_env(),
+        }
+        base = get_output(['git', 'merge-base', 'HEAD', 'origin/' + branch], **git_extra_args).strip()
+        head = get_output(['git', 'rev-parse', 'HEAD'], **git_extra_args).strip()
+        return base != head
+
     def rebase_current_branch(self, buildscript):
         """Pull the current branch if it is tracking a remote branch."""
+
+        if self.is_dirty(ignore_submodules=True):
+            # custom behavior, instead of allowing for stash, refuse to deal with dirty tree at all
+            raise CommandError(_('Refusing to switch a dirty tree.'))
+
         branch = self.get_current_branch();
         if not self.is_tracking_a_remote_branch(branch):
             return
+
+        if self.has_diverged_from_remote_branch(branch):
+            # custom behavior, do not merge from origin if local branch has diverged
+            raise CommandError(_('Refusing to merge origin into a diverged branch.'))
 
         git_extra_args = {'cwd': self.get_checkoutdir(),
                 'extra_env': get_git_extra_env()}
