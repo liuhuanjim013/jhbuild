@@ -305,9 +305,13 @@ them into the prefix."""
     def _do_strip(self, destdir_prefix, contents):
         # first find exec
         files_to_strip = []
+
+        # HACK from orininal bash script.
         excluded_packages = ['scipy', 'PIL']
         excluded_libs = ['libQt5']
         excluded_file_info = ['ELF', ', not stripped']
+
+        # filter out files to strip
         for filename in contents:
             if os.access(filename, os.X_OK) or 'so' in filename.split(os.path.extsep):
                 splited_filename = filename.split(os.path.sep)
