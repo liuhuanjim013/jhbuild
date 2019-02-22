@@ -30,6 +30,8 @@ __all__ = [
 import os
 import re
 import shutil
+import stat
+import subprocess
 import logging
 
 from jhbuild.errors import FatalError, CommandError, BuildStateError, \
@@ -300,6 +302,43 @@ them into the prefix."""
                 errors.append(str(e))
         return num_copied
 
+    def _do_strip(self, destdir_prefix, contents):
+        # first find exec
+        files_to_strip = []
+        excluded_packages = ['scipy', 'PIL']
+        excluded_libs = ['libQt5']
+        excluded_file_info = ['ELF', ', not stripped']
+        for filename in contents:
+            if os.access(filename, os.X_OK) or 'so' in filename.split(os.path.extsep):
+                splited_filename = filename.split(os.path.sep)
+                if any([s == e for s in splited_filename for e in excluded_packages]):
+                    continue
+                if any([e in filename for e in excluded_libs]):
+                    continue
+                file_info = subprocess.check_output(['file', '-b', filename])
+                if any([e in file_info for e in excluded_file_info]):
+                    continue
+                files_to_strip.append(filename)
+
+        # do strip
+        for filename in files_to_strip:
+            dirname = os.path.dirname(filename)
+            debug_dir = os.path.join(destdir_prefix, 'debug')
+            dir_in_debug = os.path.join(debug_dir, dirname)
+            if not os.path.exists(dir_in_debug):
+                os.makedirs(dir_in_debug)
+            dotdebug_link =os.path.join(destdir_prefix, dirname, '.debug')
+            if os.path.exists(dotdebug_link):
+                os.remove(dotdebug_link)
+            os.symlink(os.path.join(debug_dir, dirname), dotdebug_link)
+            filefullpath = os.path.join(destdir_prefix, filename)
+            st = os.stat(filefullpath)
+            os.chmod(filefullpath, st.st_mode | stat.S_IWUSR)
+            subprocess.call(['objcopy', '--only-keep-debug', filefullpath, os.path.join(debug_dir, filename+'.debug')])
+            subprocess.call(['objcopy', '--remove-section', '.gnu_debuglink', filefullpath])
+            subprocess.call(['objcopy', '--add-gnu-debuglink=%s'%os.path.join(debug_dir,filename+'.debug'), filefullpath])
+            subprocess.call(['objcopy', '--strip-all', '--discard-all', '--preserve-dates', filefullpath])
+
     def process_install(self, buildscript, revision):
         assert self.supports_install_destdir
         destdir = self.get_destdir(buildscript)
@@ -315,13 +354,16 @@ them into the prefix."""
         destdir_prefix = os.path.join(destdir, stripped_prefix)
         new_contents = fileutils.accumulate_dirtree_contents(destdir_prefix)
         errors = []
+
+        # strip debug info before install
+        self._do_strip(destdir_prefix, new_contents)
+
         if os.path.isdir(destdir_prefix):
             destdir_install = True
             logging.info(_('Moving temporary DESTDIR %r into build prefix') % (destdir, ))
             num_copied = self._process_install_files(destdir, destdir_prefix,
                                                      buildscript.config.prefix,
                                                      errors)
-
             # Now the destdir should have a series of empty directories:
             # $JHBUILD_PREFIX/_jhbuild/root-foo/$JHBUILD_PREFIX
             # Remove them one by one to clean the tree to the state we expect,
