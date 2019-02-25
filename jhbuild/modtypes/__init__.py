@@ -363,6 +363,7 @@ them into the prefix."""
 
         # strip debug info before install
         self._do_strip(destdir_prefix, buildscript.config.prefix)
+
         new_contents = fileutils.accumulate_dirtree_contents(destdir_prefix)
         errors = []
 
