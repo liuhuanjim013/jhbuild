@@ -302,10 +302,10 @@ them into the prefix."""
                 errors.append(str(e))
         return num_copied
 
-    def _do_strip(self, destdir_prefix, contents):
+    def _do_strip(self, destdir_prefix, installroot):
+        contents = fileutils.accumulate_dirtree_contents(destdir_prefix)
         # first find exec
         files_to_strip = []
-
         # filter out files to strip
         for filename in contents:
             if os.access(filename, os.X_OK) or 'so' in filename.split(os.path.extsep):
@@ -338,14 +338,13 @@ them into the prefix."""
             if os.path.exists(debug_link):
                 os.remove(debug_link)
 
-            filebasename = os.path.basename(filename)
-            os.symlink(os.path.join(debug_dir, filebasename + '.debug'), debug_link)
+            os.symlink(os.path.join(installroot, 'debug', filename + '.debug'), debug_link)
             filefullpath = os.path.join(destdir_prefix, filename)
             st = os.stat(filefullpath)
             os.chmod(filefullpath, st.st_mode | stat.S_IWUSR)
-            subprocess.call(['objcopy', '--only-keep-debug', filefullpath, os.path.join(debug_dir, filebasename + '.debug')])
+            subprocess.call(['objcopy', '--only-keep-debug', filefullpath, os.path.join(debug_dir, filename + '.debug')])
             subprocess.call(['objcopy', '--remove-section', '.gnu_debuglink', filefullpath])
-            subprocess.call(['objcopy', '--add-gnu-debuglink=%s'%os.path.join(debug_dir, filebasename + '.debug'), filefullpath])
+            subprocess.call(['objcopy', '--add-gnu-debuglink=%s.debug' % os.path.join(debug_dir, filename), filefullpath])
             subprocess.call(['objcopy', '--strip-all', '--discard-all', '--preserve-dates', filefullpath])
 
     def process_install(self, buildscript, revision):
@@ -361,11 +360,12 @@ them into the prefix."""
         save_broken_tree = False
         broken_name = destdir + '-broken'
         destdir_prefix = os.path.join(destdir, stripped_prefix)
-        new_contents = fileutils.accumulate_dirtree_contents(destdir_prefix)
-        errors = []
 
         # strip debug info before install
-        self._do_strip(destdir_prefix, new_contents)
+        self._do_strip(destdir_prefix, buildscript.config.prefix)
+
+        new_contents = fileutils.accumulate_dirtree_contents(destdir_prefix)
+        errors = []
 
         if os.path.isdir(destdir_prefix):
             destdir_install = True
