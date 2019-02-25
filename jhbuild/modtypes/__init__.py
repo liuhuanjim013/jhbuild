@@ -302,10 +302,10 @@ them into the prefix."""
                 errors.append(str(e))
         return num_copied
 
-    def _do_strip(self, destdir_prefix, contents):
+    def _do_strip(self, destdir_prefix, destdir):
+        contents = fileutils.accumulate_dirtree_contents(destdir_prefix)
         # first find exec
         files_to_strip = []
-
         # filter out files to strip
         for filename in contents:
             if os.access(filename, os.X_OK) or 'so' in filename.split(os.path.extsep):
@@ -339,7 +339,8 @@ them into the prefix."""
                 os.remove(debug_link)
 
             filebasename = os.path.basename(filename)
-            os.symlink(os.path.join(debug_dir, filebasename + '.debug'), debug_link)
+            installroot = destdir_prefix[len(destdir):]
+            os.symlink(os.path.join(os.path.join(installroot, 'debug'), filebasename + '.debug'), debug_link)
             filefullpath = os.path.join(destdir_prefix, filename)
             st = os.stat(filefullpath)
             os.chmod(filefullpath, st.st_mode | stat.S_IWUSR)
@@ -361,11 +362,11 @@ them into the prefix."""
         save_broken_tree = False
         broken_name = destdir + '-broken'
         destdir_prefix = os.path.join(destdir, stripped_prefix)
-        new_contents = fileutils.accumulate_dirtree_contents(destdir_prefix)
-        errors = []
 
         # strip debug info before install
-        self._do_strip(destdir_prefix, new_contents)
+        self._do_strip(destdir_prefix, destdir)
+        new_contents = fileutils.accumulate_dirtree_contents(destdir_prefix)
+        errors = []
 
         if os.path.isdir(destdir_prefix):
             destdir_install = True
