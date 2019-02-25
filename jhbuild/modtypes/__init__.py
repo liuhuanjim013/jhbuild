@@ -334,10 +334,11 @@ them into the prefix."""
                 os.makedirs(dir_in_debug)
 
             # create a filename.debug link to /opt/debug/dirname/filename.debug
-            filebasename = os.path.basename(filename)
-            debug_link = os.path.join(destdir_prefix, filebasename + '.debug')
+            debug_link = os.path.join(destdir_prefix, filename + '.debug')
             if os.path.exists(debug_link):
                 os.remove(debug_link)
+
+            filebasename = os.path.basename(filename)
             os.symlink(os.path.join(debug_dir, filebasename + '.debug'), debug_link)
             filefullpath = os.path.join(destdir_prefix, filename)
             st = os.stat(filefullpath)
