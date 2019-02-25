@@ -303,12 +303,11 @@ them into the prefix."""
         return num_copied
 
     def _do_strip(self, destdir_prefix, installroot):
-        contents = fileutils.accumulate_dirtree_contents(destdir_prefix)
         # first find exec
         files_to_strip = []
         # filter out files to strip
-        for filename in contents:
-            if os.access(filename, os.X_OK) or 'so' in filename.split(os.path.extsep):
+        for filename in fileutils.accumulate_dirtree_contents(destdir_prefix):
+            if os.access(os.path.join(destdir_prefix, filename), os.X_OK) or 'so' in os.path.basename(filename).split(os.path.extsep):
                 splited_filename = filename.split(os.path.sep)
                 # HACK from orininal bash script.
                 if 'scipy' in splited_filename:
@@ -316,11 +315,11 @@ them into the prefix."""
                 if 'PIL' in splited_filename:
                     continue
                 # Skip Qt5 libraries, which are already split and stripped
-                if 'libQt5' in filename:
+                if 'libQt5' in os.path.basename(filename):
                     continue
                 file_info = subprocess.check_output(['file', '-b', os.path.join(destdir_prefix, filename)])
                 # ignore symbolic link and stripped file
-                if 'ELF' not in file_info or ', not stripped' not in file_info:
+                if 'ELF ' not in file_info or ', not stripped' not in file_info:
                     continue
                 files_to_strip.append(filename)
 
@@ -362,6 +361,7 @@ them into the prefix."""
         destdir_prefix = os.path.join(destdir, stripped_prefix)
 
         # strip debug info before install
+        logging.info(_('Stripping symbols...'))
         self._do_strip(destdir_prefix, buildscript.config.prefix)
 
         new_contents = fileutils.accumulate_dirtree_contents(destdir_prefix)
