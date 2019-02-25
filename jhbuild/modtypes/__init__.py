@@ -318,7 +318,7 @@ them into the prefix."""
                 # Skip Qt5 libraries, which are already split and stripped
                 if 'libQt5' in filename:
                     continue
-                file_info = subprocess.check_output(['file', '-b', filename])
+                file_info = subprocess.check_output(['file', '-b', os.path.join(destdir_prefix, filename)])
                 # ignore symbolic link and stripped file
                 if 'ELF' not in file_info or ', not stripped' not in file_info:
                     continue
@@ -329,12 +329,15 @@ them into the prefix."""
             dirname = os.path.dirname(filename)
             debug_dir = os.path.join(destdir_prefix, 'debug')
             dir_in_debug = os.path.join(debug_dir, dirname)
+
             if not os.path.exists(dir_in_debug):
                 os.makedirs(dir_in_debug)
-            dotdebug_link = os.path.join(destdir_prefix, dirname, '.debug')
-            if os.path.exists(dotdebug_link):
-                os.remove(dotdebug_link)
-            os.symlink(os.path.join(debug_dir, dirname), dotdebug_link)
+
+            # create a filename.debug link to /opt/debug/dirname/filename.debug
+            debug_link = os.path.join(destdir_prefix, filename + '.debug')
+            if os.path.exists(debug_link):
+                os.remove(debug_link)
+            os.symlink(os.path.join(debug_dir, filename + '.debug'), debug_link)
             filefullpath = os.path.join(destdir_prefix, filename)
             st = os.stat(filefullpath)
             os.chmod(filefullpath, st.st_mode | stat.S_IWUSR)
