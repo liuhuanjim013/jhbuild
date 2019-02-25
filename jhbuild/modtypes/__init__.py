@@ -306,21 +306,21 @@ them into the prefix."""
         # first find exec
         files_to_strip = []
 
-        # HACK from orininal bash script.
-        excluded_packages = ['scipy', 'PIL']
-        excluded_libs = ['libQt5']
-        excluded_file_info = ['ELF', ', not stripped']
-
         # filter out files to strip
         for filename in contents:
             if os.access(filename, os.X_OK) or 'so' in filename.split(os.path.extsep):
                 splited_filename = filename.split(os.path.sep)
-                if any([s == e for s in splited_filename for e in excluded_packages]):
+                # HACK from orininal bash script.
+                if 'scipy' in splited_filename:
                     continue
-                if any([e in filename for e in excluded_libs]):
+                if 'PIL' in splited_filename:
+                    continue
+                # Skip Qt5 libraries, which are already split and stripped
+                if 'libQt5' in filename:
                     continue
                 file_info = subprocess.check_output(['file', '-b', filename])
-                if any([e in file_info for e in excluded_file_info]):
+                # ignore symbolic link and stripped file
+                if 'ELF' not in file_info or ', not stripped' not in file_info:
                     continue
                 files_to_strip.append(filename)
 
