@@ -338,13 +338,13 @@ them into the prefix."""
             if os.path.exists(debug_link):
                 os.remove(debug_link)
 
-            os.symlink(os.path.join(os.path.join(installroot, 'debug'), filename + '.debug'), debug_link)
+            os.symlink(os.path.join(installroot, 'debug', filename + '.debug'), debug_link)
             filefullpath = os.path.join(destdir_prefix, filename)
             st = os.stat(filefullpath)
             os.chmod(filefullpath, st.st_mode | stat.S_IWUSR)
             subprocess.call(['objcopy', '--only-keep-debug', filefullpath, os.path.join(debug_dir, filename + '.debug')])
             subprocess.call(['objcopy', '--remove-section', '.gnu_debuglink', filefullpath])
-            subprocess.call(['objcopy', '--add-gnu-debuglink=%s'%os.path.join(debug_dir, filename + '.debug'), filefullpath])
+            subprocess.call(['objcopy', '--add-gnu-debuglink=%s.debug' % os.path.join(debug_dir, filename), filefullpath])
             subprocess.call(['objcopy', '--strip-all', '--discard-all', '--preserve-dates', filefullpath])
 
     def process_install(self, buildscript, revision):
