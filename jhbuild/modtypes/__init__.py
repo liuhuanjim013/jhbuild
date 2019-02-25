@@ -331,16 +331,16 @@ them into the prefix."""
             dir_in_debug = os.path.join(debug_dir, dirname)
             if not os.path.exists(dir_in_debug):
                 os.makedirs(dir_in_debug)
-            dotdebug_link =os.path.join(destdir_prefix, dirname, '.debug')
+            dotdebug_link = os.path.join(destdir_prefix, dirname, '.debug')
             if os.path.exists(dotdebug_link):
                 os.remove(dotdebug_link)
             os.symlink(os.path.join(debug_dir, dirname), dotdebug_link)
             filefullpath = os.path.join(destdir_prefix, filename)
             st = os.stat(filefullpath)
             os.chmod(filefullpath, st.st_mode | stat.S_IWUSR)
-            subprocess.call(['objcopy', '--only-keep-debug', filefullpath, os.path.join(debug_dir, filename+'.debug')])
+            subprocess.call(['objcopy', '--only-keep-debug', filefullpath, os.path.join(debug_dir, filename + '.debug')])
             subprocess.call(['objcopy', '--remove-section', '.gnu_debuglink', filefullpath])
-            subprocess.call(['objcopy', '--add-gnu-debuglink=%s'%os.path.join(debug_dir,filename+'.debug'), filefullpath])
+            subprocess.call(['objcopy', '--add-gnu-debuglink=%s'%os.path.join(debug_dir,filename + '.debug'), filefullpath])
             subprocess.call(['objcopy', '--strip-all', '--discard-all', '--preserve-dates', filefullpath])
 
     def process_install(self, buildscript, revision):
