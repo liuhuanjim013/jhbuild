@@ -302,7 +302,7 @@ them into the prefix."""
                 errors.append(str(e))
         return num_copied
 
-    def _do_strip(self, destdir_prefix, destdir):
+    def _do_strip(self, destdir_prefix, installroot):
         contents = fileutils.accumulate_dirtree_contents(destdir_prefix)
         # first find exec
         files_to_strip = []
@@ -338,15 +338,13 @@ them into the prefix."""
             if os.path.exists(debug_link):
                 os.remove(debug_link)
 
-            filebasename = os.path.basename(filename)
-            installroot = destdir_prefix[len(destdir):]
-            os.symlink(os.path.join(os.path.join(installroot, 'debug'), filebasename + '.debug'), debug_link)
+            os.symlink(os.path.join(os.path.join(installroot, 'debug'), filename + '.debug'), debug_link)
             filefullpath = os.path.join(destdir_prefix, filename)
             st = os.stat(filefullpath)
             os.chmod(filefullpath, st.st_mode | stat.S_IWUSR)
-            subprocess.call(['objcopy', '--only-keep-debug', filefullpath, os.path.join(debug_dir, filebasename + '.debug')])
+            subprocess.call(['objcopy', '--only-keep-debug', filefullpath, os.path.join(debug_dir, filename + '.debug')])
             subprocess.call(['objcopy', '--remove-section', '.gnu_debuglink', filefullpath])
-            subprocess.call(['objcopy', '--add-gnu-debuglink=%s'%os.path.join(debug_dir, filebasename + '.debug'), filefullpath])
+            subprocess.call(['objcopy', '--add-gnu-debuglink=%s'%os.path.join(debug_dir, filename + '.debug'), filefullpath])
             subprocess.call(['objcopy', '--strip-all', '--discard-all', '--preserve-dates', filefullpath])
 
     def process_install(self, buildscript, revision):
@@ -364,7 +362,7 @@ them into the prefix."""
         destdir_prefix = os.path.join(destdir, stripped_prefix)
 
         # strip debug info before install
-        self._do_strip(destdir_prefix, destdir)
+        self._do_strip(destdir_prefix, buildscript.config.prefix)
         new_contents = fileutils.accumulate_dirtree_contents(destdir_prefix)
         errors = []
 
