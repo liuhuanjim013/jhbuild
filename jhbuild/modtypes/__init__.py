@@ -361,6 +361,7 @@ them into the prefix."""
         destdir_prefix = os.path.join(destdir, stripped_prefix)
 
         # strip debug info before install
+        logging.info(_('Stripping symbols...'))
         self._do_strip(destdir_prefix, buildscript.config.prefix)
 
         new_contents = fileutils.accumulate_dirtree_contents(destdir_prefix)
