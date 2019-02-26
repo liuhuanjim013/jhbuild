@@ -316,15 +316,28 @@ them into the prefix."""
             fileinfo = ''
             try:
                 fileinfo = subprocess.check_output(['file', '-b', fullfilename])
-            except Exception as e:
+            except Exception:
                 pass
             if 'ELF ' not in fileinfo or ', not stripped' not in fileinfo:
                 continue
+
+            # make sure file is writable
+            os.chmod(fullfilename, os.stat(fullfilename).st_mode | stat.S_IWUSR)
 
             # first create the /opt/debug/dirname
             fulldebugdirname = os.path.join(destdir_prefix, 'debug', dirname)
             if not os.path.exists(fulldebugdirname):
                 os.makedirs(fulldebugdirname)
+            fulldebugfilename = os.path.join(fulldebugdirname, basename + '.debug')
+
+            # strip
+            try:
+                subprocess.check_call(['objcopy', '--only-keep-debug', fullfilename, fulldebugfilename])
+                subprocess.check_call(['objcopy', '--remove-section', '.gnu_debuglink', fullfilename])
+                subprocess.check_call(['objcopy', '--add-gnu-debuglink', fulldebugfilename, fullfilename])
+                subprocess.check_call(['objcopy', '--strip-all', '--discard-all', '--preserve-dates', fullfilename])
+            except Exception:
+                continue
 
             # create a /opt/dirname/basename.debug link to /opt/debug/dirname/basename.debug
             fulldebuglinkname = os.path.join(destdir_prefix, dirname, basename + '.debug')
@@ -332,18 +345,6 @@ them into the prefix."""
                 os.remove(fulldebuglinkname)
             os.symlink(os.path.join(installroot, 'debug', dirname, basename + '.debug'), fulldebuglinkname)
 
-            # make sure file is writable
-            os.chmod(fullfilename, os.stat(fullfilename).st_mode | stat.S_IWUSR)
-
-            # strip
-            fulldebugfilename = os.path.join(fulldebugdirname, basename + '.debug')
-            try:
-                subprocess.check_call(['objcopy', '--only-keep-debug', fullfilename, fulldebugfilename])
-                subprocess.check_call(['objcopy', '--remove-section', '.gnu_debuglink', fullfilename])
-                subprocess.check_call(['objcopy', '--add-gnu-debuglink', fulldebugfilename, fullfilename])
-                subprocess.check_call(['objcopy', '--strip-all', '--discard-all', '--preserve-dates', fullfilename])
-            except Exception as e:
-                pass
 
     def process_install(self, buildscript, revision):
         assert self.supports_install_destdir
