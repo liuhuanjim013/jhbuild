@@ -402,12 +402,16 @@ them into the prefix."""
         readlink_output = subprocess.check_output(['readlink', '-f', filename])
         dpkg_output = ''
         try:
-            if readlink_output:
-                dpkg_output = subprocess.check_output(['dpkg', '-S', readlink_output.strip()]) # strip remove the ending \n
-            else:
-                dpkg_output = subprocess.check_output(['dpkg', '-S', filename.strip()])
+            dpkg_output = subprocess.check_output(['dpkg', '-S', readlink_output.strip()]) # strip remove the ending \n
         except subprocess.CalledProcessError as e:
-            logging.info(_(dpkg_output))
+            pass
+
+        if not dpkg_output:
+            try:
+                dpkg_output = subprocess.check_output(['dpkg', '-S', filename.strip()])
+            except subprocess.CalledProcessError as e:
+                logging.error(e)
+                raise e
 
         # format like this: libselinux1:amd64: /lib/x86_64-linux-gnu/libselinux.so.1
         # return the name before colon
@@ -461,9 +465,6 @@ them into the prefix."""
         for path in path_filtered:
             pkg_name = self._find_pkg(path)
             versioned_pkgs.extend(self._find_versioned_pkg(pkg_name))
-
-        # filter unwanted pkg
-        versioned_pkgs = [x for x in versioned_pkgs if not x.startswith('libc6:')]
         return sorted(versioned_pkgs)
 
     def process_install(self, buildscript, revision):
