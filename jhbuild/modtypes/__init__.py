@@ -426,7 +426,6 @@ them into the prefix."""
     def _dump_systemdeps(self, destdir_prefix, installroot):
         exec_files = self._find_exec(destdir_prefix)
 
-        # runtime_deps = self._dump_runtime()
         ldd_paths = set()
         for filename in exec_files:
             if filename in ldd_paths:
