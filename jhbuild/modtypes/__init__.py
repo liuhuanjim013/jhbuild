@@ -302,9 +302,8 @@ them into the prefix."""
                 errors.append(str(e))
         return num_copied
 
-    def _do_strip(self, destdir_prefix, installroot):
-        # first find exec
-        files_to_strip = []
+    def _find_exec(self, destdir_prefix):
+        exec_files = []
         # filter out files to strip
         for filename in fileutils.accumulate_dirtree_contents(destdir_prefix):
             if os.access(os.path.join(destdir_prefix, filename), os.X_OK) or 'so' in os.path.basename(filename).split(os.path.extsep):
@@ -319,9 +318,22 @@ them into the prefix."""
                     continue
                 file_info = subprocess.check_output(['file', '-b', os.path.join(destdir_prefix, filename)])
                 # ignore symbolic link and stripped file
-                if 'ELF ' not in file_info or ', not stripped' not in file_info:
+                if 'ELF ' not in file_info:
                     continue
-                files_to_strip.append(filename)
+                exec_files.append(filename)
+
+        return exec_files
+
+    def _do_strip(self, destdir_prefix, installroot):
+        # first find exec
+        exec_files = self._find_exec(destdir_prefix)
+        # filter out files to strip
+        files_to_strip = []
+        for filename in exec_files:
+            file_info = subprocess.check_output(['file', '-b', os.path.join(destdir_prefix, filename)])
+            if ', not stripped' not in file_info:
+                continue
+            files_to_strip.append(filename)
 
         # do strip
         for filename in files_to_strip:
@@ -346,6 +358,101 @@ them into the prefix."""
             subprocess.call(['objcopy', '--add-gnu-debuglink=%s.debug' % os.path.join(debug_dir, filename), filefullpath])
             subprocess.call(['objcopy', '--strip-all', '--discard-all', '--preserve-dates', filefullpath])
 
+    def _find_exec_ldd(self, destdir_prefix, filename):
+        filefullname = os.path.join(destdir_prefix, filename)
+        output = subprocess.check_output(['env', 'LD_LIBRARY_PATH=%s' % os.path.join(destdir_prefix, 'lib'), 'ldd', filefullname])
+
+        results = [] # result value to return
+
+        for line in output.splitlines():
+            # remove leading space
+            line_stripped = line.lstrip()
+            if '=> not found' in line_stripped:
+                logging.info(line_stripped)
+                continue
+            if 'no version information' in line_stripped:
+                logging.info(line_stripped)
+                continue
+
+            # bunch of orignal sed scripts
+            # list all lines with slash(/)  sed:  /\//!d;
+            if '/' in line_stripped:
+                # sed: /linux-gate/d;
+                if '/linux-gate' not in line_stripped:
+                    # remove `=>` and leading blank after `=>`, remove the hex after path. Only absorb the path
+                    if '=> ' in line_stripped:
+                        result = line_stripped[line_stripped.find('=> ') + len('=> '):]
+                        result = result.split(' ')[0]
+                        results.append(result)
+        return results
+
+    def _find_pkg(self, filename):
+        """ Find debian packages
+        """
+        readlink_output = subprocess.check_output(['readlink', '-f', filename])
+        dpkg_output = ''
+        if readlink_output:
+            dpkg_output = subprocess.check_output(['dpkg', '-S', readlink_output.strip()]) # strip remove the ending \n
+        else:
+            dpkg_output = subprocess.check_output(['dpkg', '-S', filename.strip()])
+        # format like this: libselinux1:amd64: /lib/x86_64-linux-gnu/libselinux.so.1
+        # return the name before colon
+        return dpkg_output.split(':')[0]
+
+    def _find_versioned_pkg(self, pkg_name):
+        dpkg_list_output = subprocess.check_output(['dpkg', '-l'])
+        packages = dpkg_list_output.splitlines()
+        results = []
+        for pkg in packages:
+            if pkg.startswith('ii  %s:' % pkg_name) or pkg.startswith('ii  %s ' % pkg_name):
+                pkg_filtered = filter(None, pkg.split(' '))
+                results.append(pkg_filtered[1] + '=' + pkg_filtered[2])
+        return results
+
+    def _dump_systemdeps(self, destdir_prefix, installroot):
+        exec_files = self._find_exec(destdir_prefix)
+
+        # runtime_deps = self._dump_runtime()
+        ldd_paths = set()
+        for filename in exec_files:
+            if filename in ldd_paths:
+                continue
+            results = self._find_exec_ldd(destdir_prefix, filename)
+            difference = ldd_paths.union(results).difference(ldd_paths)
+            while difference:
+                ldd_paths.update(difference)
+                next_filename = difference.pop()
+                if next_filename in difference: # already in queue.
+                    continue
+                results = self._find_exec_ldd(destdir_prefix, next_filename)
+                difference = ldd_paths.union(results).difference(ldd_paths).union(difference)
+
+        path_filtered = []
+        new_contents = fileutils.accumulate_dirtree_contents(destdir_prefix)
+        for path in ldd_paths:
+            # exclude binaries found inside the current working directory
+            if path.startswith(destdir_prefix) or path.startswith(installroot):
+                continue
+            # exclude binaries found inside the manifests
+            exclued = False
+            for content in new_contents:
+                if path in os.path.join(destdir_prefix, content) :
+                    exclude = True
+                    break
+            if exclued:
+                continue
+
+            path_filtered.append(path)
+
+        versioned_pkgs = []
+        for path in path_filtered:
+            pkg_name = self._find_pkg(path)
+            versioned_pkgs.extend(self._find_versioned_pkg(pkg_name))
+
+        # filter unwanted pkg
+        versioned_pkgs = [x for x in versioned_pkgs if not x.startswith('libc6:')]
+        return sorted(versioned_pkgs)
+
     def process_install(self, buildscript, revision):
         assert self.supports_install_destdir
         destdir = self.get_destdir(buildscript)
@@ -363,6 +470,16 @@ them into the prefix."""
         # strip debug info before install
         logging.info(_('Stripping symbols...'))
         self._do_strip(destdir_prefix, buildscript.config.prefix)
+
+        # dump sysdeps
+        logging.info(_('Generating sysdeps...'))
+        sysdeps = self._dump_systemdeps(destdir_prefix, buildscript.config.prefix)
+
+        # write sysdeps to disk
+        fileutils.mkdir_with_parents(os.path.join(destdir_prefix, '.jhbuild', 'sysdeps'))
+        writer = fileutils.SafeWriter(os.path.join(destdir_prefix, '.jhbuild', 'sysdeps', self.name))
+        writer.fp.write("\n".join(sysdeps))
+        writer.commit()
 
         new_contents = fileutils.accumulate_dirtree_contents(destdir_prefix)
         errors = []
