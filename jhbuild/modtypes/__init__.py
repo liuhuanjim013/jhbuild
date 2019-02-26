@@ -401,10 +401,14 @@ them into the prefix."""
         """
         readlink_output = subprocess.check_output(['readlink', '-f', filename])
         dpkg_output = ''
-        if readlink_output:
-            dpkg_output = subprocess.check_output(['dpkg', '-S', readlink_output.strip()]) # strip remove the ending \n
-        else:
-            dpkg_output = subprocess.check_output(['dpkg', '-S', filename.strip()])
+        try:
+            if readlink_output:
+                dpkg_output = subprocess.check_output(['dpkg', '-S', readlink_output.strip()]) # strip remove the ending \n
+            else:
+                dpkg_output = subprocess.check_output(['dpkg', '-S', filename.strip()])
+        except subprocess.CalledProcessError as e:
+            logging.info(_(dpkg_output))
+
         # format like this: libselinux1:amd64: /lib/x86_64-linux-gnu/libselinux.so.1
         # return the name before colon
         return dpkg_output.split(':')[0]
