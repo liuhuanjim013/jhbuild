@@ -400,9 +400,12 @@ them into the prefix."""
         """ Find debian packages
         """
         readlink_output = subprocess.check_output(['readlink', '-f', filename])
+        while os.path.islink(filename):
+            filename = os.readlink(filename)
         dpkg_output = ''
         try:
-            dpkg_output = subprocess.check_output(['dpkg', '-S', readlink_output.strip()]) # strip remove the ending \n
+            with open(os.devnull, 'w') as f:
+                dpkg_output = subprocess.check_output(['dpkg', '-S', readlink_output.strip()], stderr=f) # strip remove the ending \n
         except subprocess.CalledProcessError as e:
             pass
 
@@ -411,7 +414,6 @@ them into the prefix."""
                 dpkg_output = subprocess.check_output(['dpkg', '-S', filename.strip()])
             except subprocess.CalledProcessError as e:
                 logging.error(e)
-                raise e
 
         # format like this: libselinux1:amd64: /lib/x86_64-linux-gnu/libselinux.so.1
         # return the name before colon
