@@ -138,6 +138,7 @@ class CMakeModule(MakeModule, DownloadableModule):
             ('id', 'name', None),
             ('skip-install', 'skip_install_phase', False),
             ('supports-non-srcdir-builds', 'supports_non_srcdir_builds', None),
+            ('supports-stripping-debug-symbols', 'supports_stripping_debug_symbols', None),
             ('force-non-srcdir-builds', 'force_non_srcdir_builds', None),
             ('cmakeargs', 'cmakeargs', None),
             ('makeargs', 'makeargs', None),
@@ -159,11 +160,11 @@ def parse_cmake(node, config, uri, repositories, default_repo):
         else:
             instance.skip_install_phase = False
     if node.hasAttribute('supports-non-srcdir-builds'):
-        instance.supports_non_srcdir_builds = \
-                (node.getAttribute('supports-non-srcdir-builds') != 'no')
+        instance.supports_non_srcdir_builds = (node.getAttribute('supports-non-srcdir-builds') != 'no')
     if node.hasAttribute('force-non-srcdir-builds'):
-        instance.force_non_srcdir_builds = \
-                (node.getAttribute('force-non-srcdir-builds') != 'no')
+        instance.force_non_srcdir_builds = (node.getAttribute('force-non-srcdir-builds') != 'no')
+    if node.hasAttribute('supports-stripping-debug-symbols'):
+        instance.supports_stripping_debug_symbols = (node.getAttribute('supports-stripping-debug-symbols') != 'no')
     # liuhuan: override cmakeargs defined in xml if it is specified in .jhbuildrc
     if config.modulecmakeargs.has_key(instance.name):
         instance.cmakeargs = config.modulecmakeargs[instance.name]

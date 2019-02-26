@@ -187,6 +187,7 @@ class Package:
         self.moduleset_name = None
         self.supports_install_destdir = False
         self.supports_parallel_build = True
+        self.supports_stripping_debug_symbols = True
         self.configure_cmd = None
 
     def __repr__(self):
@@ -302,6 +303,49 @@ them into the prefix."""
                 errors.append(str(e))
         return num_copied
 
+
+    def _strip_debug_symbols(self, destdir_prefix, installroot):
+        assert self.supports_stripping_debug_symbols
+
+        for filename in fileutils.accumulate_dirtree_contents(destdir_prefix):
+            dirname, basename = os.path.split(filename)
+            fullfilename = os.path.join(destdir_prefix, dirname, basename)
+            if not os.path.isfile(fullfilename) or os.path.islink(fullfilename):
+                continue
+            if not os.access(fullfilename, os.X_OK) and 'so' not in basename.split(os.path.extsep):
+                continue
+            fileinfo = ''
+            try:
+                fileinfo = subprocess.check_output(['file', '-b', fullfilename])
+            except Exception as e:
+                pass
+            if 'ELF ' not in fileinfo or ', not stripped' not in fileinfo:
+                continue
+
+            # first create the /opt/debug/dirname
+            fulldebugdirname = os.path.join(destdir_prefix, 'debug', dirname)
+            if not os.path.exists(fulldebugdirname):
+                os.makedirs(fulldebugdirname)
+
+            # create a /opt/dirname/basename.debug link to /opt/debug/dirname/basename.debug
+            fulldebuglinkname = os.path.join(destdir_prefix, dirname, basename + '.debug')
+            if os.path.exists(fulldebuglinkname):
+                os.remove(fulldebuglinkname)
+            os.symlink(os.path.join(installroot, 'debug', dirname, basename + '.debug'), fulldebuglinkname)
+
+            # make sure file is writable
+            os.chmod(fullfilename, os.stat(fullfilename).st_mode | stat.S_IWUSR)
+
+            # strip
+            fulldebugfilename = os.path.join(fulldebugdirname, basename + '.debug')
+            try:
+                subprocess.check_call(['objcopy', '--only-keep-debug', fullfilename, fulldebugfilename])
+                subprocess.check_call(['objcopy', '--remove-section', '.gnu_debuglink', fullfilename])
+                subprocess.check_call(['objcopy', '--add-gnu-debuglink', fulldebugfilename, fullfilename])
+                subprocess.check_call(['objcopy', '--strip-all', '--discard-all', '--preserve-dates', fullfilename])
+            except Exception as e:
+                pass
+
     def _find_exec(self, destdir_prefix):
         exec_files = []
         # filter out files to strip
@@ -323,40 +367,6 @@ them into the prefix."""
                 exec_files.append(filename)
 
         return exec_files
-
-    def _do_strip(self, destdir_prefix, installroot):
-        # first find exec
-        exec_files = self._find_exec(destdir_prefix)
-        # filter out files to strip
-        files_to_strip = []
-        for filename in exec_files:
-            file_info = subprocess.check_output(['file', '-b', os.path.join(destdir_prefix, filename)])
-            if ', not stripped' not in file_info:
-                continue
-            files_to_strip.append(filename)
-
-        # do strip
-        for filename in files_to_strip:
-            dirname = os.path.dirname(filename)
-            debug_dir = os.path.join(destdir_prefix, 'debug')
-            dir_in_debug = os.path.join(debug_dir, dirname)
-
-            if not os.path.exists(dir_in_debug):
-                os.makedirs(dir_in_debug)
-
-            # create a filename.debug link to /opt/debug/dirname/filename.debug
-            debug_link = os.path.join(destdir_prefix, filename + '.debug')
-            if os.path.exists(debug_link):
-                os.remove(debug_link)
-
-            os.symlink(os.path.join(installroot, 'debug', filename + '.debug'), debug_link)
-            filefullpath = os.path.join(destdir_prefix, filename)
-            st = os.stat(filefullpath)
-            os.chmod(filefullpath, st.st_mode | stat.S_IWUSR)
-            subprocess.call(['objcopy', '--only-keep-debug', filefullpath, os.path.join(debug_dir, filename + '.debug')])
-            subprocess.call(['objcopy', '--remove-section', '.gnu_debuglink', filefullpath])
-            subprocess.call(['objcopy', '--add-gnu-debuglink=%s.debug' % os.path.join(debug_dir, filename), filefullpath])
-            subprocess.call(['objcopy', '--strip-all', '--discard-all', '--preserve-dates', filefullpath])
 
     def _find_exec_ldd(self, destdir_prefix, filename):
         filefullname = os.path.join(destdir_prefix, filename)
@@ -468,8 +478,9 @@ them into the prefix."""
         destdir_prefix = os.path.join(destdir, stripped_prefix)
 
         # strip debug info before install
-        logging.info(_('Stripping symbols...'))
-        self._do_strip(destdir_prefix, buildscript.config.prefix)
+        if self.supports_stripping_debug_symbols:
+            logging.info(_('Stripping debug symbols...'))
+            self._strip_debug_symbols(destdir_prefix, buildscript.config.prefix)
 
         # dump sysdeps
         logging.info(_('Generating sysdeps...'))
