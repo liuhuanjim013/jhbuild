@@ -67,6 +67,7 @@ class PipModule(Package):
         return 'pip', [
             ('id', 'name', None),
             ('python', 'python', None),
+            ('supports-stripping-debug-symbols', 'supports_stripping_debug_symbols', None),
         ]
 
 def parse_pip(node, config, uri, repositories, default_repo):
@@ -76,6 +77,9 @@ def parse_pip(node, config, uri, repositories, default_repo):
     # allow to specify python executable separated by space
     if node.hasAttribute('python'):
         instance.python = node.getAttribute('python').split()
+
+    if node.hasAttribute('supports-stripping-debug-symbols'):
+        instance.supports_stripping_debug_symbols = (node.getAttribute('supports-stripping-debug-symbols') != 'no')
 
     return instance
 
