@@ -371,7 +371,13 @@ them into the prefix."""
 
     def _find_exec_ldd(self, destdir_prefix, filename):
         filefullname = os.path.join(destdir_prefix, filename)
-        output = subprocess.check_output(['env', 'LD_LIBRARY_PATH=%s' % os.path.join(destdir_prefix, 'lib'), 'ldd', filefullname])
+
+        env = os.environ.copy()
+        env['LD_LIBRARY_PATH'] = ":".join([
+            os.path.join(destdir_prefix, 'lib'),
+            os.path.join(destdir_prefix, 'bin'),
+        ])
+        output = subprocess.check_output(['ldd', filefullname], env=env)
 
         results = [] # result value to return
 
