@@ -411,7 +411,7 @@ them into the prefix."""
             dpkg_output, dpkg_error = subprocess.Popen(['dpkg', '-S', filename, realfilename], stdout = subprocess.PIPE, stderr = f).communicate()
 
         if not dpkg_output:
-            logging.error(_("dpkg -S no path found matching pattern %s or %s" % (filename, realfilename)))
+            logging.error(_("dpkg -S no path found matching pattern: %s or %s" % (filename, realfilename)))
 
         # format like this: libselinux1:amd64: /lib/x86_64-linux-gnu/libselinux.so.1 or libxdmcp6:amd64: /lib/libxdmcp6:amd64
         # return the name before colon
