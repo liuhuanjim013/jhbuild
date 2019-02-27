@@ -351,21 +351,23 @@ them into the prefix."""
         exec_files = []
         # filter out files to strip
         for filename in fileutils.accumulate_dirtree_contents(destdir_prefix):
-            if os.access(os.path.join(destdir_prefix, filename), os.X_OK) or 'so' in os.path.basename(filename).split(os.path.extsep):
-                splited_filename = filename.split(os.path.sep)
-                # HACK from orininal bash script.
-                if 'scipy' in splited_filename:
-                    continue
-                if 'PIL' in splited_filename:
-                    continue
-                # Skip Qt5 libraries, which are already split and stripped
-                if 'libQt5' in os.path.basename(filename):
-                    continue
-                file_info = subprocess.check_output(['file', '-b', os.path.join(destdir_prefix, filename)])
-                # ignore symbolic link and stripped file
-                if 'ELF ' not in file_info:
-                    continue
-                exec_files.append(filename)
+            dirname, basename = os.path.split(filename)
+            fullfilename = os.path.join(destdir_prefix, dirname, basename)
+            if not os.path.isfile(fullfilename) or os.path.islink(fullfilename):
+                continue
+            if not os.access(fullfilename, os.X_OK) and 'so' not in basename.split(os.path.extsep):
+                continue
+            fileinfo = ''
+            try:
+                file_info = subprocess.check_output(['file', '-b', fullfilename])
+            except Exception as e:
+                pass
+
+            if 'ELF ' not in file_info:
+                continue
+            if filename.endswith('.debug'):
+                continue
+            exec_files.append(filename)
 
         return exec_files
 
