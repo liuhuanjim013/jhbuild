@@ -433,9 +433,7 @@ them into the prefix."""
 
         ldd_all_fullfilename = set()
         ldd_queue_fullfilename = set()
-
         # first we queue all the exec we found
-
         ldd_queue_fullfilename.update(os.path.join(destdir_prefix, filename) for filename in exec_files)
         ldd_all_fullfilename.update(ldd_queue_fullfilename)
         while ldd_queue_fullfilename:
