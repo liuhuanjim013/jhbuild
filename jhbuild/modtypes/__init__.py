@@ -408,14 +408,14 @@ them into the prefix."""
         """
         realfilename = os.path.realpath(filename)
         with open(os.devnull, 'w') as f:
-            dpkg_output, dpkg_error = subprocess.Popen(['dpkg', '-S', filename, realfilename], stdout = subprocess.PIPE, stderr = f).communicate()
+            dpkg_stdout, dpkg_stderr = subprocess.Popen(['dpkg', '-S', filename, realfilename], stdout = subprocess.PIPE, stderr = f).communicate()
 
-        if not dpkg_output:
+        if not dpkg_stdout:
             logging.error(_("dpkg -S no path found matching pattern: %s or %s" % (filename, realfilename)))
 
         # format like this: libselinux1:amd64: /lib/x86_64-linux-gnu/libselinux.so.1 or libxdmcp6:amd64: /lib/libxdmcp6:amd64
         # return the name before colon
-        return dpkg_output.strip().split(' ')[0][:-len(':')]
+        return dpkg_stdout.strip().split(' ')[0][:-len(':')]
 
     def _get_all_versioned_pkgs(self):
         """ get all pkgs from `dpkg -l` command. return a dict
