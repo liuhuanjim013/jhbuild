@@ -489,7 +489,7 @@ them into the prefix."""
         # write sysdeps to disk
         fileutils.mkdir_with_parents(os.path.join(destdir_prefix, '.jhbuild', 'sysdeps'))
         writer = fileutils.SafeWriter(os.path.join(destdir_prefix, '.jhbuild', 'sysdeps', self.name))
-        writer.fp.write("\n".join(sysdeps))
+        writer.fp.write('\n'.join(sysdeps))
         writer.commit()
 
         new_contents = fileutils.accumulate_dirtree_contents(destdir_prefix)
