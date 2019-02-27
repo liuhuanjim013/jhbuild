@@ -371,68 +371,51 @@ them into the prefix."""
 
         return exec_files
 
-    def _find_exec_ldd(self, destdir_prefix, filename):
-        filefullname = os.path.join(destdir_prefix, filename)
-
+    def _find_exec_ldd(self, fullfilename, destdir_prefix, installroot):
         env = os.environ.copy()
         env['LD_LIBRARY_PATH'] = ":".join([
             os.path.join(destdir_prefix, 'lib'),
-            os.path.join(destdir_prefix, 'bin'),
+            os.path.join(os.path.join(installroot, 'lib')),
+            os.path.join(os.path.dirname(fullfilename))  # for .so link to the file under same dir
         ])
-        output = subprocess.check_output(['ldd', filefullname], env=env)
+        output = subprocess.check_output(['ldd', fullfilename], env=env)
 
         results = [] # result value to return
 
+        libs_notfound = []
         for line in output.splitlines():
             # remove leading space
             line_stripped = line.strip()
             if '=> not found' in line_stripped:
-                logging.info(line_stripped)
-                continue
-            if 'no version information' in line_stripped:
-                logging.info(line_stripped)
+                libs_notfound.append(line_stripped)
                 continue
 
-            # bunch of orignal sed scripts
-            # list all lines with slash(/)  sed:  /\//!d;
-            if '/' in line_stripped:
-                # sed: /linux-gate/d;
-                if '/linux-gate' not in line_stripped:
-                    # remove `=>` and leading blank after `=>`, remove the hex after path. Only absorb the path
-                    if '=> ' in line_stripped:
-                        result = line_stripped[line_stripped.find('=> ') + len('=> '):]
-                        result = result.split(' ')[0]
-                        results.append(result)
+            line_splitted = line_stripped.split(' ')
+            if '=>' in line_splitted:
+                try:
+                    result = line_splitted[2]
+                except KeyError as e:
+                    logging.error(_("%s has error" % line))
+                results.append(result)
+
+        if libs_notfound:
+            logging.info(_("%s missing following libs: %s" % (fullfilename, notfound)))
+
         return results
 
     def _find_pkg(self, filename):
         """ Find debian packages
         """
         realfilename = os.path.realpath(filename)
-        dpkg_output = ''
-        try:
-            with open(os.devnull, 'w') as f:
-                dpkg_output = subprocess.check_output(['dpkg', '-S', realfilename], stderr=f) # strip remove the ending \n
-        except subprocess.CalledProcessError as e:
-            pass
+        with open(os.devnull, 'w') as f:
+            dpkg_output, dpkg_error = subprocess.Popen(['dpkg', '-S', filename, realfilename], stdout = subprocess.PIPE, stderr = f).communicate()
 
         if not dpkg_output:
-            try:
-                with open(os.devnull, 'w') as f:
-                    dpkg_output = subprocess.check_output(['dpkg', '-S', filename], stderr=f)
-            except subprocess.CalledProcessError as e:
-                pass
-
-        if not dpkg_output:
-            try:
-                # special case like: /usr/lib/x86_64-linux-gnu/libc.so.6 -> libc-2.24.so
-                dpkg_output = subprocess.check_output(['dpkg', '-S', os.path.basename(realfilename)])
-            except subprocess.CalledProcessError as e:
-                logging.error(e)
+            logging.error(_("dpkg -S no path found matching pattern %s or %s" % (filename, realfilename)))
 
         # format like this: libselinux1:amd64: /lib/x86_64-linux-gnu/libselinux.so.1 or libxdmcp6:amd64: /lib/libxdmcp6:amd64
         # return the name before colon
-        return dpkg_output.split(' ')[0][:-len(':')]
+        return dpkg_output.strip().split(' ')[0][:-len(':')]
 
     def _get_all_versioned_pkgs(self):
         """ get all pkgs from `dpkg -l` command. return a dict
@@ -454,14 +437,14 @@ them into the prefix."""
         for filename in exec_files:
             if filename in ldd_paths:
                 continue
-            results = self._find_exec_ldd(destdir_prefix, filename)
+            results = self._find_exec_ldd(os.path.join(destdir_prefix, filename), destdir_prefix, installroot)
             difference = ldd_paths.union(results).difference(ldd_paths)
             while difference:
                 ldd_paths.update(difference)
                 next_filename = difference.pop()
                 if next_filename in difference: # already in queue.
                     continue
-                results = self._find_exec_ldd(destdir_prefix, next_filename)
+                results = self._find_exec_ldd(next_filename, destdir_prefix, installroot)
                 difference = ldd_paths.union(results).difference(ldd_paths).union(difference)
 
         path_filtered = []
