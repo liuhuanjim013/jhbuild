@@ -377,7 +377,7 @@ them into the prefix."""
 
         for line in output.splitlines():
             # remove leading space
-            line_stripped = line.lstrip()
+            line_stripped = line.strip()
             if '=> not found' in line_stripped:
                 logging.info(line_stripped)
                 continue
@@ -415,19 +415,21 @@ them into the prefix."""
                 dpkg_output = subprocess.check_output(['dpkg', '-S', filename.strip()])
             except subprocess.CalledProcessError as e:
                 logging.error(e)
-
-        # format like this: libselinux1:amd64: /lib/x86_64-linux-gnu/libselinux.so.1
+        # format like this: libselinux1:amd64: /lib/x86_64-linux-gnu/libselinux.so.1 or libxdmcp6:amd64: /lib/libxdmcp6:amd64
         # return the name before colon
-        return dpkg_output.split(':')[0]
+        return dpkg_output.split(' ')[0][:-len(':')]
 
-    def _find_versioned_pkg(self, pkg_name):
+    def _get_all_versioned_pkgs(self):
+        """ get all pkgs from `dpkg -l` command. return a dict
+        """
         dpkg_list_output = subprocess.check_output(['dpkg', '-l'])
         packages = dpkg_list_output.splitlines()
-        results = []
+        results = {}
         for pkg in packages:
-            if pkg.startswith('ii  %s:' % pkg_name) or pkg.startswith('ii  %s ' % pkg_name):
-                pkg_filtered = filter(None, pkg.split(' '))
-                results.append(pkg_filtered[1] + '=' + pkg_filtered[2])
+            if not pkg.startswith('ii'):
+                continue
+            pkg_filtered = filter(None, pkg.split(' '))
+            results[pkg_filtered[1]] = pkg_filtered[2]
         return results
 
     def _dump_systemdeps(self, destdir_prefix, installroot):
@@ -465,9 +467,11 @@ them into the prefix."""
             path_filtered.append(path)
 
         versioned_pkgs = []
+        all_versioned_pkgs = self._get_all_versioned_pkgs()
         for path in path_filtered:
             pkg_name = self._find_pkg(path)
-            versioned_pkgs.extend(self._find_versioned_pkg(pkg_name))
+            if pkg_name in all_versioned_pkgs:
+                versioned_pkgs.append(pkg_name + '=' + all_versioned_pkgs[pkg_name])
         return sorted(versioned_pkgs)
 
     def process_install(self, buildscript, revision):
