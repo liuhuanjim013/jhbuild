@@ -303,6 +303,7 @@ them into the prefix."""
                 errors.append(str(e))
         return num_copied
 
+
     def _strip_debug_symbols(self, destdir_prefix, installroot):
         assert self.supports_stripping_debug_symbols
 
@@ -346,6 +347,119 @@ them into the prefix."""
             os.symlink(os.path.join(installroot, 'debug', dirname, basename + '.debug'), fulldebuglinkname)
 
 
+    def _find_exec(self, destdir_prefix):
+        exec_files = []
+        # filter out files to strip
+        for filename in fileutils.accumulate_dirtree_contents(destdir_prefix):
+            dirname, basename = os.path.split(filename)
+            fullfilename = os.path.join(destdir_prefix, dirname, basename)
+            if not os.path.isfile(fullfilename) or os.path.islink(fullfilename):
+                continue
+            if not os.access(fullfilename, os.X_OK) and 'so' not in basename.split(os.path.extsep):
+                continue
+            fileinfo = ''
+            try:
+                file_info = subprocess.check_output(['file', '-b', fullfilename])
+            except Exception as e:
+                pass
+
+            if 'ELF ' not in file_info:
+                continue
+            if filename.endswith('.debug'):
+                continue
+            exec_files.append(filename)
+
+        return exec_files
+
+    def _find_exec_ldd(self, fullfilename, destdir_prefix, installroot):
+        env = os.environ.copy()
+        env['LD_LIBRARY_PATH'] = ":".join([
+            os.path.join(destdir_prefix, 'lib'),
+            os.path.join(os.path.join(installroot, 'lib')),
+            os.path.join(os.path.dirname(fullfilename))  # for .so link to the file under same dir
+        ])
+        output = subprocess.check_output(['ldd', fullfilename], env=env)
+        results = [] # result value to return
+        libs_notfound = []
+        for line in output.splitlines():
+            # remove leading space
+            line_stripped = line.strip()
+            if '=> not found' in line_stripped:
+                libs_notfound.append(line_stripped)
+                continue
+
+            line_splitted = line_stripped.split(' ')
+            if '=>' in line_splitted:
+                try:
+                    result = line_splitted[2]
+                except KeyError as e:
+                    logging.error(_("%s has error" % line))
+                results.append(result)
+
+        if libs_notfound:
+            logging.info(_("%s missing following libs: %s" % (fullfilename, notfound)))
+
+        return results
+
+    def _find_pkg(self, filename):
+        """ Find debian packages
+        """
+        realfilename = os.path.realpath(filename)
+        with open(os.devnull, 'w') as f:
+            dpkg_stdout, dpkg_stderr = subprocess.Popen(['dpkg', '-S', filename, realfilename], stdout = subprocess.PIPE, stderr = f).communicate()
+
+        if not dpkg_stdout:
+            logging.error(_("dpkg -S no path found matching pattern: %s or %s" % (filename, realfilename)))
+
+        # format like this: libselinux1:amd64: /lib/x86_64-linux-gnu/libselinux.so.1 or libxdmcp6:amd64: /lib/libxdmcp6:amd64
+        # return the name before colon
+        return dpkg_stdout.strip().split(' ')[0][:-len(':')]
+
+    def _get_all_versioned_pkgs(self):
+        """ get all pkgs from `dpkg -l` command. return a dict
+        """
+        dpkg_list_output = subprocess.check_output(['dpkg', '-l'])
+        packages = dpkg_list_output.splitlines()
+        results = {}
+        for pkg in packages:
+            if not pkg.startswith('ii'):
+                continue
+            pkg_filtered = filter(None, pkg.split(' '))
+            results[pkg_filtered[1]] = pkg_filtered[2]
+        return results
+
+    def _dump_systemdeps(self, destdir_prefix, installroot):
+        exec_files = self._find_exec(destdir_prefix)
+
+        ldd_all_fullfilename = set()
+        ldd_queue_fullfilename = set()
+        # first we queue all the exec we found
+        ldd_queue_fullfilename.update(os.path.join(destdir_prefix, filename) for filename in exec_files)
+        ldd_all_fullfilename.update(ldd_queue_fullfilename)
+        while ldd_queue_fullfilename:
+            fullfilename = ldd_queue_fullfilename.pop()
+            results = self._find_exec_ldd(fullfilename, destdir_prefix, installroot)
+            difference = set(results).difference(ldd_all_fullfilename) # find out which isn't in ldd_all_fullfilename
+            ldd_queue_fullfilename.update(difference)
+            ldd_all_fullfilename.update(difference)
+
+        fullfilenames_filtered = []
+        for fullfilename in ldd_all_fullfilename:
+            # exclude binaries found inside the current working directory
+            if fullfilename.startswith(destdir_prefix) or fullfilename.startswith(installroot):
+                continue
+            fullfilenames_filtered.append(fullfilename)
+
+        versioned_pkgs = {}
+        all_versioned_pkgs = self._get_all_versioned_pkgs()
+        for fullfilename in fullfilenames_filtered:
+            pkg_name = self._find_pkg(fullfilename)
+            if pkg_name in all_versioned_pkgs:
+                versioned_pkgs[pkg_name] = all_versioned_pkgs[pkg_name]
+            else:
+                logging.warn(_('filename: %s, package %s not found in all_packages_version' % (fullfilename, pkg_name)))
+        return versioned_pkgs
+
     def process_install(self, buildscript, revision):
         assert self.supports_install_destdir
         destdir = self.get_destdir(buildscript)
@@ -364,6 +478,17 @@ them into the prefix."""
         if self.supports_stripping_debug_symbols:
             logging.info(_('Stripping debug symbols...'))
             self._strip_debug_symbols(destdir_prefix, buildscript.config.prefix)
+
+        # dump sysdeps
+        logging.info(_('Generating sysdeps...'))
+        sysdeps = self._dump_systemdeps(destdir_prefix, buildscript.config.prefix)
+
+        # write sysdeps to disk
+        fileutils.mkdir_with_parents(os.path.join(destdir_prefix, '.jhbuild', 'sysdeps'))
+        writer = fileutils.SafeWriter(os.path.join(destdir_prefix, '.jhbuild', 'sysdeps', self.name))
+        results = [pkg_name + '=' + pkg_version for pkg_name, pkg_version in sysdeps.items()]
+        writer.fp.write('\n'.join(results))
+        writer.commit()
 
         new_contents = fileutils.accumulate_dirtree_contents(destdir_prefix)
         errors = []
