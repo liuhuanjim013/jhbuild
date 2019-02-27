@@ -453,15 +453,6 @@ them into the prefix."""
             # exclude binaries found inside the current working directory
             if path.startswith(destdir_prefix) or path.startswith(installroot):
                 continue
-            # exclude binaries found inside the manifests
-            exclued = False
-            for content in new_contents:
-                if path in os.path.join(destdir_prefix, content) :
-                    exclude = True
-                    break
-            if exclued:
-                continue
-
             path_filtered.append(path)
 
         versioned_pkgs = []
