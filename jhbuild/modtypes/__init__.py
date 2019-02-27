@@ -379,9 +379,7 @@ them into the prefix."""
             os.path.join(os.path.dirname(fullfilename))  # for .so link to the file under same dir
         ])
         output = subprocess.check_output(['ldd', fullfilename], env=env)
-
         results = [] # result value to return
-
         libs_notfound = []
         for line in output.splitlines():
             # remove leading space
