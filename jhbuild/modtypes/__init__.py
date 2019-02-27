@@ -433,35 +433,36 @@ them into the prefix."""
     def _dump_systemdeps(self, destdir_prefix, installroot):
         exec_files = self._find_exec(destdir_prefix)
 
-        ldd_paths = set()
-        for filename in exec_files:
-            if filename in ldd_paths:
-                continue
-            results = self._find_exec_ldd(os.path.join(destdir_prefix, filename), destdir_prefix, installroot)
-            difference = ldd_paths.union(results).difference(ldd_paths)
-            while difference:
-                ldd_paths.update(difference)
-                next_filename = difference.pop()
-                if next_filename in difference: # already in queue.
-                    continue
-                results = self._find_exec_ldd(next_filename, destdir_prefix, installroot)
-                difference = ldd_paths.union(results).difference(ldd_paths).union(difference)
+        ldd_all_fullfilename = set()
+        ldd_queue_fullfilename = set()
 
-        path_filtered = []
-        new_contents = fileutils.accumulate_dirtree_contents(destdir_prefix)
-        for path in ldd_paths:
+        # first we queue all the exec we found
+
+        ldd_queue_fullfilename.update(os.path.join(destdir_prefix, filename) for filename in exec_files)
+        ldd_all_fullfilename.update(ldd_queue_fullfilename)
+        while ldd_queue_fullfilename:
+            fullfilename = ldd_queue_fullfilename.pop()
+            results = self._find_exec_ldd(fullfilename, destdir_prefix, installroot)
+            difference = set(results).difference(ldd_all_fullfilename) # find out which isn't in ldd_all_fullfilename
+            ldd_queue_fullfilename.update(difference)
+            ldd_all_fullfilename.update(difference)
+
+        fullfilenames_filtered = []
+        for fullfilename in ldd_all_fullfilename:
             # exclude binaries found inside the current working directory
-            if path.startswith(destdir_prefix) or path.startswith(installroot):
+            if fullfilename.startswith(destdir_prefix) or fullfilename.startswith(installroot):
                 continue
-            path_filtered.append(path)
+            fullfilenames_filtered.append(fullfilename)
 
-        versioned_pkgs = []
+        versioned_pkgs = {}
         all_versioned_pkgs = self._get_all_versioned_pkgs()
-        for path in path_filtered:
-            pkg_name = self._find_pkg(path)
+        for fullfilename in fullfilenames_filtered:
+            pkg_name = self._find_pkg(fullfilename)
             if pkg_name in all_versioned_pkgs:
-                versioned_pkgs.append(pkg_name + '=' + all_versioned_pkgs[pkg_name])
-        return sorted(versioned_pkgs)
+                versioned_pkgs[pkg_name] = all_versioned_pkgs[pkg_name]
+            else:
+                logging.warn(_('filename: %s, package %s not found in all_packages_version' % (fullfilename, pkg_name)))
+        return versioned_pkgs
 
     def process_install(self, buildscript, revision):
         assert self.supports_install_destdir
@@ -489,7 +490,8 @@ them into the prefix."""
         # write sysdeps to disk
         fileutils.mkdir_with_parents(os.path.join(destdir_prefix, '.jhbuild', 'sysdeps'))
         writer = fileutils.SafeWriter(os.path.join(destdir_prefix, '.jhbuild', 'sysdeps', self.name))
-        writer.fp.write('\n'.join(sysdeps))
+        results = [pkg_name + '=' + pkg_version for pkg_name, pkg_version in sysdeps.items()]
+        writer.fp.write('\n'.join(results))
         writer.commit()
 
         new_contents = fileutils.accumulate_dirtree_contents(destdir_prefix)
