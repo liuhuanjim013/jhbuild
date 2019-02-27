@@ -400,21 +400,28 @@ them into the prefix."""
     def _find_pkg(self, filename):
         """ Find debian packages
         """
-        readlink_output = subprocess.check_output(['readlink', '-f', filename])
-        while os.path.islink(filename):
-            filename = os.readlink(filename)
+        realfilename = os.path.realpath(filename)
         dpkg_output = ''
         try:
             with open(os.devnull, 'w') as f:
-                dpkg_output = subprocess.check_output(['dpkg', '-S', readlink_output.strip()], stderr=f) # strip remove the ending \n
+                dpkg_output = subprocess.check_output(['dpkg', '-S', realfilename], stderr=f) # strip remove the ending \n
         except subprocess.CalledProcessError as e:
             pass
 
         if not dpkg_output:
             try:
-                dpkg_output = subprocess.check_output(['dpkg', '-S', filename.strip()])
+                with open(os.devnull, 'w') as f:
+                    dpkg_output = subprocess.check_output(['dpkg', '-S', filename], stderr=f)
+            except subprocess.CalledProcessError as e:
+                pass
+
+        if not dpkg_output:
+            try:
+                # special case like: /usr/lib/x86_64-linux-gnu/libc.so.6 -> libc-2.24.so
+                dpkg_output = subprocess.check_output(['dpkg', '-S', os.path.basename(realfilename)])
             except subprocess.CalledProcessError as e:
                 logging.error(e)
+
         # format like this: libselinux1:amd64: /lib/x86_64-linux-gnu/libselinux.so.1 or libxdmcp6:amd64: /lib/libxdmcp6:amd64
         # return the name before colon
         return dpkg_output.split(' ')[0][:-len(':')]
