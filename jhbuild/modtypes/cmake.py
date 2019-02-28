@@ -51,7 +51,7 @@ class CMakeModule(MakeModule, NinjaModule, DownloadableModule):
         self.skip_install_phase = skip_install_phase
         self.force_non_srcdir_builds = False
         self.supports_install_destdir = True
-        self.use_ninja = True
+        self.use_ninja = False
         self.cmakedir = None
 
     def eval_args(self, args):
@@ -157,7 +157,7 @@ class CMakeModule(MakeModule, NinjaModule, DownloadableModule):
     def xml_tag_and_attrs(self):
         return 'cmake', [('id', 'name', None),
                          ('skip-install', 'skip_install_phase', False),
-                         ('use-ninja', 'use_ninja', True),
+                         ('use-ninja', 'use_ninja', False),
                          ('cmakedir', None),
                          ('supports-non-srcdir-builds',
                           'supports_non_srcdir_builds', True),
@@ -195,8 +195,8 @@ def parse_cmake(node, config, uri, repositories, default_repo):
                 (node.getAttribute('force-non-srcdir-builds') != 'no')
     if node.hasAttribute('use-ninja'):
         use_ninja = node.getAttribute('use-ninja')
-        if use_ninja.lower() in ('false', 'no'):
-            instance.use_ninja = False
+        if use_ninja.lower() in ('true', 'yes'):
+            instance.use_ninja = True
     if node.hasAttribute('cmakedir'):
         instance.cmakedir = node.getAttribute('cmakedir')
 
