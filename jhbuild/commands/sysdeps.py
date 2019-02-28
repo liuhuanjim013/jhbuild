@@ -19,7 +19,6 @@
 
 from optparse import make_option
 import logging
-import os.path
 import subprocess
 import sys
 
@@ -47,10 +46,58 @@ class cmd_sysdeps(cmd_build):
                         help=_('Machine readable list of all sysdeps')),
             make_option('--dump-runtime',
                         action='store_true', default=False,
-                        help=_('Machine readable list of runtime sysdeps')),
+                        help=_('Machine readable list of runtime sysdeps as system package name and versions')),
             make_option('--install',
                         action='store_true', default=False,
                         help=_('Install pkg-config modules via system'))])
+
+    def _get_all_system_packages(self):
+        """ get all pkgs from `dpkg -l` command. return a dict
+        """
+        results = {}
+        for line in subprocess.check_output(['dpkg', '-l']).splitlines():
+            if not line.startswith('ii'):
+                continue
+            parts = line.split()
+            results[parts[1]] = parts[2]
+        return results
+
+    def _find_system_packages(self, systemdependencies):
+        patterns = set()
+        for dep_type, value, altdeps in systemdependencies:
+            if dep_type == 'path':
+                patterns.add(value)
+            for dep_type2, value2, altdeps2 in altdeps:
+                if dep_type2 == 'path':
+                    patterns.add(value2)
+
+        if not patterns:
+            return {}, []
+
+        stdout, stderr = subprocess.Popen(['dpkg', '-S'] + list(patterns), stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+        found = {}
+        for line in stdout.splitlines():
+            parts = line.strip().split(': ')
+            if len(parts) == 2:
+                found[parts[1]] = parts[0].split(', ')
+
+        # figure out what is not found
+        notfound = []
+        for dep_type, value, altdeps in systemdependencies:
+            if dep_type == 'path':
+                if value.rstrip('/') in found:
+                    continue
+            altdepfound = False
+            for dep_type2, value2, altdeps2 in altdeps:
+                if dep_type2 == 'path':
+                    if value2.rstrip('/') in found:
+                        altdepfound = True
+                        break
+            if altdepfound:
+                continue
+            notfound.append((dep_type, value, altdeps))
+
+        return found, notfound
 
     def run(self, config, options, args, help=None):
 
@@ -88,21 +135,34 @@ class cmd_sysdeps(cmd_build):
                             for dep_type, value, empty in altdeps:
                                 sys.stdout.write(',{0}:{1}'.format(dep_type, value))
                             sys.stdout.write('\n')
-
             return
 
         if options.dump_runtime:
+            # dump runtime packages with version
+            systemdependencies = []
+            for module in module_list:
+                package_entry = module_set.packagedb.get(module.name)
+                if package_entry:
+                    systemdependencies += package_entry.systemdependencies
+
             for module in module_list:
                 if isinstance(module, SystemModule) and module.runtime:
-                    if module.pkg_config is not None:
-                        print 'pkgconfig:{0}'.format(module.pkg_config[:-3]) # remove .pc
+                    systemdependencies += module.systemdependencies or []
 
-                    if module.systemdependencies is not None:
-                        for dep_type, value, altdeps in module.systemdependencies:
-                            sys.stdout.write('{0}:{1}'.format(dep_type, value))
-                            for dep_type, value, empty in altdeps:
-                                sys.stdout.write(',{0}:{1}'.format(dep_type, value))
-                            sys.stdout.write('\n')
+            found, notfound = self._find_system_packages(systemdependencies)
+            # TODO: print out notfound
+
+            versionedpackages = {}
+            allpackages = self._get_all_system_packages()
+            for pattern, packages in found.iteritems():
+                for package in packages:
+                    if package in allpackages:
+                        versionedpackages[package] = allpackages[package]
+                        break
+
+            # output the versioned packages
+            for package, version in sorted(versionedpackages.items()):
+                sys.stdout.write('%s=%s\n' % (package, version))
 
             return
 

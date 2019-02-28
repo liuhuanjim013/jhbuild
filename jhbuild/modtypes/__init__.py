@@ -317,10 +317,10 @@ them into the prefix."""
                 continue
             fileinfo = ''
             try:
-                fileinfo = subprocess.check_output(['file', '-b', fullfilename])
+                fileinfo = subprocess.check_output(['file', '-b', fullfilename]).strip()
             except Exception:
                 pass
-            if 'ELF ' not in fileinfo or ', not stripped' not in fileinfo:
+            if not fileinfo.startswith('ELF ') or not fileinfo.endswith(', not stripped'):
                 continue
 
             # make sure file is writable
@@ -348,8 +348,8 @@ them into the prefix."""
             os.symlink(os.path.join(installroot, 'debug', dirname, basename + '.debug'), fulldebuglinkname)
 
 
-    def _find_exec(self, destdir_prefix):
-        exec_files = []
+    def _find_executables(self, destdir_prefix):
+        executables = []
         # filter out files to strip
         for filename in fileutils.accumulate_dirtree_contents(destdir_prefix):
             dirname, basename = os.path.split(filename)
@@ -358,21 +358,19 @@ them into the prefix."""
                 continue
             if not os.access(fullfilename, os.X_OK) and 'so' not in basename.split(os.path.extsep):
                 continue
-            fileinfo = ''
-            try:
-                file_info = subprocess.check_output(['file', '-b', fullfilename])
-            except Exception as e:
-                pass
-
-            if 'ELF ' not in file_info:
-                continue
             if filename.endswith('.debug'):
                 continue
-            exec_files.append(filename)
+            fileinfo = ''
+            try:
+                fileinfo = subprocess.check_output(['file', '-b', fullfilename]).strip()
+            except Exception:
+                pass
+            if not fileinfo.startswith('ELF '):
+                continue
+            executables.append(filename)
+        return executables
 
-        return exec_files
-
-    def _find_exec_ldd(self, fullfilename, destdir_prefix, installroot):
+    def _find_executable_dependencies(self, fullfilename, destdir_prefix, installroot):
         env = os.environ.copy()
         env['LD_LIBRARY_PATH'] = ":".join([
             os.path.join(destdir_prefix, 'lib'),
@@ -380,86 +378,57 @@ them into the prefix."""
             os.path.join(os.path.dirname(fullfilename))  # for .so link to the file under same dir
         ])
         output = subprocess.check_output(['ldd', fullfilename], env=env)
-        results = [] # result value to return
-        libs_notfound = []
+        found = []
+        notfound = []
         for line in output.splitlines():
-            # remove leading space
-            line_stripped = line.strip()
-            if '=> not found' in line_stripped:
-                libs_notfound.append(line_stripped)
+            if '=>' not in line:
                 continue
+            lib, rest = map(lambda x: x.strip(), line.split('=>'))
+            if 'not found' in rest:
+                notfound.append(lib)
+            found.append(rest.split()[0])
 
-            line_splitted = line_stripped.split(' ')
-            if '=>' in line_splitted:
-                try:
-                    result = line_splitted[2]
-                except KeyError as e:
-                    logging.error(_("%s has error" % line))
-                results.append(result)
+        return found, notfound
 
-        if libs_notfound:
-            logging.info(_("%s missing following libs: %s" % (fullfilename, notfound)))
+    def _find_executable_system_dependencies(self, destdir_prefix, installroot):
+        notfounds = {}
+        executables = self._find_executables(destdir_prefix)
 
-        return results
-
-    def _find_pkg(self, filename):
-        """ Find debian packages
-        """
-        realfilename = os.path.realpath(filename)
-        with open(os.devnull, 'w') as f:
-            dpkg_stdout, dpkg_stderr = subprocess.Popen(['dpkg', '-S', filename, realfilename], stdout = subprocess.PIPE, stderr = f).communicate()
-
-        if not dpkg_stdout:
-            logging.error(_("dpkg -S no path found matching pattern: %s or %s" % (filename, realfilename)))
-
-        # format like this: libselinux1:amd64: /lib/x86_64-linux-gnu/libselinux.so.1 or libxdmcp6:amd64: /lib/libxdmcp6:amd64
-        # return the name before colon
-        return dpkg_stdout.strip().split(' ')[0][:-len(':')]
-
-    def _get_all_versioned_pkgs(self):
-        """ get all pkgs from `dpkg -l` command. return a dict
-        """
-        dpkg_list_output = subprocess.check_output(['dpkg', '-l'])
-        packages = dpkg_list_output.splitlines()
-        results = {}
-        for pkg in packages:
-            if not pkg.startswith('ii'):
-                continue
-            pkg_filtered = filter(None, pkg.split(' '))
-            results[pkg_filtered[1]] = pkg_filtered[2]
-        return results
-
-    def _dump_systemdeps(self, destdir_prefix, installroot):
-        exec_files = self._find_exec(destdir_prefix)
-
-        ldd_all_fullfilename = set()
-        ldd_queue_fullfilename = set()
         # first we queue all the exec we found
-        ldd_queue_fullfilename.update(os.path.join(destdir_prefix, filename) for filename in exec_files)
-        ldd_all_fullfilename.update(ldd_queue_fullfilename)
-        while ldd_queue_fullfilename:
-            fullfilename = ldd_queue_fullfilename.pop()
-            results = self._find_exec_ldd(fullfilename, destdir_prefix, installroot)
-            difference = set(results).difference(ldd_all_fullfilename) # find out which isn't in ldd_all_fullfilename
-            ldd_queue_fullfilename.update(difference)
-            ldd_all_fullfilename.update(difference)
+        executablequeue = set(os.path.join(destdir_prefix, filename) for filename in executables)
+        allexecutables = set(executablequeue)
 
-        fullfilenames_filtered = []
-        for fullfilename in ldd_all_fullfilename:
-            # exclude binaries found inside the current working directory
-            if fullfilename.startswith(destdir_prefix) or fullfilename.startswith(installroot):
-                continue
-            fullfilenames_filtered.append(fullfilename)
+        while executablequeue:
+            # dequeue and find dependency
+            fullfilename = executablequeue.pop()
+            found, notfound = self._find_executable_dependencies(fullfilename, destdir_prefix, installroot)
 
-        versioned_pkgs = {}
-        all_versioned_pkgs = self._get_all_versioned_pkgs()
-        for fullfilename in fullfilenames_filtered:
-            pkg_name = self._find_pkg(fullfilename)
-            if pkg_name in all_versioned_pkgs:
-                versioned_pkgs[pkg_name] = all_versioned_pkgs[pkg_name]
-            else:
-                logging.warn(_('filename: %s, package %s not found in all_packages_version' % (fullfilename, pkg_name)))
-        return versioned_pkgs
+            # remember the not founds
+            if notfound:
+                notfounds[fullfilename] = notfound
+
+            # queue the newly found
+            executablequeue.update(set(found).difference(allexecutables))
+
+            # add everything to all set
+            allexecutables.update(found)
+
+        # filter out executables that are inside of the prefix or installroot
+        filteredexecutables = filter(
+            lambda fullfilename: not fullfilename.startswith(destdir_prefix) and not fullfilename.startswith(installroot),
+            allexecutables
+        )
+
+        # for each file, we may depend on the symlink or the linked real file
+        # here we follow the sysdep format
+        systemdependencies = []
+        for fullfilename in filteredexecutables:
+            altdeps = []
+            realfilename = os.path.realpath(fullfilename)
+            if fullfilename != realfilename:
+                altdeps.append(('path', realfilename, []))
+            systemdependencies.append(('path', fullfilename, altdeps))
+        return systemdependencies, notfounds
 
     def process_install(self, buildscript, revision):
         assert self.supports_install_destdir
@@ -475,21 +444,17 @@ them into the prefix."""
         broken_name = destdir + '-broken'
         destdir_prefix = os.path.join(destdir, stripped_prefix)
 
-        # strip debug info before install
+        # simon: strip debug info before install
         if self.supports_stripping_debug_symbols:
-            logging.info(_('Stripping debug symbols...'))
+            logging.info(_('Stripping debug symbols ...'))
             self._strip_debug_symbols(destdir_prefix, buildscript.config.prefix)
 
-        # dump sysdeps
-        logging.info(_('Generating sysdeps...'))
-        sysdeps = self._dump_systemdeps(destdir_prefix, buildscript.config.prefix)
-
-        # write sysdeps to disk
-        fileutils.mkdir_with_parents(os.path.join(destdir_prefix, '.jhbuild', 'sysdeps'))
-        writer = fileutils.SafeWriter(os.path.join(destdir_prefix, '.jhbuild', 'sysdeps', self.name))
-        results = [pkg_name + '=' + pkg_version for pkg_name, pkg_version in sysdeps.items()]
-        writer.fp.write('\n'.join(results))
-        writer.commit()
+        # simon: dump sysdeps
+        logging.info(_('Finding system dependencies ...'))
+        systemdependencies, notfounds = self._find_executable_system_dependencies(destdir_prefix, buildscript.config.prefix)
+        if notfounds:
+            for lib, deps in notfounds.iteritems():
+                logging.warn(_('Missing system dependency: %s depends on: %s') % (lib, ', '.join(deps)))
 
         new_contents = fileutils.accumulate_dirtree_contents(destdir_prefix)
         errors = []
@@ -566,7 +531,8 @@ them into the prefix."""
 
             buildscript.moduleset.packagedb.add(self.name, revision or '',
                                                 new_contents,
-                                                self.configure_cmd)
+                                                self.configure_cmd,
+                                                systemdependencies)
 
         if errors:
             raise CommandError(_('Install encountered errors: %(num)d '
