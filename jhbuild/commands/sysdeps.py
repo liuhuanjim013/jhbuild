@@ -31,7 +31,7 @@ from jhbuild.utils.systeminstall import SystemInstall
 from jhbuild.modtypes.systemmodule import SystemModule
 from jhbuild.versioncontrol.tarball import TarballBranch
 from jhbuild.utils import cmds
-import jhbuild.utils.fileutils as fileutils
+from jhbuild.utils import fileutils
 
 class cmd_sysdeps(cmd_build):
     doc = N_('Check and install tarball dependencies using system packages')
@@ -49,9 +49,9 @@ class cmd_sysdeps(cmd_build):
             make_option('--dump-runtime',
                         action='store_true', default=False,
                         help=_('Machine readable list of runtime sysdeps')),
-            make_option('--dump-mujin-sysdeps',
-                         action='store_true', default=False,
-                         help=_('dump all mujin sysdeps with version')),
+            make_option('--dump-runtime-packages',
+                        action='store_true', default=False,
+                        help=_('Machine readable list of runtime packages with version')),
             make_option('--install',
                         action='store_true', default=False,
                         help=_('Install pkg-config modules via system'))])
@@ -179,8 +179,8 @@ class cmd_sysdeps(cmd_build):
             sys.stdout.write('\n'.join(runtimes))
             return
 
-        if options.dump_mujin_sysdeps:
-            # dump all mujin installed packages deps
+        if options.dump_runtime_packages:
+            # dump runtime packages with version
             pkg_sysdeps_dir = os.path.join(module_set.config.prefix, '.jhbuild', 'sysdeps')
             pkg_sysdeps = set()
             for pkg_deps_filename in fileutils.accumulate_dirtree_contents(pkg_sysdeps_dir):

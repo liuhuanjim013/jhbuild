@@ -74,6 +74,29 @@ class PackageEntry:
 
     manifest = property(get_manifest, set_manifest)
 
+    _systemdependencies = None
+    def get_systemdependencies(self):
+        if self._systemdependencies is not None:
+            return self._systemdependencies
+        if not os.path.exists(os.path.join(self.dirname, 'sysdeps', self.package)):
+            return []
+        self._systemdependencies = []
+        for line in file(os.path.join(self.dirname, 'sysdeps', self.package)):
+            deps = []
+            for part in line.strip().decode('utf-8').split(','):
+                if part.startswith('path:'):
+                    deps.append(('path', part[len('path:'):], []))
+            if deps:
+                dep_type, value, altdeps = deps[0]
+                altdeps = deps[1:]
+                self._systemdependencies.append((dep_type, value, altdeps))
+        return self._systemdependencies
+
+    def set_systemdependencies(self, value):
+        self._systemdependencies = value
+
+    systemdependencies = property(get_systemdependencies, set_systemdependencies)
+
     def write(self):
         # write info file
         fileutils.mkdir_with_parents(os.path.join(self.dirname, 'info'))
@@ -88,12 +111,27 @@ class PackageEntry:
         writer.fp.write('\n'.join(self.manifest).encode('utf-8', 'backslashreplace') + '\n')
         writer.commit()
 
+        # write sysdeps
+        fileutils.mkdir_with_parents(os.path.join(self.dirname, 'sysdeps'))
+        writer = fileutils.SafeWriter(os.path.join(self.dirname, 'sysdeps', self.package))
+        writer.fp.write('\n'.join([
+            ','.join(['%s:%s' % (dep_type, value)] + [
+                '%s:%s' % (dep_type2, value2)
+                for dep_type2, value2, altdeps2 in altdeps
+            ])
+            for dep_type, value, altdeps in self.systemdependencies
+        ]).encode('utf-8', 'backslashreplace') + '\n')
+        writer.commit()
+
     def remove(self):
         # remove info file
         fileutils.ensure_unlinked(os.path.join(self.dirname, 'info', self.package))
 
         # remove manifest
         fileutils.ensure_unlinked(os.path.join(self.dirname, 'manifests', self.package))
+
+        # remove sysdeps
+        fileutils.ensure_unlinked(os.path.join(self.dirname, 'sysdeps', self.package))
 
     def to_xml(self):
         entry_node = ET.Element('entry', {'package': self.package,
@@ -170,7 +208,7 @@ class PackageDB:
         '''Return entry if package is installed, otherwise return None.'''
         return PackageEntry.open(self.dirname, package)
 
-    def add(self, package, version, contents, configure_cmd = None):
+    def add(self, package, version, contents, configure_cmd = None, systemdependencies = None):
         '''Add a module to the install cache.'''
         entry = self.get(package)
         if entry:
@@ -182,6 +220,7 @@ class PackageDB:
             metadata['configure-hash'] = hashlib.md5(configure_cmd).hexdigest()
         pkg = PackageEntry(package, version, metadata, self.dirname)
         pkg.manifest = contents
+        pkg.systemdependencies = systemdependencies or []
         pkg.write()
 
     def check(self, package, version=None):
