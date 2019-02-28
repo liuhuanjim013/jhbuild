@@ -150,7 +150,7 @@ configure_without_autotools()
     exit 1
   }
 
-  eval_gettext "Now type 'make' to compile \$PKG_NAME"; echo
+  eval_gettext "Now type \`make' to compile \$PKG_NAME"; echo
 }
 
 # configure JHBuild to build and install via autotools.
@@ -203,7 +203,11 @@ if [ $gettext_available -ne 0 ]; then
   # If gettext is not installed fallback to echo in english
   gettext() { echo -n $1; }
   # eval_gettext substitutes variables of the form: \$var
-  eval_gettext() { eval echo -n $1; }
+  eval_gettext()
+  {
+    escaped_string=${1/\'/\\\'}
+    eval echo -n ${escaped_string/\`/\\\`}
+  }
 fi
 
 if [ ! -f $srcdir/jhbuild/main.py ]; then
