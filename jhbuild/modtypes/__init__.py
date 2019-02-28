@@ -454,8 +454,11 @@ them into the prefix."""
         logging.info(_('Finding system dependencies ...'))
         systemdependencies, notfounds = self._find_executable_system_dependencies(destdir_prefix, buildscript.config.prefix)
         if notfounds:
-            for lib, deps in notfounds.iteritems():
-                logging.warn(_('Missing system dependency: %s depends on: %s') % (lib, ', '.join(deps)))
+            missing = set()
+            for lib, notfound in notfounds.iteritems():
+                logging.warn(_('Broken binary: %s') % lib)
+                missing.update(notfound)
+            logging.warn(_('Missing system dependencies: %s') % ', '.join(sorted(missing)))
 
         new_contents = fileutils.accumulate_dirtree_contents(destdir_prefix)
         errors = []
