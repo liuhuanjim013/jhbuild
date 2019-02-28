@@ -431,7 +431,7 @@ them into the prefix."""
             else:
                 pkgs_path.update(['path:%s,path:%s' % (fullfilename, realfilename)])
 
-        return pkgs_path
+        return sorted(pkgs_path)
 
     def process_install(self, buildscript, revision):
         assert self.supports_install_destdir
