@@ -372,15 +372,20 @@ them into the prefix."""
 
     def _find_executable_dependencies(self, fullfilename, destdir_prefix, installroot):
         env = os.environ.copy()
-        env['LD_LIBRARY_PATH'] = ":".join([
+        env['LD_LIBRARY_PATH'] = ':'.join([
             os.path.join(destdir_prefix, 'lib'),
             os.path.join(os.path.join(installroot, 'lib')),
             os.path.join(os.path.dirname(fullfilename))  # for .so link to the file under same dir
         ])
-        output = subprocess.check_output(['ldd', fullfilename], env=env)
+        lines = []
+        try:
+            lines = subprocess.check_output(['ldd', fullfilename], env=env).splitlines()
+        except Exception:
+            pass
+
         found = []
         notfound = []
-        for line in output.splitlines():
+        for line in lines:
             if '=>' not in line:
                 continue
             lib, rest = map(lambda x: x.strip(), line.split('=>'))
