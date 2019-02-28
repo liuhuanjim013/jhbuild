@@ -386,6 +386,7 @@ them into the prefix."""
             lib, rest = map(lambda x: x.strip(), line.split('=>'))
             if 'not found' in rest:
                 notfound.append(lib)
+                continue
             found.append(rest.split()[0])
 
         return found, notfound
