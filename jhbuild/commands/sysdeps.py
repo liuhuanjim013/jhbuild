@@ -19,7 +19,6 @@
 
 from optparse import make_option
 import logging
-import os.path
 import subprocess
 import sys
 
@@ -31,7 +30,6 @@ from jhbuild.utils.systeminstall import SystemInstall
 from jhbuild.modtypes.systemmodule import SystemModule
 from jhbuild.versioncontrol.tarball import TarballBranch
 from jhbuild.utils import cmds
-from jhbuild.utils import fileutils
 
 class cmd_sysdeps(cmd_build):
     doc = N_('Check and install tarball dependencies using system packages')
