@@ -451,10 +451,10 @@ class AptSystemInstall(SystemInstall):
         for modname, filename in pkgconfigs:
             self._append_native_package_or_warn(modname, filename, native_packages, False)
 
-        binaries = [(modname, '/usr/bin/%s' % pkg) for modname, pkg in
+        binaries = [(modname, os.path.join('/usr/bin', pkg)) for modname, pkg in
                     get_uninstalled_binaries(uninstalled)]
         for modname, filename in binaries:
-            self._append_native_package_or_warn(modname, filename, native_packages, True)
+            self._append_native_package_or_warn(modname, filename, native_packages, False)
 
         # Get multiarch include directory, e.g. /usr/include/x86_64-linux-gnu
         multiarch = None
@@ -468,9 +468,8 @@ class AptSystemInstall(SystemInstall):
         c_includes = get_uninstalled_c_includes(uninstalled)
         for modname, filename in c_includes:
             # Try multiarch first, so we print the non-multiarch location on failure.
-            if (multiarch == None or
-                not self._try_append_native_package(modname, '/usr/include/%s/%s' % (multiarch, filename), native_packages, True)):
-                self._append_native_package_or_warn(modname, '/usr/include/%s' % filename, native_packages, True)
+            if (multiarch is None or not self._try_append_native_package(modname, os.path.join('/usr/include', multiarch, filename), native_packages, True)):
+                self._append_native_package_or_warn(modname, os.path.join('/usr/include', filename), native_packages, True)
 
         if native_packages:
             self._install_packages(native_packages)
