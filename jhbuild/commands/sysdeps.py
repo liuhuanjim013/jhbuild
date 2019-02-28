@@ -64,13 +64,13 @@ class cmd_sysdeps(cmd_build):
                 if module.pkg_config is not None:
                     results.append('pkgconfig:{0}'.format(module.pkg_config[:-3])) # remove .pc
 
-            if module.systemdependencies is not None:
-                for dep_type, value, altdeps in module.systemdependencies:
-                    entry = ''
-                    entry += '{0}:{1}'.format(dep_type, value)
-                    for dep_type, value, empty in altdeps:
-                        entry += ',{0}:{1}'.format(dep_type, value)
-                    results.append(entry)
+                if module.systemdependencies is not None:
+                    for dep_type, value, altdeps in module.systemdependencies:
+                        entry = ''
+                        entry += '{0}:{1}'.format(dep_type, value)
+                        for dep_type, value, empty in altdeps:
+                            entry += ',{0}:{1}'.format(dep_type, value)
+                        results.append(entry)
         return results
 
 
