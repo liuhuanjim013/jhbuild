@@ -401,33 +401,6 @@ them into the prefix."""
 
         return results
 
-    def _find_pkg(self, filename):
-        """ Find debian packages
-        """
-        realfilename = os.path.realpath(filename)
-        with open(os.devnull, 'w') as f:
-            dpkg_stdout, dpkg_stderr = subprocess.Popen(['dpkg', '-S', filename, realfilename], stdout = subprocess.PIPE, stderr = f).communicate()
-
-        if not dpkg_stdout:
-            logging.error(_("dpkg -S no path found matching pattern: %s or %s" % (filename, realfilename)))
-
-        # format like this: libselinux1:amd64: /lib/x86_64-linux-gnu/libselinux.so.1 or libxdmcp6:amd64: /lib/libxdmcp6:amd64
-        # return the name before colon
-        return dpkg_stdout.strip().split(' ')[0][:-len(':')]
-
-    def _get_all_versioned_pkgs(self):
-        """ get all pkgs from `dpkg -l` command. return a dict
-        """
-        dpkg_list_output = subprocess.check_output(['dpkg', '-l'])
-        packages = dpkg_list_output.splitlines()
-        results = {}
-        for pkg in packages:
-            if not pkg.startswith('ii'):
-                continue
-            pkg_filtered = filter(None, pkg.split(' '))
-            results[pkg_filtered[1]] = pkg_filtered[2]
-        return results
-
     def _dump_systemdeps(self, destdir_prefix, installroot):
         exec_files = self._find_exec(destdir_prefix)
 
@@ -450,15 +423,15 @@ them into the prefix."""
                 continue
             fullfilenames_filtered.append(fullfilename)
 
-        versioned_pkgs = {}
-        all_versioned_pkgs = self._get_all_versioned_pkgs()
+        pkgs_path = set()
         for fullfilename in fullfilenames_filtered:
-            pkg_name = self._find_pkg(fullfilename)
-            if pkg_name in all_versioned_pkgs:
-                versioned_pkgs[pkg_name] = all_versioned_pkgs[pkg_name]
+            realfilename = os.path.realpath(fullfilename)
+            if fullfilename == realfilename:
+                pkgs_path.update(['path:%s' % fullfilename])
             else:
-                logging.warn(_('filename: %s, package %s not found in all_packages_version' % (fullfilename, pkg_name)))
-        return versioned_pkgs
+                pkgs_path.update(['path:%s,path:%s' % (fullfilename, realfilename)])
+
+        return pkgs_path
 
     def process_install(self, buildscript, revision):
         assert self.supports_install_destdir
@@ -486,8 +459,7 @@ them into the prefix."""
         # write sysdeps to disk
         fileutils.mkdir_with_parents(os.path.join(destdir_prefix, '.jhbuild', 'sysdeps'))
         writer = fileutils.SafeWriter(os.path.join(destdir_prefix, '.jhbuild', 'sysdeps', self.name))
-        results = [pkg_name + '=' + pkg_version for pkg_name, pkg_version in sysdeps.items()]
-        writer.fp.write('\n'.join(results))
+        writer.fp.write('\n'.join(sysdeps))
         writer.commit()
 
         new_contents = fileutils.accumulate_dirtree_contents(destdir_prefix)

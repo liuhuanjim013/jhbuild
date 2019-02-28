@@ -31,6 +31,7 @@ from jhbuild.utils.systeminstall import SystemInstall
 from jhbuild.modtypes.systemmodule import SystemModule
 from jhbuild.versioncontrol.tarball import TarballBranch
 from jhbuild.utils import cmds
+import jhbuild.utils.fileutils as fileutils
 
 class cmd_sysdeps(cmd_build):
     doc = N_('Check and install tarball dependencies using system packages')
@@ -48,9 +49,92 @@ class cmd_sysdeps(cmd_build):
             make_option('--dump-runtime',
                         action='store_true', default=False,
                         help=_('Machine readable list of runtime sysdeps')),
+            make_option('--dump-mujin-sysdeps',
+                         action='store_true', default=False,
+                         help=_('dump all mujin sysdeps with version')),
             make_option('--install',
                         action='store_true', default=False,
                         help=_('Install pkg-config modules via system'))])
+
+
+    def _dump_runtime(self, module_list):
+        results = []
+        for module in module_list:
+            if isinstance(module, SystemModule) and module.runtime:
+                if module.pkg_config is not None:
+                    results.append('pkgconfig:{0}'.format(module.pkg_config[:-3])) # remove .pc
+
+            if module.systemdependencies is not None:
+                for dep_type, value, altdeps in module.systemdependencies:
+                    entry = ''
+                    entry += '{0}:{1}'.format(dep_type, value)
+                    for dep_type, value, empty in altdeps:
+                        entry += ',{0}:{1}'.format(dep_type, value)
+                    results.append(entry)
+        return results
+
+
+    def _get_all_versioned_pkgs(self):
+        """ get all pkgs from `dpkg -l` command. return a dict
+        """
+        dpkg_list_output = subprocess.check_output(['dpkg', '-l'])
+        packages = dpkg_list_output.splitlines()
+        results = {}
+        for pkg in packages:
+            if not pkg.startswith('ii'):
+                continue
+            pkg_filtered = filter(None, pkg.split(' '))
+            results[pkg_filtered[1]] = pkg_filtered[2]
+        return results
+
+    def _get_versioned_pkgs(self, pkg_sysdeps):
+        fullfilenames = {}
+        # split path
+        for x in pkg_sysdeps:
+            # example: path:/usr/lib/a.so
+            # example: path:/usr/lib/a.so,path:/usr/lib/b.so
+            f2 = ''
+            f1 = x.split(',')[0].split(':')[1].strip()
+            if ',' in x:
+                f2 = x.split(',')[1].split(':')[1].strip()
+            fullfilenames[f1] = f2
+
+        results = {} # packagename: version
+
+        command = ['dpkg', '-S']
+        command.extend(fullfilenames.keys())
+
+        dpkg_stdout, dpkg_stderr = subprocess.Popen(command, stdout = subprocess.PIPE, stderr = subprocess.PIPE).communicate()
+
+        dpkg_stdout = dpkg_stdout.splitlines()
+        dpkg_stderr = dpkg_stderr.splitlines()
+        if dpkg_stderr:
+            old_path = [x[len('dpkg-query: no path found matching pattern '):].strip() for x in dpkg_stderr]
+            dpkg_2nd_time = []
+            for p in old_path:
+                if fullfilenames.get(p ,''):
+                    dpkg_2nd_time.append(fullfilenames[p])
+                else:
+                    logging.error(_('dpkg-query: no path found matching pattern: %s' % p))
+
+            if dpkg_2nd_time:
+                command = ['dpkg', '-S']
+                command.extend(dpkg_2nd_time)
+                dpkg_2_stdout, dpkg_2_stderr = subprocess.Popen(command, stdout = subprocess.PIPE, stderr = subprocess.PIPE).communicate()
+
+            dpkg_2_stdout = dpkg_2_stdout.splitlines()
+            dpkg_2_stderr = dpkg_2_stderr.splitlines()
+
+        if dpkg_2_stderr:
+            logging.error(_('\n'.join(dpkg_2_stderr)))
+
+        all_versioned_pkgs = self._get_all_versioned_pkgs()
+        for entry in set(dpkg_stdout + dpkg_2_stdout):
+            pkg_name = entry.split(':')[0]
+            if pkg_name in all_versioned_pkgs:
+                results[pkg_name] = all_versioned_pkgs[pkg_name]
+
+        return results
 
     def run(self, config, options, args, help=None):
 
@@ -88,22 +172,29 @@ class cmd_sysdeps(cmd_build):
                             for dep_type, value, empty in altdeps:
                                 sys.stdout.write(',{0}:{1}'.format(dep_type, value))
                             sys.stdout.write('\n')
-
             return
 
         if options.dump_runtime:
-            for module in module_list:
-                if isinstance(module, SystemModule) and module.runtime:
-                    if module.pkg_config is not None:
-                        print 'pkgconfig:{0}'.format(module.pkg_config[:-3]) # remove .pc
+            runtimes = self._dump_runtime(module_list)
+            sys.stdout.write('\n'.join(runtimes))
+            return
 
-                    if module.systemdependencies is not None:
-                        for dep_type, value, altdeps in module.systemdependencies:
-                            sys.stdout.write('{0}:{1}'.format(dep_type, value))
-                            for dep_type, value, empty in altdeps:
-                                sys.stdout.write(',{0}:{1}'.format(dep_type, value))
-                            sys.stdout.write('\n')
+        if options.dump_mujin_sysdeps:
+            # dump all mujin installed packages deps
+            pkg_sysdeps_dir = os.path.join(module_set.config.prefix, '.jhbuild', 'sysdeps')
+            pkg_sysdeps = set()
+            for pkg_deps_filename in fileutils.accumulate_dirtree_contents(pkg_sysdeps_dir):
+                with open(os.path.join(pkg_sysdeps_dir, pkg_deps_filename), 'r') as f:
+                    pkg_sysdeps.update(map(lambda x: x.strip(), f.readlines()))
 
+            # dump all runtime packages
+            runtimes = self._dump_runtime(module_list)
+            # union runtime and pkg_systems
+            pkg_sysdeps.update(runtimes)
+            results = self._get_versioned_pkgs(pkg_sysdeps)
+            for pkg_name, pkg_version in results.items():
+                sys.stdout.write(pkg_name + '=' + pkg_version)
+                sys.stdout.write('\n')
             return
 
         module_state = module_set.get_module_state(module_list)
