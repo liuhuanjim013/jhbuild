@@ -5,7 +5,7 @@
 
 <!-- git repos -->
 <repository type="git" name="git.gnome.org" default="yes"
-    href="git://git.gnome.org/"/>
+    href="https://git.gnome.org/browse/"/>
 <repository type="git" name="git.freedesktop.org"
     href="git://anongit.freedesktop.org/git/"/>
 <repository type="git" name="gstreamer.freedesktop.org"
@@ -18,7 +18,7 @@
 <repository type="tarball" name="ftp.gnu.org"
     href="ftp://ftp.gnu.org/pub/gnu/"/>
 <repository type="tarball" name="sqlite.org"
-    href="http://www.sqlite.org/"/>
+    href="https://www.sqlite.org/"/>
 <repository type="tarball" name="gnome.org"
     href="http://download.gnome.org/sources/"/>
 <repository type="tarball" name="gnupg.org"
@@ -475,8 +475,8 @@
     <branch/>
   </autotools>
 
-  <autotools id="libsigc++2">
-    <branch/>
+  <autotools id="libsigcplusplus">
+    <branch revision="libsigc++-2-8"/>
     <dependencies>
       <dep package="mm-common"/>
     </dependencies>
@@ -486,7 +486,7 @@
     <branch/>
     <dependencies>
       <dep package="glib"/>
-      <dep package="libsigc++2"/>
+      <dep package="libsigcplusplus"/>
     </dependencies>
   </autotools>
 

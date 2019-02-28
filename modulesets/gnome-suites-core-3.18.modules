@@ -6,7 +6,7 @@
 
 <!-- git repos -->
   <repository type="git" name="git.gnome.org" default="yes"
-      href="git://git.gnome.org/"/>
+      href="https://git.gnome.org/browse/"/>
   <repository type="git" name="git.freedesktop.org"
       href="git://anongit.freedesktop.org/"/>
   <repository type="git" name="pulseaudio.freedesktop.org"
@@ -93,7 +93,7 @@
   </autotools>
 
   <autotools id="gnome-bluetooth">
-    <branch/>
+    <branch revision="gnome-3-18"/>
     <dependencies>
       <dep package="gtk+"/>
       <dep package="gtk-doc"/>
@@ -218,7 +218,7 @@
   </autotools>
 
   <autotools id="gnome-keyring">
-    <branch/>
+    <branch revision="gnome-3-18"/>
     <dependencies>
       <dep package="intltool"/>
       <dep package="dbus"/>
@@ -364,7 +364,7 @@
   </autotools>
 
   <autotools id="gnome-themes-standard">
-    <branch/>
+    <branch revision="gnome-3-18"/>
     <dependencies>
       <dep package="intltool"/>
       <dep package="cantarell-fonts"/>
@@ -660,7 +660,7 @@
   </autotools>
 
   <autotools id="gnome-contacts">
-    <branch/>
+    <branch revision="gnome-3-18"/>
     <dependencies>
       <dep package="folks"/>
       <dep package="glib"/>
@@ -680,7 +680,7 @@
   </autotools>
 
   <autotools id="gnome-dictionary">
-    <branch/>
+    <branch revision="gnome-3-18"/>
     <dependencies>
       <dep package="intltool"/>
       <dep package="glib"/>
@@ -716,7 +716,7 @@
   </autotools>
 
   <autotools id="gnome-screenshot">
-    <branch/>
+    <branch revision="gnome-3-18"/>
     <dependencies>
       <dep package="intltool"/>
       <dep package="glib"/>
@@ -735,7 +735,7 @@
   </autotools>
 
   <autotools id="gnome-system-monitor">
-    <branch/>
+    <branch revision="gnome-3-18"/>
     <dependencies>
       <dep package="intltool"/>
       <dep package="glib"/>
@@ -768,7 +768,7 @@
   </autotools>
 
   <autotools id="gnome-user-docs">
-    <branch/>
+    <branch revision="gnome-3-18"/>
     <dependencies>
       <dep package="yelp-tools"/>
     </dependencies>
@@ -801,7 +801,7 @@
   </autotools>
 
   <autotools id="sushi">
-    <branch/>
+    <branch revision="gnome-3-18"/>
     <dependencies>
       <dep package="intltool"/>
       <dep package="gobject-introspection"/>
@@ -853,7 +853,7 @@
     <if condition-set="freebsd">
       <autogenargs value="YELP_LZMA_CFLAGS=' ' YELP_LZMA_LIBS='-llzma'"/>
     </if>
-    <branch/>
+    <branch revision="gnome-3-18"/>
     <dependencies>
       <dep package="intltool"/>
       <dep package="glib"/>
@@ -895,7 +895,7 @@
   </autotools>
 
   <autotools id="vino">
-    <branch/>
+    <branch revision="gnome-3-18"/>
     <dependencies>
       <dep package="intltool"/>
       <dep package="glib"/>
@@ -1038,7 +1038,7 @@
 
   <autotools id="udisks" autogenargs="--with-systemdsystemunitdir=no">
     <pkg-config>udisks2.pc</pkg-config>
-    <branch repo="git.freedesktop.org" module="udisks"/>
+    <branch repo="git.freedesktop.org" module="udisks" revision="2.1.8"/>
     <dependencies>
       <dep package="gudev"/>
       <dep package="libacl"/>

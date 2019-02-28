@@ -46,10 +46,10 @@ _known_keys = [ 'moduleset', 'modules', 'skip', 'tags', 'prefix',
                 'autogenargs', 'makeargs', 'nice_build', 'jobs',
                 'installprog', 'repos', 'branches', 'noxvfb', 'xvfbargs',
                 'builddir_pattern', 'module_autogenargs', 'module_makeargs',
-                'interact', 'buildscript', 'nonetwork', 'nobuild',
-                'alwaysautogen', 'noinstall', 'makeclean', 'makedistclean',
-                'makecheck', 'module_makecheck', 'system_libdirs',
-                'tinderbox_outputdir', 'sticky_date', 'tarballdir',
+                'module_ninjaargs', 'ninjaargs', 'interact', 'buildscript',
+                'nonetwork', 'nobuild', 'alwaysautogen', 'noinstall',
+                'makeclean', 'makedistclean', 'makecheck', 'module_makecheck',
+                'system_libdirs', 'tinderbox_outputdir', 'sticky_date', 'tarballdir',
                 'pretty_print', 'svn_program', 'makedist', 'makedistcheck',
                 'nonotify', 'notrayicon', 'cvs_program', 'checkout_mode',
                 'copy_dir', 'module_checkout_mode', 'build_policy',
@@ -62,6 +62,7 @@ _known_keys = [ 'moduleset', 'modules', 'skip', 'tags', 'prefix',
                 'use_local_modulesets', 'ignore_suggests', 'modulesets_dir',
                 'mirror_policy', 'module_mirror_policy', 'dvcs_mirror_dir',
                 'shallow_clone', 'build_targets', 'cmakeargs', 'module_cmakeargs',
+                'mesonargs', 'module_mesonargs',
                 'print_command_pattern', 'static_analyzer',
                 'module_static_analyzer', 'static_analyzer_template',
                 'static_analyzer_outputdir', 'check_sysdeps', 'system_prefix',
@@ -198,7 +199,7 @@ class Config:
         if filename:
             try:
                 execfile(filename, config)
-            except Exception, e:
+            except Exception as e:
                 if isinstance(e, FatalError):
                     # raise FatalErrors back, as it means an error in include()
                     # and it will print a traceback, and provide a meaningful

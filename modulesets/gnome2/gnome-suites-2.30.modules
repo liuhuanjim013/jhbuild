@@ -4,7 +4,7 @@
 <!-- vim:set ts=2 expandtab: -->
 <moduleset>
   <repository type="git" name="git.gnome.org" default="yes"
-      href="git://git.gnome.org/"/>
+      href="https://git.gnome.org/browse/"/>
   <repository type="git" name="gstreamer.freedesktop.org"
       href="git://anongit.freedesktop.org/gstreamer/"/>
   <repository type="git" name="git.freedesktop.org"
@@ -364,7 +364,7 @@
       <dep package="glib"/>
       <dep package="gtk+"/>
       <dep package="libxml2"/>
-      <dep package="libsigc++2"/>
+      <dep package="libsigcplusplus"/>
       <dep package="opal" />
       <dep package="evolution-data-server"/>
     </dependencies>
@@ -1477,8 +1477,8 @@
     <branch/>
   </autotools>
 
-  <autotools id="libsigc++2">
-    <branch/>
+  <autotools id="libsigcplusplus">
+    <branch revision="libsigc-2-0"/>
     <dependencies>
       <dep package="mm-common"/>
     </dependencies>
@@ -1488,7 +1488,7 @@
     <branch revision="glibmm-2-24"/>
     <dependencies>
       <dep package="glib"/>
-      <dep package="libsigc++2"/>
+      <dep package="libsigcplusplus"/>
     </dependencies>
   </autotools>
 

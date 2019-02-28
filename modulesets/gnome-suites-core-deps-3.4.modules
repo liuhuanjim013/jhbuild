@@ -5,7 +5,7 @@
 
 <!-- git repos -->
 <repository type="git" name="git.gnome.org" default="yes"
-    href="git://git.gnome.org/"/>
+    href="https://git.gnome.org/browse/"/>
 <repository type="git" name="git.freedesktop.org"
     href="git://anongit.freedesktop.org/"/>
 <repository type="git" name="gstreamer.freedesktop.org"
@@ -336,7 +336,7 @@
   </autotools>
 
   <autotools id="librest">
-    <branch/>
+    <branch revision="librest-0-7"/>
     <dependencies>
       <dep package="glib"/>
       <dep package="libsoup"/>
@@ -430,8 +430,8 @@
     <branch/>
   </autotools>
 
-  <autotools id="libsigc++2">
-    <branch/>
+  <autotools id="libsigcplusplus">
+    <branch revision="libsigc++-2-8"/>
     <dependencies>
       <dep package="mm-common"/>
     </dependencies>
@@ -441,7 +441,7 @@
     <branch revision="glibmm-2-32"/>
     <dependencies>
       <dep package="glib"/>
-      <dep package="libsigc++2"/>
+      <dep package="libsigcplusplus"/>
     </dependencies>
   </autotools>
 

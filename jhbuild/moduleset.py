@@ -57,6 +57,7 @@ virtual_sysdeps = [
     'hg',
     'libtool',
     'make',
+    'ninja',
     'pkg-config',
     'svn',
     'xmlcatalog',
@@ -178,7 +179,7 @@ class ModuleSet:
             # remove skip modules from module_name list
             modules = [self.get_module(module, ignore_case = True) \
                        for module in module_names if module not in skip]
-        except KeyError, e:
+        except KeyError as e:
             raise UsageError(_("A module called '%s' could not be found.") % e)
 
         resolved = []
@@ -372,9 +373,22 @@ def load(config, uri=None):
             elif os.path.isfile(os.path.join(config.modulesets_dir, uri)):
                 uri = os.path.join(config.modulesets_dir, uri)
         elif not urlparse.urlparse(uri)[0]:
-            uri = 'https://git.gnome.org/browse/jhbuild/plain/modulesets' \
+            uri = 'https://gitlab.gnome.org/GNOME/jhbuild/raw/master/modulesets' \
                   '/%s.modules' % uri
         ms.modules.update(_parse_module_set(config, uri).modules)
+
+    # create virtual sysdeps
+    system_repo_class = get_repo_type('system')
+    virtual_repo = system_repo_class(config, 'virtual-sysdeps')
+    virtual_branch = virtual_repo.branch('virtual-sysdeps') # just reuse this
+    for name in virtual_sysdeps:
+        # don't override it if it's already there
+        if name in ms.modules:
+            continue
+
+        virtual = SystemModule.create_virtual(name, virtual_branch, 'path', name)
+        ms.add(virtual)
+
     return ms
 
 def load_tests (config, uri=None):
@@ -437,17 +451,17 @@ def _handle_conditions(config, element):
     for c in _child_elements(element):
         _handle_conditions(config, c)
 
-def _parse_module_set(config, uri, create_virtual_sysdeps=True):
+def _parse_module_set(config, uri):
     try:
         filename = httpcache.load(uri, nonetwork=config.nonetwork, age=0)
-    except Exception, e:
+    except Exception as e:
         raise FatalError(_('could not download %s: %s') % (uri, e))
     filename = os.path.normpath(filename)
     try:
         document = xml.dom.minidom.parse(filename)
-    except IOError, e:
+    except IOError as e:
         raise FatalError(_('failed to parse %s: %s') % (filename, e))
-    except xml.parsers.expat.ExpatError, e:
+    except xml.parsers.expat.ExpatError as e:
         raise FatalError(_('failed to parse %s: %s') % (uri, e))
 
     assert document.documentElement.nodeName == 'moduleset'
@@ -455,7 +469,7 @@ def _parse_module_set(config, uri, create_virtual_sysdeps=True):
     for node in _child_elements_matching(document.documentElement, ['redirect']):
         new_url = node.getAttribute('href')
         logging.info('moduleset is now located at %s', new_url)
-        return _parse_module_set(config, new_url, create_virtual_sysdeps=create_virtual_sysdeps)
+        return _parse_module_set(config, new_url)
 
     _handle_conditions(config, document.documentElement)
 
@@ -522,16 +536,16 @@ def _parse_module_set(config, uri, create_virtual_sysdeps=True):
             href = node.getAttribute('href')
             inc_uri = urlparse.urljoin(uri, href)
             try:
-                inc_moduleset = _parse_module_set(config, inc_uri, create_virtual_sysdeps=False)
+                inc_moduleset = _parse_module_set(config, inc_uri)
             except UndefinedRepositoryError:
                 raise
-            except FatalError, e:
+            except FatalError as e:
                 if inc_uri[0] == '/':
                     raise e
                 # look up in local modulesets
                 inc_uri = os.path.join(os.path.dirname(__file__), '..', 'modulesets',
                                    href)
-                inc_moduleset = _parse_module_set(config, inc_uri, create_virtual_sysdeps=False)
+                inc_moduleset = _parse_module_set(config, inc_uri)
 
             moduleset.modules.update(inc_moduleset.modules)
         elif node.nodeName in ['repository', 'cvsroot', 'svnroot',
@@ -544,20 +558,6 @@ def _parse_module_set(config, uri, create_virtual_sysdeps=True):
                 module.tags.append(moduleset_name)
             module.moduleset_name = moduleset_name
             moduleset.add(module)
-
-    # create virtual sysdeps
-    # but don't create virtual sysdeps for included module sets, otherwise the virtual sysdeps will override the ones defined in the modulesets
-    if create_virtual_sysdeps:
-        system_repo_class = get_repo_type('system')
-        virtual_repo = system_repo_class(config, 'virtual-sysdeps')
-        virtual_branch = virtual_repo.branch('virtual-sysdeps') # just reuse this
-        for name in virtual_sysdeps:
-            # don't override it if it's already there
-            if name in moduleset.modules:
-                continue
-
-            virtual = SystemModule.create_virtual(name, virtual_branch, 'path', name)
-            moduleset.add (virtual)
 
     # keep default repository around, used when creating automatic modules
     global _default_repo

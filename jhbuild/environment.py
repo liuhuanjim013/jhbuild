@@ -21,6 +21,7 @@
 
 import sys
 import os
+from distutils.sysconfig import get_python_lib
 
 from jhbuild.errors import FatalError, CommandError
 from jhbuild.utils.cmds import get_output
@@ -116,6 +117,9 @@ def setup_env_defaults(system_libdirs):
                 valarr.remove(x)
         os.environ['LD_PRELOAD'] = ' '.join(valarr)
 
+    if os.environ.has_key('CONFIG_SITE'):
+        del os.environ['CONFIG_SITE']
+
 def setup_env(prefix):
     '''set environment variables for using prefix'''
 
@@ -175,13 +179,24 @@ def setup_env(prefix):
 
     # INFOPATH
     infopathdir = os.path.join(prefix, 'share', 'info')
-    addpath('INFOPATH', infopathdir)
+    infopathports = os.path.join(prefix, 'info')
+    if not os.path.exists(infopathdir) and os.path.exists(infopathports):
+        addpath('INFOPATH', infopathports)
+    else:
+        addpath('INFOPATH', infopathdir)
 
     # PKG_CONFIG_PATH
     pkgconfigdatadir = os.path.join(prefix, 'share', 'pkgconfig')
     pkgconfigdir = os.path.join(libdir, 'pkgconfig')
     addpath('PKG_CONFIG_PATH', pkgconfigdatadir)
     addpath('PKG_CONFIG_PATH', pkgconfigdir)
+    # XXX: The host Python on Fedora uses lib64 while jhbuild defaults
+    # to lib, so any distutils based build will install .pc files
+    # into lib64. To make at least pkg-config happy add the host
+    # libdir layout as well.
+    host_libdir = os.path.dirname(get_python_lib(True, True, prefix))
+    host_pkgconfigdir = os.path.join(host_libdir, 'pkgconfig')
+    addpath('PKG_CONFIG_PATH', host_pkgconfigdir)
 
     # GI_TYPELIB_PATH
     typelibpath = os.path.join(libdir, 'girepository-1.0')

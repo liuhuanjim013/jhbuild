@@ -11,6 +11,7 @@ DTDS = \
 	modulesets/moduleset.rnc \
 	$(NULL)
 
+if GUI_ENABLED
 desktopdir = $(datadir)/applications
 desktop_DATA = jhbuild.desktop
 
@@ -20,6 +21,7 @@ jhbuild.desktop.in: jhbuild.desktop.in.in
 # Substitute variables in a Desktop Entry file.
 jhbuild.desktop: jhbuild.desktop.in
 	$(AM_V_GEN) sed -e 's|@bindir[@]|$(bindir)|g' $< > $@
+endif
 
 EXTRA_DIST = $(PATCHES) $(MODULESETS) $(DTDS) \
 	modulesets/moduleset.xsl \
@@ -39,9 +41,12 @@ install-exec-local:
 # This is a lower-level check than `jhbuild checkmodulesets` (which analyses the
 # module graph), and doesn't require jhbuild to be built and installed.
 #
-# This will fail if xmllint isn't installed.
+# This will fail if xmllint or trang isn't installed.
 check-modulesets:
 	xmllint --noout --dtdvalid $(srcdir)/modulesets/moduleset.dtd $(MODULESETS)
+	trang $(srcdir)/modulesets/moduleset.rnc $(builddir)/moduleset.rng
+	xmllint --noout --relaxng $(builddir)/moduleset.rng $(MODULESETS)
+	rm -f $(builddir)/moduleset.rng
 .PHONY: check-modulesets
 
 check: check-modulesets
