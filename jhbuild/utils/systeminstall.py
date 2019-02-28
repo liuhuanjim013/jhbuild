@@ -425,6 +425,7 @@ class AptSystemInstall(SystemInstall):
     def _try_append_native_package(self, modname, filename, native_packages, exact_match):
         native_pkg = self._get_package_for(filename, exact_match)
         if native_pkg:
+            logging.info(_('Found native package for %(id)s (%(filename)s): %(package)s') % {'id': modname, 'filename': filename, 'package': native_pkg})
             native_packages.append(native_pkg)
             return True
         return False
