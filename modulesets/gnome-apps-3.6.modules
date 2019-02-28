@@ -6,7 +6,7 @@
 
 <!-- git repos -->
   <repository type="git" name="git.gnome.org" default="yes"
-      href="git://git.gnome.org/"/>
+      href="https://git.gnome.org/browse/"/>
   <repository type="svn" name="svn.abisource.com"
       href="http://svn.abisource.com/"/>
   <repository type="git" name="git.freedesktop.org"
@@ -343,7 +343,7 @@
     </dependencies>
   </autotools>
 
-  <autotools id="libxml++">
+  <autotools id="libxmlplusplus">
     <branch/>
     <dependencies>
       <dep package="libxml2"/>
@@ -702,7 +702,7 @@
     <dependencies>
       <dep package="glibmm"/>
       <dep package="libxml2"/>
-      <dep package="libxml++"/>
+      <dep package="libxmlplusplus"/>
       <dep package="gtkmm"/>
     </dependencies>
     <suggests>
@@ -890,7 +890,7 @@
       <dep package="glib"/>
       <dep package="gtk+-2"/>
       <dep package="libxml2"/>
-      <dep package="libsigc++2"/>
+      <dep package="libsigcplusplus"/>
       <dep package="libXv"/>
       <dep package="opal" />
       <dep package="evolution-data-server"/>

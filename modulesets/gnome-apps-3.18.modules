@@ -6,15 +6,15 @@
 
 <!-- git repos -->
   <repository type="git" name="git.gnome.org" default="yes"
-      href="git://git.gnome.org/"/>
+      href="https://git.gnome.org/browse/"/>
   <repository type="git" name="git.freedesktop.org"
       href="git://anongit.freedesktop.org/git/"/>
   <repository type="git" name="github.com"
       href="git://github.com/"/>
   <repository type="git" name="git.libvirt.org"
       href="git://libvirt.org/"/>
-  <repository type="git" name="fedorahosted.org"
-      href="git://git.fedorahosted.org/git/"/>
+  <repository type="git" name="gitlab.com"
+      href="https://gitlab.com/"/>
   <repository type="git" name="wayland"
       href="git://anongit.freedesktop.org/git/wayland"/>
 
@@ -129,7 +129,7 @@
     <if condition-unset="dogtail">
       <autogenargs value="--disable-dogtail"/>
     </if>
-    <branch/>
+    <branch revision="gnome-3-18"/>
     <dependencies>
       <dep package="appstream-glib"/>
       <dep package="gdk-pixbuf"/>
@@ -263,7 +263,7 @@
 
   <autotools id="libosinfo"
              autogenargs="--enable-tests=no --enable-werror=no">
-    <branch repo="fedorahosted.org" module="libosinfo.git"/>
+    <branch repo="gitlab.com" module="libosinfo/libosinfo.git"/>
     <dependencies>
       <dep package="libsoup"/>
       <dep package="glib"/>
@@ -427,7 +427,12 @@
   </cmake>
 
   <autotools id="libgit2-glib">
-    <branch/>
+    <branch repo="gnome.org"
+            module="libgit2-glib/0.23/libgit2-glib-${version}.tar.xz"
+            version="0.23.10"
+            hash="sha256:398ea6ff5fb1eafa61f2908da5ff8722dc051a2081be6cbed76a2ab07ecab1af"
+            checkoutdir="libgit2-glib-${version}"
+            size="450552"/>
     <dependencies>
       <dep package="libgit2"/>
       <dep package="glib"/>
@@ -513,7 +518,7 @@
   </autotools>
 
   <autotools id="devhelp">
-    <branch/>
+    <branch revision="gnome-3-18" />
     <dependencies>
       <dep package="intltool"/>
       <dep package="gtk+"/>
@@ -522,7 +527,7 @@
   </autotools>
 
   <autotools id="glade">
-    <branch/>
+    <branch revision="glade-3-18" />
     <dependencies>
       <dep package="intltool"/>
       <dep package="gnome-common"/>
@@ -573,7 +578,7 @@
   </autotools>
 
   <autotools id="gnome-sound-recorder">
-    <branch/>
+    <branch revision="gnome-3-18"/>
     <dependencies>
       <dep package="gjs"/>
       <dep package="glib"/>
@@ -760,7 +765,7 @@
   </autotools>
 
   <autotools id="gnome-builder">
-    <branch/>
+    <branch revision="gnome-builder-3-18"/>
     <dependencies>
       <dep package="clang"/>
       <dep package="devhelp"/>
@@ -780,7 +785,7 @@
   </autotools>
 
   <autotools id="gnome-clocks">
-    <branch/>
+    <branch revision="gnome-3-18"/>
     <dependencies>
       <dep package="vala"/>
       <dep package="gtk+"/>
@@ -794,7 +799,7 @@
   </autotools>
 
   <autotools id="gnome-initial-setup">
-    <branch/>
+    <branch revision="gnome-3-18"/>
     <dependencies>
       <dep package="accountsservice"/>
       <dep package="geoclue"/>
@@ -820,7 +825,7 @@
   </autotools>
 
   <autotools id="gnome-getting-started-docs">
-    <branch/>
+    <branch revision="gnome-3-18"/>
     <dependencies>
       <dep package="yelp-tools"/>
     </dependencies>
@@ -1033,7 +1038,7 @@
   </autotools>
 
   <autotools id="gnome-tweak-tool">
-    <branch/>
+    <branch revision="gnome-3-18"/>
     <dependencies>
       <dep package="gtk+"/>
       <dep package="pygobject"/>
@@ -1068,7 +1073,7 @@
   </autotools>
 
   <autotools id="lightsoff">
-    <branch/>
+    <branch revision="gnome-3-18"/>
     <dependencies>
       <dep package="appstream-glib"/>
       <dep package="intltool"/>
@@ -1097,7 +1102,7 @@
   </autotools>
 
   <autotools id="swell-foop">
-    <branch/>
+    <branch revision="gnome-3-18"/>
     <dependencies>
       <dep package="appstream-glib"/>
       <dep package="intltool"/>
@@ -1148,7 +1153,7 @@
   </autotools>
 
   <autotools id="nautilus-sendto">
-    <branch/>
+    <branch revision="NAUTILUS_SENDTO_3_8_5"/>
     <dependencies>
       <dep package="glib"/>
       <dep package="gtk+"/>
@@ -1180,7 +1185,7 @@
   </autotools>
 
   <autotools id="orca">
-    <branch/>
+    <branch revision="gnome-3-18"/>
     <dependencies>
       <dep package="gtk+"/>
       <dep package="at-spi2-atk"/> <!-- to make Orca's gui accessible -->

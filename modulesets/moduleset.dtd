@@ -1,4 +1,4 @@
-<!ELEMENT moduleset (redirect|repository|include|autotools|metamodule|tarball|distutils|perl|linux|testmodule|cvsroot|cvsmodule|waf|cmake|systemmodule)+>
+<!ELEMENT moduleset (redirect|repository|include|autotools|metamodule|tarball|distutils|perl|linux|testmodule|cvsroot|cvsmodule|waf|cmake|meson|systemmodule)+>
 <!ATTLIST moduleset
 	name     CDATA  #IMPLIED>
 
@@ -10,7 +10,7 @@
      DTD also appears to be incapable of describing the fact that
      exactly one of condition-set='' and condition-unset='' is required.
 -->
-<!ELEMENT if (if|dep|autogenargs|cmakeargs|makeargs|makeinstallargs)+>
+<!ELEMENT if (if|dep|autogenargs|cmakeargs|mesonargs|makeargs|ninjaargs|makeinstallargs)+>
 <!ATTLIST if
 	condition-set	CDATA	#IMPLIED
 	condition-unset	CDATA	#IMPLIED>
@@ -60,10 +60,13 @@
 	makeinstallargs CDATA	#IMPLIED
 	autogen-sh	CDATA	#IMPLIED
 	makefile	CDATA	#IMPLIED
+	bootstrap	(true|false) "false"
 	skip-autogen	(true|false|never) "false"
 	uninstall-before-install (true|false) "false"
 	supports-non-srcdir-builds (yes|no) "yes"
+	force-non-srcdir-builds (yes|no) "no"
 	supports-parallel-builds (yes|no) "yes"
+	supports-unknown-configure-options (yes|no) "yes"
 	autogen-template CDATA  #IMPLIED
 	check-target	(true|false) "true">
 
@@ -100,17 +103,33 @@
 <!ELEMENT distutils (pkg-config?,branch?,dependencies?,after?)>
 <!ATTLIST distutils
 	id	ID	#REQUIRED
+	python3 CDATA	#FIXED "1"
 	supports-non-srcdir-builds (yes|no) "yes">
 
-<!ELEMENT cmake (if*,cmakeargs*,makeargs*,pkg-config?,branch?,dependencies?,suggests?,after?)>
+<!ELEMENT ninjaargs EMPTY>
+<!ATTLIST ninjaargs value CDATA #REQUIRED>
+
+<!ELEMENT cmake (if*,cmakeargs*,makeargs*,ninjaargs*,pkg-config?,branch?,dependencies?,suggests?,after?)>
 <!ATTLIST cmake
 	id		CDATA	#REQUIRED
 	cmakeargs	CDATA	#IMPLIED
 	makeargs	CDATA	#IMPLIED
-	supports-non-srcdir-builds (yes|no) "yes">
+	ninjaargs	CDATA	#IMPLIED
+	use-ninja (yes|no) "yes"
+	supports-non-srcdir-builds (yes|no) "yes"
+	force-non-srcdir-builds (yes|no) "no">
 
 <!ELEMENT cmakeargs EMPTY>
 <!ATTLIST cmakeargs value CDATA #REQUIRED>
+
+<!ELEMENT meson (if*,mesonargs*,ninjaargs*,pkg-config?,branch?,dependencies?,suggests?,after?)>
+<!ATTLIST meson
+	id		CDATA	#REQUIRED
+	mesonargs	CDATA	#IMPLIED
+	ninjaargs	CDATA	#IMPLIED>
+
+<!ELEMENT mesonargs EMPTY>
+<!ATTLIST mesonargs value CDATA #REQUIRED>
 
 <!ELEMENT perl (pkg-config?,branch?,dependencies?,after?)>
 <!ATTLIST perl
@@ -178,7 +197,7 @@
 <!ELEMENT pkg-config (#PCDATA)>
 <!ELEMENT dependencies (dep|if)*>
 <!ELEMENT suggests (dep|if)*>
-<!ELEMENT after (dep*)>
+<!ELEMENT after (dep|if)*>
 <!ELEMENT systemdependencies (dep*)>
 <!ELEMENT dep (altdep*)>
 <!-- This is actually 2 different types of element: <dep package=""/> as used in <dependencies>
@@ -210,7 +229,8 @@
 	version		CDATA	#IMPLIED
 	size		CDATA	#IMPLIED
 	md5sum		CDATA	#IMPLIED
-	hash		CDATA	#IMPLIED>
+	hash		CDATA	#IMPLIED
+        rename-tarball  CDATA   #IMPLIED>
 	<!-- override-checkoutdir and update-new-dirs are CVS only
 	     source-subdir is tarballs only -->
 

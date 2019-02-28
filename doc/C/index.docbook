@@ -69,7 +69,7 @@
       <ulink url="http://www.selenic.com/mercurial/">Mercurial</ulink>
       repositories, as well as Tar and Zip archives hosted on web or FTP sites.
       JHBuild can build modules using a variety of build systems, including
-      Autotools, CMake, WAF, Python Distutils and Perl Makefiles.</para>
+      Autotools, CMake, Meson, WAF, Python Distutils and Perl Makefiles.</para>
 
     <para>JHBuild is not intended as a replacement for the distribution's
       package management system. Instead, it makes it easy to build software
@@ -97,7 +97,7 @@
         all source code will be installed, for example,
         <filename>~/jhbuild/checkout</filename>.</para>
 
-<screen><prompt>$</prompt> <userinput>git clone git://git.gnome.org/jhbuild</userinput>
+<screen><prompt>$</prompt> <userinput>git clone https://gitlab.gnome.org/GNOME/jhbuild.git</userinput>
 <computeroutput>...</computeroutput>
 <prompt>$</prompt></screen>
 
@@ -219,10 +219,10 @@
           </term>
           <listitem>
             <simpara>A string specifying the directory to unpack source trees
-              to. Unless <link linkend="cfg-buildroot">
-              <varname>buildroot</varname></link> is set, builds will occur in
-              this directory too. Defaults to
-              <filename>~/jhbuild/checkout</filename>.</simpara>
+              to. If <link linkend="cfg-buildroot">
+              <varname>buildroot</varname></link> is set to
+              <constant>None</constant>, builds will occur in this directory
+              too. Defaults to <filename>~/jhbuild/checkout</filename>.</simpara>
           </listitem>
         </varlistentry>
         <varlistentry>
@@ -250,6 +250,18 @@
         </varlistentry>
         <varlistentry>
           <term>
+            <link linkend="cfg-cmakeargs"><varname>cmakeargs</varname></link>
+          </term>
+          <listitem>
+            <simpara>A string containing arguments passed to the
+              <command>cmake</command> invocation of all modules. Can be
+              overridden for particular modules using the
+              <link linkend="cfg-module-cmakeargs">
+              <varname>module_cmakeargs</varname></link> dictionary.</simpara>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>
             <link linkend="cfg-makeargs"><varname>makeargs</varname></link>
           </term>
           <listitem>
@@ -257,6 +269,27 @@
               <command>make</command>. JHBuild will automatically append the
               parallel execution option (<option>-j</option>) based upon
               available CPU cores. Defaults to <literal>''</literal>.</simpara>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>
+            <link linkend="cfg-mesonargs"><varname>mesonargs</varname></link>
+          </term>
+          <listitem>
+            <simpara>A string containing arguments passed to the
+              <command>meson</command> invocation of all modules. Can be
+              overridden for particular modules using the
+              <link linkend="cfg-module-mesonargs">
+              <varname>module_mesonargs</varname></link> dictionary.</simpara>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term>
+            <link linkend="cfg-ninjaargs"><varname>ninjaargs</varname></link>
+          </term>
+          <listitem>
+            <simpara>A string listing additional arguments to be passed to
+              <command>ninja</command>. Defaults to <literal>''</literal>.</simpara>
           </listitem>
         </varlistentry>
       </variablelist>
@@ -403,7 +436,7 @@
             (<filename>/etc/xml/catalog</filename>).</simpara>
         </listitem>
         <listitem>
-          <simpara>X libraries</simpara>
+          <simpara>X libraries.</simpara>
         </listitem>
         <listitem>
           <simpara><filename>libsmbclient</filename> from Samba (used for
@@ -705,6 +738,23 @@ jhbuildbot_password = 'password'
             <literal>+docs</literal> in order to remove or add conditions.  Multiple modifications can be
             separated by a comma like <command>--conditions=+docs,-wayland</command> or you can split them
             across multiple <command>--conditions</command> arguments.</simpara>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+
+    <para>Additionally, JHBuild checks the presence, and value, of the
+      following environment variables:</para>
+
+    <variablelist>
+      <varlistentry>
+        <term><envar>JHBUILD_RUN_AS_ROOT</envar></term>
+        <listitem>
+          <simpara>By default, JHBuild does not run when using the root user,
+            to avoid destructive operations that may affect the whole system.
+            In certain cases, though, it's acceptable to run JHBuild as root;
+            for instance, inside a container, or in a continuous integration
+            environment. Exporting the <envar>JHBUILD_RUN_AS_ROOT</envar> will
+            disable the user id check at startup.</simpara>
         </listitem>
       </varlistentry>
     </variablelist>
@@ -1660,7 +1710,7 @@ Optional packages: (JHBuild will build the missing packages)
                 </example>
               </listitem>
               <listitem>
-                <simpara>Subversion: URI of module branch E.g.
+                <simpara>Subversion: URI of module branch. E.g.
                   <literal>'svn://svn.example.net/project/gnome-2-28'</literal>
                 </simpara>
               </listitem>
@@ -1686,7 +1736,8 @@ Optional packages: (JHBuild will build the missing packages)
           </term>
           <listitem>
             <simpara>A string specifying the parent directory to place build
-              trees. Defaults to <constant>None</constant>, which causes builds
+              trees. Defaults to <filename>~/.cache/jhbuild/build</filename>.
+              Setting the value to <constant>None</constant> causes builds
               to be performed within the source trees.</simpara>
           </listitem>
         </varlistentry>
@@ -1741,6 +1792,18 @@ Optional packages: (JHBuild will build the missing packages)
               the one it will build).</simpara>
           </listitem>
         </varlistentry>
+        <varlistentry id="cfg-cmakeargs">
+          <term>
+            <varname>cmakeargs</varname>
+          </term>
+          <listitem>
+            <simpara>A string containing arguments passed to the
+              <command>cmake</command> invocation of all modules. Can be
+              overridden for particular modules using the
+              <varname>module_cmakeargs</varname> dictionary.
+              Defaults to <literal>''</literal>.</simpara>
+          </listitem>
+        </varlistentry>
         <varlistentry id="cfg-copy-dir">
           <term>
             <varname>copy_dir</varname>
@@ -1774,7 +1837,7 @@ Optional packages: (JHBuild will build the missing packages)
               flag as a way to disable fatal compiler warnings.  The value of <literal>True</literal> is
               selected as a reasonable default for those using jhbuild as a means to get an up-to-date version of
               software packages without being side-tracked by build failures in other people's modules.
-              Settings this value to <literal>False</literal> may make sense for those using jhbuild as part of
+              Setting this value to <literal>False</literal> may make sense for those using jhbuild as part of
               a continuous integration or testing system.
             </simpara>
           </listitem>
@@ -1934,6 +1997,18 @@ Optional packages: (JHBuild will build the missing packages)
               the <option>--distcheck</option> option.</simpara>
           </listitem>
         </varlistentry>
+        <varlistentry id="cfg-mesonargs">
+          <term>
+            <varname>mesonargs</varname>
+          </term>
+          <listitem>
+            <simpara>A string containing arguments passed to the
+              <command>meson</command> invocation of all modules. Can be
+              overridden for particular modules using the
+              <varname>module_mesonargs</varname> dictionary. Defaults
+              to <literal>''</literal>.</simpara>
+          </listitem>
+        </varlistentry>
         <varlistentry id="cfg-module-autogenargs">
           <term>
             <varname>module_autogenargs</varname>
@@ -1955,6 +2030,19 @@ Optional packages: (JHBuild will build the missing packages)
             <simpara>A dictionary specifying which checkout mode to use for
               modules. This overrides the global
               <varname>checkout_mode</varname> setting.</simpara>
+          </listitem>
+        </varlistentry>
+        <varlistentry id="cfg-module-cmakeargs">
+          <term>
+            <varname>module_cmakeargs</varname>
+          </term>
+          <listitem>
+            <simpara>A dictionary mapping module names to strings specifying
+              the arguments to be passed to <command>cmake</command>. The
+              setting in <varname>module_cmakeargs</varname> is used instead
+              of the global <varname>cmakeargs</varname> setting. If a
+              particular module isn’t listed in the dictionary, the global
+              <varname>cmakeargs</varname> will be used.</simpara>
           </listitem>
         </varlistentry>
         <varlistentry id="cfg-module-makeargs">
@@ -1981,6 +2069,32 @@ Optional packages: (JHBuild will build the missing packages)
               <varname>module_makecheck</varname> replaces the value of
               <varname>makecheck</varname>. If a particular module isn't listed
               in the dictionary, the global <varname>makecheck</varname> will be
+              used.</simpara>
+          </listitem>
+        </varlistentry>
+        <varlistentry id="cfg-module-mesonargs">
+          <term>
+            <varname>module_mesonargs</varname>
+          </term>
+          <listitem>
+            <simpara>A dictionary mapping module names to strings specifying
+              the arguments to be passed to <command>meson</command>. The
+              setting in <varname>module_mesonargs</varname> is used instead
+              of the global <varname>mesonargs</varname> setting. If a
+              particular module isn’t listed in the dictionary, the global
+              <varname>mesonargs</varname> will be used.</simpara>
+          </listitem>
+        </varlistentry>
+        <varlistentry id="cfg-module-ninjaargs">
+          <term>
+            <varname>module_ninjaargs</varname>
+          </term>
+          <listitem>
+            <simpara>A dictionary mapping module names to strings specifying
+              the arguments to pass to <command>ninja</command>. The setting in
+              <varname>module_ninjaargs</varname> replaces the value of
+              <varname>ninjaargs</varname>. If a particular module isn't listed
+              in the dictionary, the global <varname>ninjaargs</varname> will be
               used.</simpara>
           </listitem>
         </varlistentry>
@@ -2071,6 +2185,15 @@ Optional packages: (JHBuild will build the missing packages)
             </simpara>
           </listitem>
         </varlistentry>
+        <varlistentry id="cfg-ninjaargs">
+          <term>
+            <varname>ninjaargs</varname>
+          </term>
+          <listitem>
+            <simpara>A string listing additional arguments to be passed to
+              <command>ninja</command>. Defaults to <literal>''</literal>.</simpara>
+          </listitem>
+        </varlistentry>
         <varlistentry id="cfg-nobuild">
           <term>
             <varname>nobuild</varname>
@@ -2078,7 +2201,7 @@ Optional packages: (JHBuild will build the missing packages)
           <listitem>
             <simpara>A boolean value, if set to <constant>True</constant>
               JHBuild will not build modules, but just download and unpack the
-              sources. The default vale is <constant>False</constant>.</simpara>
+              sources. The default value is <constant>False</constant>.</simpara>
           </listitem>
         </varlistentry>
         <varlistentry id="cfg-nonetwork">
@@ -2124,7 +2247,7 @@ Optional packages: (JHBuild will build the missing packages)
           <listitem>
             <simpara>A boolean value specifying whether to show an icon in the
               system tray using Zenity. If set to <constant>False</constant>,
-              notifications are emitted. Defaults to <constant>True</constant>.
+              an icon is shown. Defaults to <constant>True</constant>.
             </simpara>
           </listitem>
         </varlistentry>
@@ -2137,7 +2260,7 @@ Optional packages: (JHBuild will build the missing packages)
               JHBuild will run any graphical tests on the real X server, rather
               than using <command>Xvfb</command>. This option is equivalent to
               passing <option>--no-xvfb</option>. The default value is
-              <constant>False</constant></simpara>
+              <constant>False</constant>.</simpara>
           </listitem>
         </varlistentry>
         <varlistentry id="cfg-partial-build">
@@ -2373,9 +2496,10 @@ Optional packages: (JHBuild will build the missing packages)
               that are used for building them.  You should use <literal>conditions.add()</literal> and
               <literal>conditions.discard()</literal> to modify the list if you want to make changes.</simpara>
             <simpara>The original set of conditions is determined on a per-OS basis and can be modified using
-              the --conditions= commandline argument.  The changes made by --conditions are visible at the time
-              that jhbuildrc is sourced, so you can set other variables based on the current value of the set,
-              but --conditions will be applied again after any changes made by jhbuildrc.</simpara>
+              the <option>--conditions=</option> commandline argument.  The changes made by
+              <option>--conditions</option> are visible at the time that jhbuildrc is sourced, so you can set
+              other variables based on the current value of the set, but <option>--conditions</option> will be
+              applied again after any changes made by jhbuildrc.</simpara>
           </listitem>
         </varlistentry>
       </variablelist>
@@ -2799,6 +2923,10 @@ Optional packages: (JHBuild will build the missing packages)
           If these attributes are present, they are used to check that the
           source package was downloaded correctly.</para>
 
+        <para>The <sgmltag class="attribute">rename-tarball</sgmltag> can be
+          used to rename the tarball file when downloading, in case the original
+          name conflicts with another module.</para>
+
         <para>Any number of <sgmltag class="element">patch</sgmltag> elements
           may be nested inside the <sgmltag class="element">branch</sgmltag>
           element. These patches are applied, in order, to the source tree after
@@ -2897,6 +3025,7 @@ Optional packages: (JHBuild will build the missing packages)
 	      [ check-target="<replaceable>check-target</replaceable>" ]
 	      [ supports-non-srcdir-builds="<replaceable>supports-non-srcdir-builds</replaceable>" ]
 	      [ force-non-srcdir-builds="<replaceable>force-non-srcdir-builds</replaceable>" ]
+	      [ supports-unknown-configure-options="<replaceable>supports-unknown-configure-options</replaceable>" ]
 	      [ supports-static-analyzer="<replaceable>supports-static-analyzer</replaceable>" ]&gt;
 
   &lt;branch [ ... ] &gt;
@@ -2976,6 +3105,11 @@ Optional packages: (JHBuild will build the missing packages)
           attribute must be specified (with false as value) for modules which
           don’t support being built under a static analysis tool such as
           <command>scan-build</command>.</para>
+
+        <para>The <sgmltag class="attribute">supports-unknown-configure-options</sgmltag>
+          attribute is used to mark modules that will error out if an unknown
+          option is passed to <filename>configure</filename>. Global configure
+          options will not be used for that module.</para>
       </section>
 
       <section id="moduleset-syntax-defs-cmake">
@@ -2986,7 +3120,13 @@ Optional packages: (JHBuild will build the missing packages)
 
 <programlisting>
   &lt;cmake id="<replaceable>modulename</replaceable>"
-            [ skip-install="<replaceable>skip-install</replaceable>" ]&gt;
+            [ cmakeargs="<replaceable>cmakeargs</replaceable>" ]
+            [ ninjaargs="<replaceable>ninjaargs</replaceable>" ]
+            [ makeargs="<replaceable>makeargs</replaceable>" ]
+            [ skip-install="<replaceable>skip-install</replaceable>" ]
+            [ cmakedir="<replaceable>cmakedir</replaceable>" ]
+            [ use-ninja="<replaceable>use-ninja</replaceable>" ]
+            [ force-non-srcdir-builds="<replaceable>force-non-srcdir-builds</replaceable>" ]&gt;
   &lt;branch [ ... ] &gt;
     [...]
   &lt;/branch&gt;
@@ -3001,7 +3141,91 @@ Optional packages: (JHBuild will build the missing packages)
   &lt;/after&gt;
 &lt;/cmake&gt;
 </programlisting>
+        <para>The <sgmltag class="attribute">cmakeargs</sgmltag> attribute is
+          used to specify additional arguments to pass to
+          <command>cmake</command>.</para>
+
+        <para>The <sgmltag class="attribute">ninjaargs</sgmltag> attribute is
+          used to specify additional arguments to pass to
+          <command>ninja</command>.</para>
+
+        <para>The <sgmltag class="attribute">makeargs</sgmltag> attribute is
+          used to specify additional arguments to pass to
+          <command>make</command>.</para>
+
+        <para>The <sgmltag class="attribute">cmakedir</sgmltag> attribute
+          specifies the subdirectory where cmake will run in relation to srcdir.
+        </para>
+
+        <para>The <sgmltag class="attribute">force-non-srcdir-builds</sgmltag>
+          attribute is used to mark modules that can't be cleanly built from
+          the source directory, but can be built from outside it.</para>
+
+        <para>The <sgmltag class="attribute">use-ninja</sgmltag>
+          attribute is used to mark modules should be built using the
+          Ninja backend for cmake, instead of the Make backend. The
+          default is to use the Ninja backend.</para>
       </section>
+
+      <section id="moduleset-syntax-defs-meson">
+        <title>Meson</title>
+
+        <para>The <sgmltag class="element">meson</sgmltag> element is used to
+          define a module which is configured using the Meson build system and
+          built using the Ninja build tool.</para>
+
+<programlisting>
+  &lt;meson id="<replaceable>modulename</replaceable>"
+            [ mesonargs="<replaceable>mesonargs</replaceable>" ]
+            [ ninjaargs="<replaceable>ninjaargs</replaceable>" ]
+            [ skip-install="<replaceable>skip-install</replaceable>" ]&gt;
+  &lt;branch [ ... ] &gt;
+    [...]
+  &lt;/branch&gt;
+
+  &lt;dependencies&gt;
+    &lt;dep package="<replaceable>modulename</replaceable>"/&gt;
+    ...
+  &lt;/dependencies&gt;
+  &lt;after&gt;
+    &lt;dep package="<replaceable>modulename</replaceable>"/&gt;
+    ...
+  &lt;/after&gt;
+&lt;/meson&gt;
+</programlisting>
+        <para>The <sgmltag class="attribute">mesonargs</sgmltag> attribute is
+          used to specify additional arguments to pass to
+          <command>meson</command>.</para>
+        <para>The <sgmltag class="attribute">ninjaargs</sgmltag> attribute is
+          used to specify additional arguments to pass to
+          <command>ninja</command>.</para>
+      </section>
+
+      <section id="moduleset-syntax-defs-distutils">
+        <title>distutils</title>
+
+        <para>The <sgmltag class="element">distutils</sgmltag> element is used
+          to define a module which is built using python's distutils.</para>
+
+<programlisting>
+&lt;distutils id="<replaceable>modulename</replaceable>"
+            [ supports-non-srcdir-builds="<replaceable>yes|no</replaceable>" ]&gt;
+  &lt;branch [ ... ] &gt;
+    [...]
+  &lt;/branch&gt;
+
+  &lt;dependencies&gt;
+    &lt;dep package="<replaceable>modulename</replaceable>"/&gt;
+    ...
+  &lt;/dependencies&gt;
+  &lt;after&gt;
+    &lt;dep package="<replaceable>modulename</replaceable>"/&gt;
+    ...
+  &lt;/after&gt;
+&lt;/distutils&gt;
+</programlisting>
+      </section>
+
 
       <section id="moduleset-syntax-defs-distutils">
         <title>distutils</title>
@@ -3252,7 +3476,7 @@ Optional packages: (JHBuild will build the missing packages)
           invoke all .py files. 'ldtp' invokes 'ldtprunner run.xml'.</para>
 
         <para>Unless the noxvfb configuration option is set, an Xvfb server is
-          started to run the tests in</para>
+          started to run the tests in.</para>
       </section>
 
       <section id="moduleset-syntax-defs-metamodule">
@@ -3341,7 +3565,7 @@ Optional packages: (JHBuild will build the missing packages)
           <para>The <sgmltag class="attribute">name</sgmltag> attribute should
             be a unique identifier for the Subversion repository.</para>
 
-          <para>If <sgmltag class="attribute">default</sgmltag> attribute says
+          <para>The <sgmltag class="attribute">default</sgmltag> attribute says
             whether this is the default module source for this module set file.
           </para>
 

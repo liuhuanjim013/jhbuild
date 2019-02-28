@@ -41,7 +41,8 @@ class DistutilsModule(Package, DownloadableModule):
         Package.__init__(self, name, branch=branch)
         self.supports_non_srcdir_builds = supports_non_srcdir_builds
         self.supports_install_destdir = True
-        self.python = [os.environ.get('PYTHON', 'python')]
+        self.python = os.environ.get('PYTHON', 'python')
+        self.pythons = [self.python]
 
     def get_srcdir(self, buildscript):
         return self.branch.srcdir
@@ -60,12 +61,13 @@ class DistutilsModule(Package, DownloadableModule):
         buildscript.set_action(_('Building'), self)
         srcdir = self.get_srcdir(buildscript)
         builddir = self.get_builddir(buildscript)
-        for python in self.python:
+        for python in self.pythons:
             cmd = [python, 'setup.py', 'build']
             if srcdir != builddir:
                 cmd.extend(['--build-base', builddir])
             cmd.extend(['build_py', '--optimize', '2'])
             buildscript.execute(cmd, cwd = srcdir, extra_env = self.extra_env)
+
     do_build.depends = [PHASE_CHECKOUT]
     do_build.error_phase = [PHASE_FORCE_CHECKOUT]
 
@@ -74,7 +76,7 @@ class DistutilsModule(Package, DownloadableModule):
         srcdir = self.get_srcdir(buildscript)
         builddir = self.get_builddir(buildscript)
         destdir = self.prepare_installroot(buildscript)
-        for python in self.python:
+        for python in self.pythons:
             cmd = [python, 'setup.py']
             if srcdir != builddir:
                 cmd.extend(['build', '--build-base', builddir])
@@ -98,10 +100,13 @@ def parse_distutils(node, config, uri, repositories, default_repo):
     if node.hasAttribute('supports-non-srcdir-builds'):
         instance.supports_non_srcdir_builds = \
             (node.getAttribute('supports-non-srcdir-builds') != 'no')
+    if node.hasAttribute('python3'):
+        instance.python = os.environ.get('PYTHON3', 'python3')
+        instance.pythons = [instance.python]
 
     # allow to specify python executable separated by space
     if node.hasAttribute('python'):
-        instance.python = node.getAttribute('python').split()
+        instance.pythons = node.getAttribute('python').split()
 
     return instance
 

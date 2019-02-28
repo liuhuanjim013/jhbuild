@@ -63,11 +63,13 @@ class AutogenModule(MakeModule, DownloadableModule):
                  autogen_template=None,
                  check_target=True,
                  supports_static_analyzer=True,
-                 needs_gmake=True):
+                 needs_gmake=True,
+                 supports_unknown_configure_options=True):
         MakeModule.__init__(self, name, branch=branch, makeargs=makeargs,
                             makeinstallargs=makeinstallargs, makefile=makefile, needs_gmake=needs_gmake)
         self.autogenargs = autogenargs
         self.supports_non_srcdir_builds = supports_non_srcdir_builds
+        self.force_non_srcdir_builds = False
         self.skip_autogen = skip_autogen
         self.skip_install_phase = skip_install_phase
         self.skip_build_phase = skip_build_phase # liuhuan: support for skipping build
@@ -77,23 +79,26 @@ class AutogenModule(MakeModule, DownloadableModule):
         self.check_target = check_target
         self.supports_install_destdir = True
         self.supports_static_analyzer = supports_static_analyzer
+        self.supports_unknown_configure_options = supports_unknown_configure_options
 
     def get_srcdir(self, buildscript):
         return self.branch.srcdir
 
     def get_builddir(self, buildscript):
+        builddir = self.get_srcdir(buildscript);
         if buildscript.config.buildroot and self.supports_non_srcdir_builds:
             d = buildscript.config.builddir_pattern % (
                 self.branch.checkoutdir or self.branch.get_module_basename())
-            return os.path.join(buildscript.config.buildroot, d)
-        else:
-            return self.get_srcdir(buildscript)
+            builddir = os.path.join(buildscript.config.buildroot, d)
+        if self.force_non_srcdir_builds and builddir == self.get_srcdir(buildscript):
+            builddir = os.path.join(builddir, 'build')
+        return builddir
 
     def _file_exists_and_is_newer_than(self, potential, other):
         try:
             other_stbuf = os.stat(other)
             potential_stbuf = os.stat(potential)
-        except OSError, e:
+        except OSError as e:
             return False
         return potential_stbuf.st_mtime > other_stbuf.st_mtime
 
@@ -114,17 +119,20 @@ class AutogenModule(MakeModule, DownloadableModule):
         else:
             template = ("%(srcdir)s/%(autogen-sh)s --prefix %(prefix)s %(autogenargs)s ")
 
+        default_autogenargs = (self.config.autogenargs
+            if self.supports_unknown_configure_options else '')
         autogenargs = self.autogenargs + ' ' + self.config.module_autogenargs.get(
-                self.name, self.config.autogenargs)
+                self.name, default_autogenargs)
 
-        if self.config.disable_Werror:
-            autogenargs = autogenargs + ' ' + '--disable-Werror'
+        if self.config.disable_Werror and self.supports_unknown_configure_options:
+            autogenargs = '--disable-Werror' + ' ' + autogenargs
 
         vars = {'prefix': os.path.splitdrive(buildscript.config.prefix)[1],
                 'autogen-sh': self.autogen_sh,
                 'autogenargs': autogenargs}
 
-        if buildscript.config.buildroot and self.supports_non_srcdir_builds:
+        if buildscript.config.buildroot and self.supports_non_srcdir_builds or \
+           self.force_non_srcdir_builds:
             vars['srcdir'] = self.get_srcdir(buildscript)
         else:
             vars['srcdir'] = '.'
@@ -212,7 +220,7 @@ class AutogenModule(MakeModule, DownloadableModule):
 
     def do_configure(self, buildscript):
         builddir = self.get_builddir(buildscript)
-        if buildscript.config.buildroot and not os.path.exists(builddir):
+        if not os.path.exists(builddir):
             os.makedirs(builddir)
         buildscript.set_action(_('Configuring'), self)
 
@@ -318,6 +326,7 @@ class AutogenModule(MakeModule, DownloadableModule):
         self.process_install(buildscript, self.get_revision())
 
     do_install.depends = [PHASE_BUILD]
+    do_install.error_phases = [PHASE_CONFIGURE]
 
     def skip_install(self, buildscript, last_phase):
         return self.config.noinstall or self.skip_install_phase
@@ -352,6 +361,10 @@ class AutogenModule(MakeModule, DownloadableModule):
                  ('makeinstallargs', 'makeinstallargs', ''),
                  ('supports-non-srcdir-builds',
                   'supports_non_srcdir_builds', True),
+                 ('force-non-srcdir-builds',
+                  'force_non_srcdir_builds', False),
+                 ('supports-unknown-configure-options',
+                  'supports_unknown_configure_options', True),
                  ('skip-autogen', 'skip_autogen', False),
                  ('skip-install', 'skip_install_phase', False),
                  ('skip-build', 'skip_build_phase', False), # liuhuan: support for skipping build
@@ -378,7 +391,10 @@ def collect_args(instance, node, argtype):
 def parse_autotools(node, config, uri, repositories, default_repo):
     instance = AutogenModule.parse_from_xml(node, config, uri, repositories, default_repo)
 
-    instance.dependencies += ['automake', 'libtool', instance.get_makecmd(config)]
+    # Allow base packages such as autoconf/automake/libtool/etc. to skip the
+    # standard dependencies to prevent dependency cycles.
+    if node.getAttribute('bootstrap') != 'true':
+        instance.dependencies += ['automake', 'libtool', instance.get_makecmd(config)]
 
     instance.autogenargs = collect_args (instance, node, 'autogenargs')
     instance.makeargs = collect_args (instance, node, 'makeargs')
@@ -387,6 +403,12 @@ def parse_autotools(node, config, uri, repositories, default_repo):
     if node.hasAttribute('supports-non-srcdir-builds'):
         instance.supports_non_srcdir_builds = \
                 (node.getAttribute('supports-non-srcdir-builds') != 'no')
+    if node.hasAttribute('force-non-srcdir-builds'):
+        instance.force_non_srcdir_builds = \
+                (node.getAttribute('force-non-srcdir-builds') != 'no')
+    if node.hasAttribute('supports-unknown-configure-options'):
+        instance.supports_unknown_configure_options = \
+                (node.getAttribute('supports-unknown-configure-options') != 'no')
     if node.hasAttribute('skip-autogen'):
         skip_autogen = node.getAttribute('skip-autogen')
         if skip_autogen == 'true':

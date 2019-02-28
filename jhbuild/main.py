@@ -94,7 +94,7 @@ def main(args):
         localedir = None
     gettext.install('jhbuild', localedir=localedir, unicode=True)
 
-    if hasattr(os, 'getuid') and os.getuid() == 0:
+    if not 'JHBUILD_RUN_AS_ROOT' in os.environ and hasattr(os, 'getuid') and os.getuid() == 0:
         sys.stderr.write(_('You should not run jhbuild as root.\n').encode(_encoding, 'replace'))
         sys.exit(1)
 
@@ -135,7 +135,7 @@ def main(args):
 
     try:
         config = jhbuild.config.Config(options.configfile, options.conditions)
-    except FatalError, exc:
+    except FatalError as exc:
         sys.stderr.write('jhbuild: %s\n' % exc.args[0].encode(_encoding, 'replace'))
         sys.exit(1)
 
@@ -153,11 +153,11 @@ def main(args):
 
     try:
         rc = jhbuild.commands.run(command, config, args, help=lambda: print_help(parser))
-    except UsageError, exc:
+    except UsageError as exc:
         sys.stderr.write('jhbuild %s: %s\n' % (command, exc.args[0].encode(_encoding, 'replace')))
         parser.print_usage()
         sys.exit(1)
-    except FatalError, exc:
+    except FatalError as exc:
         sys.stderr.write('jhbuild %s: %s\n' % (command, exc.args[0].encode(_encoding, 'replace')))
         sys.exit(1)
     except KeyboardInterrupt:
@@ -166,7 +166,7 @@ def main(args):
     except EOFError:
         uprint(_('EOF'))
         sys.exit(1)
-    except IOError, e:
+    except IOError as e:
         if e.errno != errno.EPIPE:
             raise
         sys.exit(0)

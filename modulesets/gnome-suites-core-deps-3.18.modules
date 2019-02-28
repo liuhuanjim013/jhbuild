@@ -5,7 +5,7 @@
 
 <!-- git repos -->
 <repository type="git" name="git.gnome.org" default="yes"
-    href="git://git.gnome.org/"/>
+    href="https://git.gnome.org/browse/"/>
 <repository type="git" name="git.freedesktop.org"
     href="git://anongit.freedesktop.org/"/>
 <repository type="git" name="gstreamer.freedesktop.org"
@@ -73,7 +73,7 @@
     <if condition-set="freebsd">
       <autogenargs value="LIBARCHIVE_CFLAGS=' ' LIBARCHIVE_LIBS='-larchive'"/>
     </if>
-    <branch repo="github.com" module="hughsie/appstream-glib.git"/>
+    <branch repo="github.com" module="hughsie/appstream-glib.git" revision="0_6_X"/>
     <dependencies>
       <dep package="freetype2"/>
       <dep package="gcab"/>
@@ -112,7 +112,7 @@
      </branch>
      <dependencies>
         <dep package="cairo"/>
-        <dep package="libsigc++2"/>
+        <dep package="libsigcplusplus"/>
      </dependencies>
   </autotools>
 
@@ -163,7 +163,7 @@
   </autotools>
 
   <autotools id="gcr">
-    <branch/>
+    <branch revision="gnome-3-18"/>
     <dependencies>
       <dep package="gnome-common"/>
       <dep package="glib"/>
@@ -404,7 +404,7 @@
     <if condition-set="wayland">
       <autogenargs value="--enable-wayland-backend --enable-wayland-compositor"/>
     </if>
-    <branch/>
+    <branch revision="1.26.2"/>
     <dependencies>
       <dep package="cogl"/>
       <dep package="atk"/>
@@ -744,7 +744,7 @@
     <if condition-set="freebsd">
       <autogenargs value="--with-ca-certificates=/usr/local/share/certs/ca-root-nss.crt"/>
     </if>
-    <branch/>
+    <branch revision="librest-0-7"/>
     <dependencies>
       <dep package="glib"/>
       <dep package="libsoup"/>
@@ -764,7 +764,7 @@
   </autotools>
 
   <autotools id="gobject-introspection">
-    <branch/>
+    <branch revision="gnome-3-18"/>
     <dependencies>
       <dep package="bison"/>
       <dep package="flex"/>
@@ -778,7 +778,7 @@
     <if condition-set="coverage">
       <autogenargs value="--enable-coverage"/>
     </if>
-    <branch/>
+    <branch revision="gnome-3-22"/>
     <dependencies>
       <dep package="dbus-glib"/>
       <dep package="gobject-introspection"/>
@@ -864,8 +864,8 @@
     <branch/>
   </autotools>
 
-  <autotools id="libsigc++2">
-    <branch/>
+  <autotools id="libsigcplusplus">
+    <branch revision="libsigc++-2-8"/>
     <dependencies>
       <dep package="mm-common"/>
     </dependencies>
@@ -875,12 +875,12 @@
     <branch revision="glibmm-2-46"/>
     <dependencies>
       <dep package="glib"/>
-      <dep package="libsigc++2"/>
+      <dep package="libsigcplusplus"/>
     </dependencies>
   </autotools>
 
   <autotools id="pangomm">
-    <branch/>
+    <branch revision="pangomm-2-38"/>
     <dependencies>
       <dep package="glibmm"/>
       <dep package="cairomm"/>
@@ -909,7 +909,7 @@
   </autotools>
 
   <autotools id="gssdp" makeargs="CFLAGS=-Wno-error">
-    <branch />
+    <branch revision="gssdp_1.0"/>
     <dependencies>
       <dep package="glib"/>
       <dep package="libsoup"/>
@@ -921,7 +921,7 @@
 
   <autotools id="gupnp"
              autogenargs="--with-context-manager=network-manager">
-    <branch />
+    <branch revision="gupnp-1.0"/>
     <dependencies>
       <dep package="gssdp"/>
       <dep package="glib"/>
@@ -1034,7 +1034,7 @@
   </autotools>
 
   <autotools id="libgweather">
-    <branch/>
+    <branch revision="gnome-3-18"/>
     <dependencies>
       <dep package="intltool"/>
       <dep package="libxml2"/>
@@ -1066,7 +1066,7 @@
   </autotools>
 
   <autotools id="libgxps">
-    <branch/>
+    <branch revision="0.2.5"/>
     <dependencies>
       <dep package="glib"/>
       <dep package="cairo"/>
@@ -1116,7 +1116,7 @@
     <if condition-unset="gnu-elf">
       <autogenargs value="--disable-Bsymbolic"/>
     </if>
-    <branch/>
+    <branch revision="librsvg-2-40"/>
     <dependencies>
       <dep package="libxml2"/>
       <dep package="glib"/>
@@ -1159,7 +1159,7 @@
 
   <!-- Python 3 build of pygobject -->
   <autotools id="pygobject" autogenargs="--with-python=python3">
-    <branch/>
+    <branch revision="pygobject-3-18"/>
     <dependencies>
       <dep package="gnome-common"/>
       <dep package="glib"/>
@@ -1200,7 +1200,7 @@
   </autotools>
 
   <autotools id="totem-pl-parser">
-    <branch/>
+    <branch revision="gnome-3-10"/>
     <dependencies>
       <dep package="gnome-common"/>
       <dep package="intltool"/>
@@ -1288,7 +1288,7 @@
   </autotools>
 
   <autotools id="libinput">
-    <branch repo="git.freedesktop.org" checkoutdir="libinput" module="wayland/libinput.git" />
+    <branch repo="git.freedesktop.org" checkoutdir="libinput" module="wayland/libinput.git" revision="1.5-branch"/>
     <dependencies>
       <dep package="libevdev"/>
       <dep package="libudev"/>
@@ -1383,9 +1383,9 @@
     </if>
     <pkg-config>webkit2gtk-4.0.pc</pkg-config>
     <branch repo="webkitgtk.org"
-            module="webkitgtk-2.10.6.tar.xz" version="2.10.6"
-            hash="sha256:0b77abcc72a274e8f11e9d9f0f6b116dadeeb8b9d5f22b17b6604ed9ae3fe83c"
-            size="10988348">
+            module="webkitgtk-2.10.9.tar.xz" version="2.10.9"
+            hash="sha256:bbb18d741780b1b7fa284beb9a97361ac57cda2e42bad2ae2fcdbf797919e969"
+            size="10992980">
     </branch>
     <dependencies>
       <dep package="c++"/>
@@ -1469,7 +1469,7 @@
   </autotools>
 
   <autotools id="zenity">
-    <branch/>
+    <branch revision="gnome-3-18"/>
     <dependencies>
       <dep package="intltool"/>
       <dep package="gtk+"/>
@@ -1499,7 +1499,7 @@
     <if condition-unset="linux">
       <autogenargs value="--disable-gusb --disable-udev --disable-systemd-login"/>
     </if>
-    <branch repo="github.com" checkoutdir="colord" module="hughsie/colord.git"/>
+    <branch repo="github.com" checkoutdir="colord" module="hughsie/colord.git" revision="colord-1-3"/>
     <dependencies>
       <dep package="glib"/>
       <dep package="dbus"/>
@@ -1642,7 +1642,7 @@
   </autotools>
 
   <autotools id="libwnck">
-    <branch revision="3.14.0"/>
+    <branch revision="gnome-3-14"/>
     <dependencies>
       <dep package="intltool"/>
       <dep package="gtk+"/>

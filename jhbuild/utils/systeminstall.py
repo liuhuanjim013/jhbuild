@@ -47,7 +47,7 @@ def get_installed_pkgconfigs(config):
             versions = stdout.splitlines()
             if len(versions) == len(pkgs):
                 return dict(zip(pkgs, versions))
-        except OSError:
+        except (subprocess.CalledProcessError, OSError):
             pass
 
         # We have to rather inefficiently repeatedly fork to work around
@@ -60,23 +60,41 @@ def get_installed_pkgconfigs(config):
             stdout = proc.communicate()[0]
             proc.wait()
             pkgversions[pkg] = stdout.strip()
-    except OSError: # pkg-config not installed
+    except (subprocess.CalledProcessError, OSError): # pkg-config not installed
         pass
     return pkgversions
 
-def get_uninstalled_pkgconfigs_and_filenames(uninstalled):
+def get_uninstalled_pkgconfigs(uninstalled):
     uninstalled_pkgconfigs = []
-    uninstalled_filenames = []
-
     for module_name, dep_type, value in uninstalled:
         if dep_type == 'pkgconfig':
             uninstalled_pkgconfigs.append((module_name, value))
-        elif dep_type.lower() == 'path':
+    return uninstalled_pkgconfigs
+
+def get_uninstalled_binaries(uninstalled):
+    uninstalled_binaries = []
+    for module_name, dep_type, value in uninstalled:
+        if dep_type.lower() == 'path':
+            uninstalled_binaries.append((module_name, value))
+    return uninstalled_binaries
+
+def get_uninstalled_c_includes(uninstalled):
+    uninstalled_c_includes = []
+    for module_name, dep_type, value in uninstalled:
+        if dep_type.lower() == 'c_include':
+            uninstalled_c_includes.append((module_name, value))
+    return uninstalled_c_includes
+
+# This function returns uninstalled binaries and C includes as filenames.
+# Backends should use either this OR the functions above.
+def get_uninstalled_filenames(uninstalled):
+    uninstalled_filenames = []
+    for module_name, dep_type, value in uninstalled:
+        if dep_type.lower() == 'path':
             uninstalled_filenames.append((module_name, os.path.join('/usr/bin', value)))
         elif dep_type.lower() == 'c_include':
             uninstalled_filenames.append((module_name, os.path.join('/usr/include', value)))
-
-    return uninstalled_pkgconfigs, uninstalled_filenames
+    return uninstalled_filenames
 
 def systemdependencies_met(module_name, sysdeps, config):
     '''Returns True of the system dependencies are met for module_name'''
@@ -197,7 +215,7 @@ class SystemInstall(object):
         elif cmds.has_command('sudo'):
             self._root_command_prefix_args = ['sudo', '-E']
         else:
-            raise SystemExit, _('No suitable root privilege command found; you should install "pkexec"')
+            raise SystemExit(_('No suitable root privilege command found; you should install "pkexec"'))
 
     def install(self, uninstalled):
         """Takes a list of pkg-config identifiers and uses a system-specific method to install them."""
@@ -218,7 +236,6 @@ PK_FILTER_ENUM_NEWEST = 1 << 16
 PK_FILTER_ENUM_ARCH = 1 << 18
 PK_TRANSACTION_FLAG_ENUM_ONLY_TRUSTED = 1 << 1
 
-# NOTE: This class is unfinished
 class PKSystemInstall(SystemInstall):
     def __init__(self):
         SystemInstall.__init__(self)
@@ -234,26 +251,29 @@ class PKSystemInstall(SystemInstall):
 
     def _get_new_transaction(self):
         if self._loop is None:
-            import glib
+            try:
+                import glib
+            except:
+                try:
+                    from gi.repository import GLib as glib
+                except:
+                    raise SystemExit(_('Error: python-gobject package not found.'))
             self._loop = glib.MainLoop()
         if self._sysbus is None:
-            import dbus.glib
+            try:
+                import dbus.glib
+            except:
+                raise SystemExit(_('Error: dbus-python package not found.'))
             import dbus
             self._dbus = dbus
             self._sysbus = dbus.SystemBus()
         if self._pkdbus is None:
             self._pkdbus = dbus.Interface(self._sysbus.get_object('org.freedesktop.PackageKit',
-                                              '/org/freedesktop/PackageKit'),
-                            'org.freedesktop.PackageKit')
+                                                                  '/org/freedesktop/PackageKit'),
+                                          'org.freedesktop.PackageKit')
             properties = dbus.Interface(self._pkdbus, 'org.freedesktop.DBus.Properties')
-            self._pk_major = properties.Get('org.freedesktop.PackageKit', 'VersionMajor')
-            self._pk_minor = properties.Get('org.freedesktop.PackageKit', 'VersionMinor')
-        if self._pk_major == 1 or (self._pk_major == 0 and self._pk_minor >= 8):
-            txn_path = self._pkdbus.CreateTransaction()
-            txn = self._sysbus.get_object('org.freedesktop.PackageKit', txn_path)
-        else:
-            tid = self._pkdbus.GetTid()
-            txn = self._sysbus.get_object('org.freedesktop.PackageKit', tid)
+        txn_path = self._pkdbus.CreateTransaction()
+        txn = self._sysbus.get_object('org.freedesktop.PackageKit', txn_path)
         txn_tx = self._dbus.Interface(txn, 'org.freedesktop.PackageKit.Transaction')
         txn.connect_to_signal('Message', self._on_pk_message)
         txn.connect_to_signal('ErrorCode', self._on_pk_error)
@@ -261,45 +281,27 @@ class PKSystemInstall(SystemInstall):
         return txn_tx, txn
 
     def install(self, uninstalled):
-        uninstalled_pkgconfigs, uninstalled_filenames = get_uninstalled_pkgconfigs_and_filenames(uninstalled)
+        logging.info(_('Computing packages to install. This might be slow. Please wait.'))
         pk_package_ids = set()
-
+        uninstalled_pkgconfigs = get_uninstalled_pkgconfigs(uninstalled)
         if uninstalled_pkgconfigs:
             txn_tx, txn = self._get_new_transaction()
             txn.connect_to_signal('Package', lambda info, pkid, summary: pk_package_ids.add(pkid))
-            if self._pk_major == 1 or (self._pk_major == 0 and self._pk_minor >= 9):
-                # PackageKit 1.0.x or 0.9.x
-                txn_tx.WhatProvides(PK_FILTER_ENUM_ARCH | PK_FILTER_ENUM_NEWEST |
-                                    PK_FILTER_ENUM_NOT_INSTALLED,
-                                    ['pkgconfig(%s)' % pkg for modname, pkg in
-                                     uninstalled_pkgconfigs])
-            elif self._pk_major == 0 and self._pk_minor == 8:
-                # PackageKit 0.8.x
-                txn_tx.WhatProvides(PK_FILTER_ENUM_ARCH | PK_FILTER_ENUM_NEWEST |
-                                    PK_FILTER_ENUM_NOT_INSTALLED,
-                                    PK_PROVIDES_ANY,
-                                    ['pkgconfig(%s)' % pkg for modname, pkg in
-                                     uninstalled_pkgconfigs])
-            else:
-                # PackageKit 0.7.x and older
-                txn_tx.WhatProvides('arch;newest;~installed', 'any',
-                                    ['pkgconfig(%s)' % pkg for modname, pkg in
-                                     uninstalled_pkgconfigs])
+            txn_tx.WhatProvides(PK_FILTER_ENUM_ARCH | PK_FILTER_ENUM_NEWEST |
+                                PK_FILTER_ENUM_NOT_INSTALLED,
+                                ['pkgconfig(%s)' % pkg for modname, pkg in
+                                 uninstalled_pkgconfigs])
             self._loop.run()
             del txn, txn_tx
 
+        uninstalled_filenames = get_uninstalled_filenames(uninstalled)
         if uninstalled_filenames:
             txn_tx, txn = self._get_new_transaction()
             txn.connect_to_signal('Package', lambda info, pkid, summary: pk_package_ids.add(pkid))
-            if self._pk_major == 1 or (self._pk_major == 0 and self._pk_minor >= 8):
-                txn_tx.SearchFiles(PK_FILTER_ENUM_ARCH | PK_FILTER_ENUM_NEWEST |
-                                   PK_FILTER_ENUM_NOT_INSTALLED,
-                                   [pkg for modname, pkg in
-                                    uninstalled_filenames])
-            else:
-                txn_tx.SearchFiles('arch;newest;~installed',
-                                   [pkg for modname, pkg in
-                                    uninstalled_filenames])
+            txn_tx.SearchFiles(PK_FILTER_ENUM_ARCH | PK_FILTER_ENUM_NEWEST |
+                               PK_FILTER_ENUM_NOT_INSTALLED,
+                               [pkg for modname, pkg in
+                                uninstalled_filenames])
             self._loop.run()
             del txn, txn_tx
 
@@ -313,19 +315,10 @@ class PKSystemInstall(SystemInstall):
             return
 
         logging.info(_('Installing:\n  %s' % ('\n  '.join(pk_package_ids, ))))
+        logging.info(_('This might take a very long time. Do not turn off your computer. You can run `pkmon\' to monitor progress.'))
 
         txn_tx, txn = self._get_new_transaction()
-        if self._pk_major == 1 or (self._pk_major == 0 and self._pk_minor >= 8):
-            # Using OnlyTrusted might break package installation on rawhide,
-            # where packages are unsigned, but this prevents users of normal
-            # distros with signed packages from seeing security warnings. It
-            # would be better to simulate the transaction first to decide
-            # whether OnlyTrusted will work before using it. See
-            # http://www.freedesktop.org/software/PackageKit/gtk-doc/introduction-ideas-transactions.html
-            txn_tx.InstallPackages(PK_TRANSACTION_FLAG_ENUM_ONLY_TRUSTED, pk_package_ids)
-        else:
-            # PackageKit 0.7.x and older
-            txn_tx.InstallPackages(True, pk_package_ids)
+        txn_tx.InstallPackages(PK_TRANSACTION_FLAG_ENUM_ONLY_TRUSTED, pk_package_ids)
         self._loop.run()
 
         logging.info(_('Complete!'))
@@ -360,7 +353,8 @@ class PacmanSystemInstall(SystemInstall):
                 logging.info(_('Successfully updated pkgfile cache'))
 
     def install(self, uninstalled):
-        uninstalled_pkgconfigs, uninstalled_filenames = get_uninstalled_pkgconfigs_and_filenames(uninstalled)
+        uninstalled_pkgconfigs = get_uninstalled_pkgconfigs(uninstalled)
+        uninstalled_filenames = get_uninstalled_filenames(uninstalled)
         logging.info(_('Using pacman to install packages.  Please wait.'))
         package_names = set()
 
@@ -398,39 +392,17 @@ class PacmanSystemInstall(SystemInstall):
             return True
         return False
 
-class YumSystemInstall(SystemInstall):
-    def __init__(self):
-        SystemInstall.__init__(self)
-
-    def install(self, uninstalled):
-        uninstalled_pkgconfigs, uninstalled_filenames = get_uninstalled_pkgconfigs_and_filenames(uninstalled)
-        logging.info(_('Using yum to install packages.  Please wait.'))
-
-        if len(uninstalled_pkgconfigs) + len(uninstalled_filenames) > 0:
-            logging.info(_('Installing:\n  %(pkgs)s') %
-                         {'pkgs': '\n  '.join([modname for modname, pkg in
-                                               uninstalled_pkgconfigs +
-                                               uninstalled_filenames])})
-            args = self._root_command_prefix_args + ['yum', '-y', 'install']
-            args.extend(['pkgconfig(%s)' % pkg for modname, pkg in
-                         uninstalled_pkgconfigs])
-            args.extend([pkg for modname, pkg in uninstalled_filenames])
-            subprocess.check_call(args)
-        else:
-            logging.info(_('Nothing to install'))
-
-    @classmethod
-    def detect(cls):
-        return cmds.has_command('yum')
-
-
 class AptSystemInstall(SystemInstall):
     def __init__(self):
         SystemInstall.__init__(self)
 
-    def _get_package_for(self, filename):
-        proc = subprocess.Popen(['apt-file', 'search', filename],
-                                stdout=subprocess.PIPE, close_fds=True)
+    def _get_package_for(self, filename, exact_match):
+        if exact_match:
+            proc = subprocess.Popen(['apt-file', '--fixed-string', 'search', filename],
+                                    stdout=subprocess.PIPE, close_fds=True)
+        else:
+            proc = subprocess.Popen(['apt-file', 'search', filename],
+                                    stdout=subprocess.PIPE, close_fds=True)
         stdout = proc.communicate()[0]
         if proc.returncode != 0:
             return None
@@ -440,33 +412,67 @@ class AptSystemInstall(SystemInstall):
                 continue
             name = parts[0]
             path = parts[1]
-            # No idea why the LSB has forks of the pkg-config files
-            if path.find('/lsb3') != -1:
+            # Ignore copies of the pkg-config files that are not from the
+            # libraries.
+            if '/lsb3' in path:
                 continue
+            if '/emscripten' in path:
+                continue
+
             # otherwise for now, just take the first match
             return name
 
+    def _try_append_native_package(self, modname, filename, native_packages, exact_match):
+        native_pkg = self._get_package_for(filename, exact_match)
+        if native_pkg:
+            native_packages.append(native_pkg)
+            return True
+        return False
+
+    def _append_native_package_or_warn(self, modname, filename, native_packages, exact_match):
+        if not self._try_append_native_package(modname, filename, native_packages, exact_match):
+            logging.info(_('No native package found for %(id)s '
+                           '(%(filename)s)') % {'id'       : modname,
+                                                'filename' : filename})
+
+    def _install_packages(self, native_packages):
+        logging.info(_('Installing: %(pkgs)s') % {'pkgs': ' '.join(native_packages)})
+        args = self._root_command_prefix_args + ['apt-get', 'install', '-y', '-qq']
+        args.extend(native_packages)
+        subprocess.check_call(args)
+
     def install(self, uninstalled):
-        uninstalled_pkgconfigs, uninstalled_filenames = get_uninstalled_pkgconfigs_and_filenames(uninstalled)
-        logging.info(_('Using apt-file to search for providers; this may be slow.  Please wait.'))
+        logging.info(_('Using apt-file to search for providers; this may be extremely slow. Please wait. Patience!'))
         native_packages = []
+
         pkgconfigs = [(modname, '/%s.pc' % pkg) for modname, pkg in
-                      uninstalled_pkgconfigs]
-        for modname, filename in pkgconfigs + uninstalled_filenames:
-            native_pkg = self._get_package_for(filename)
-            if native_pkg:
-                logging.info(_('Found native package for %(id)s (%(filename)s): %(package)s') % {'id': modname, 'filename': filename, 'package': native_pkg})
-                native_packages.append(native_pkg)
-            else:
-                logging.info(_('No native package found for %(id)s '
-                               '(%(filename)s)') % {'id'       : modname,
-                                                   'filename' : filename})
+                      get_uninstalled_pkgconfigs(uninstalled)]
+        for modname, filename in pkgconfigs:
+            self._append_native_package_or_warn(modname, filename, native_packages, False)
+
+        binaries = [(modname, '/usr/bin/%s' % pkg) for modname, pkg in
+                    get_uninstalled_binaries(uninstalled)]
+        for modname, filename in binaries:
+            self._append_native_package_or_warn(modname, filename, native_packages, True)
+
+        # Get multiarch include directory, e.g. /usr/include/x86_64-linux-gnu
+        multiarch = None
+        try:
+            multiarch = subprocess.check_output(['gcc', '-print-multiarch']).strip()
+        except:
+            # Really need GCC to continue. Yes, this is fragile.
+            self._install_packages(['gcc'])
+            multiarch = subprocess.check_output(['gcc', '-print-multiarch']).strip()
+
+        c_includes = get_uninstalled_c_includes(uninstalled)
+        for modname, filename in c_includes:
+            # Try multiarch first, so we print the non-multiarch location on failure.
+            if (multiarch == None or
+                not self._try_append_native_package(modname, '/usr/include/%s/%s' % (multiarch, filename), native_packages, True)):
+                self._append_native_package_or_warn(modname, '/usr/include/%s' % filename, native_packages, True)
 
         if native_packages:
-            logging.info(_('Installing: %(pkgs)s') % {'pkgs': ' '.join(native_packages)})
-            args = self._root_command_prefix_args + ['apt-get', 'install', '-y', '-qq']
-            args.extend(native_packages)
-            subprocess.check_call(args)
+            self._install_packages(native_packages)
         else:
             logging.info(_('Nothing to install'))
 
@@ -475,7 +481,7 @@ class AptSystemInstall(SystemInstall):
         return cmds.has_command('apt-file')
 
 # Ordered from best to worst
-_classes = [AptSystemInstall, PacmanSystemInstall, PKSystemInstall, YumSystemInstall]
+_classes = [AptSystemInstall, PacmanSystemInstall, PKSystemInstall]
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)

@@ -8,6 +8,7 @@ app_PYTHON = \
 	distutils.py \
 	pip.py \
 	linux.py \
+	meson.py \
 	perl.py \
 	systemmodule.py \
 	tarball.py \
