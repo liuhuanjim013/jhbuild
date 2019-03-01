@@ -33,6 +33,7 @@ import shutil
 import stat
 import subprocess
 import logging
+import collections
 
 from jhbuild.errors import FatalError, CommandError, BuildStateError, \
              SkipToEnd, UndefinedRepositoryError
@@ -370,13 +371,12 @@ them into the prefix."""
             executables.append(filename)
         return executables
 
-    def _find_executable_dependencies(self, fullfilename, destdir_prefix, installroot):
+    def _find_executable_dependencies(self, fullfilename, destdir_prefix, installroot, librarypaths):
         env = os.environ.copy()
         env['LD_LIBRARY_PATH'] = ':'.join([
             os.path.join(destdir_prefix, 'lib'),
             os.path.join(os.path.join(installroot, 'lib')),
-            os.path.join(os.path.dirname(fullfilename))  # for .so link to the file under same dir
-        ])
+        ] + librarypaths)
         lines = []
         try:
             lines = subprocess.check_output(['ldd', fullfilename], env=env).splitlines()
@@ -399,19 +399,31 @@ them into the prefix."""
     def _find_executable_system_dependencies(self, destdir_prefix, installroot):
         notfounds = {}
         executables = self._find_executables(destdir_prefix)
+        fullexecutables = set(os.path.join(destdir_prefix, filename) for filename in executables)
+        librarypaths = sorted(set(os.path.dirname(fullfilename) for fullfilename in fullexecutables))
+
+        rdependencies = collections.defaultdict(set)
 
         # first we queue all the exec we found
-        executablequeue = set(os.path.join(destdir_prefix, filename) for filename in executables)
-        allexecutables = set(executablequeue)
+        executablequeue = set(fullexecutables)
+        allexecutables = set(fullexecutables)
 
         while executablequeue:
             # dequeue and find dependency
             fullfilename = executablequeue.pop()
-            found, notfound = self._find_executable_dependencies(fullfilename, destdir_prefix, installroot)
+            found, notfound = self._find_executable_dependencies(fullfilename, destdir_prefix, installroot, librarypaths)
 
-            # remember the not founds
-            if notfound:
-                notfounds[fullfilename] = notfound
+            if fullfilename in fullexecutables:
+                filename = fullfilename[len(destdir_prefix) + len(os.path.sep):]
+
+                # remember internal dependency
+                for foundfilename in found:
+                    if foundfilename in fullexecutables:
+                        rdependencies[foundfilename[len(destdir_prefix) + len(os.path.sep):]].add(filename)
+
+                # remember the not founds
+                if notfound:
+                    notfounds[filename] = notfound
 
             # queue the newly found
             executablequeue.update(set(found).difference(allexecutables))
@@ -434,7 +446,8 @@ them into the prefix."""
             if fullfilename != realfilename:
                 altdeps.append(('path', realfilename, []))
             systemdependencies.append(('path', fullfilename, altdeps))
-        return systemdependencies, notfounds
+
+        return systemdependencies, notfounds, rdependencies
 
     def process_install(self, buildscript, revision):
         assert self.supports_install_destdir
@@ -450,20 +463,32 @@ them into the prefix."""
         broken_name = destdir + '-broken'
         destdir_prefix = os.path.join(destdir, stripped_prefix)
 
+        # simon: dump sysdeps
+        logging.info(_('Finding system dependencies ...'))
+        systemdependencies, notfounds, rdependencies = self._find_executable_system_dependencies(destdir_prefix, buildscript.config.prefix)
+        if notfounds:
+            broken = set()
+            missing = set()
+            for lib, notfound in notfounds.iteritems():
+                broken.add(lib)
+                missing.update(notfound)
+
+            # collect broken binaries
+            brokenqueue = set(broken)
+            while brokenqueue:
+                rdepend = rdependencies[brokenqueue.pop()]
+                brokenqueue.update(set(rdepend).difference(broken))
+                broken.update(rdepend)
+
+            for filename in broken:
+                # os.unlink(os.path.join(destdir_prefix, filename))
+                logging.warn(_('Broken binary: %s') % filename)
+            logging.warn(_('Missing system dependencies: %s') % ', '.join(sorted(missing)))
+
         # simon: strip debug info before install
         if self.supports_stripping_debug_symbols:
             logging.info(_('Stripping debug symbols ...'))
             self._strip_debug_symbols(destdir_prefix, buildscript.config.prefix)
-
-        # simon: dump sysdeps
-        logging.info(_('Finding system dependencies ...'))
-        systemdependencies, notfounds = self._find_executable_system_dependencies(destdir_prefix, buildscript.config.prefix)
-        if notfounds:
-            missing = set()
-            for lib, notfound in notfounds.iteritems():
-                logging.warn(_('Broken binary: %s') % lib)
-                missing.update(notfound)
-            logging.warn(_('Missing system dependencies: %s') % ', '.join(sorted(missing)))
 
         new_contents = fileutils.accumulate_dirtree_contents(destdir_prefix)
         errors = []
