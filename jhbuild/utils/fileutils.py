@@ -25,7 +25,6 @@ import errno
 import codecs
 import shutil
 
-
 def _accumulate_dirtree_contents_recurse(path, contents):
     names = os.listdir(path)
     for name in names:
@@ -53,7 +52,6 @@ in the returned list is relative to the root path."""
         assert subpath.startswith(path)
         contents[i] = subpath[pathlen:]
     return contents
-
 
 def remove_dir(dir_path):
     shutil.rmtree(dir_path)
