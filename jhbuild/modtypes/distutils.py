@@ -20,7 +20,7 @@
 __metaclass__ = type
 
 import os
-
+import shutil
 from jhbuild.errors import BuildStateError
 from jhbuild.modtypes import \
      Package, DownloadableModule, register_module_type
@@ -61,6 +61,9 @@ class DistutilsModule(Package, DownloadableModule):
         buildscript.set_action(_('Building'), self)
         srcdir = self.get_srcdir(buildscript)
         builddir = self.get_builddir(buildscript)
+        if srcdir != builddir and os.path.exists(builddir):
+            # clean up the builddir to ensure no old files remain inside
+            shutil.rmtree(builddir)
         for python in self.pythons:
             cmd = [python, 'setup.py', 'build']
             if srcdir != builddir:
