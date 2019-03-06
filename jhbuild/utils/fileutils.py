@@ -22,7 +22,6 @@
 import os
 import sys
 import errno
-import shutil
 
 def _accumulate_dirtree_contents_recurse(path, contents):
     names = os.listdir(path)
@@ -51,9 +50,6 @@ in the returned list is relative to the root path."""
         assert subpath.startswith(path)
         contents[i] = subpath[pathlen:]
     return contents
-
-def remove_dir(dir_path):
-    shutil.rmtree(dir_path)
 
 def remove_files_and_dirs(file_paths, config, allow_nonempty_dirs=False):
     """Given a list of file paths in any order, attempt to delete
