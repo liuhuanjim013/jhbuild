@@ -22,7 +22,6 @@
 import os
 import sys
 import errno
-import codecs
 import shutil
 
 def _accumulate_dirtree_contents_recurse(path, contents):
