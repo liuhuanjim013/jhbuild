@@ -82,6 +82,7 @@ mesonargs = '--buildtype=debugoptimized'
 makeargs = ''
 ninjaargs = ''
 cflags = ''
+npmargs = ''
 
 # a alternative install program to use
 installprog = None
@@ -99,6 +100,7 @@ module_ninjaargs = {}
 module_extra_env = {}
 module_makecheck = {}
 module_nopoison = {}
+module_npmargs = {}
 
 # control parts of the build process
 nonetwork     = False  # never touch the network

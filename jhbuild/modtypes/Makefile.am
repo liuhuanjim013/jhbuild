@@ -9,6 +9,7 @@ app_PYTHON = \
 	pip.py \
 	linux.py \
 	meson.py \
+	npm.py \
 	perl.py \
 	systemmodule.py \
 	tarball.py \
