@@ -39,36 +39,33 @@ class NPMModule(Package, DownloadableModule):
     PHASE_BUILD = 'build'
 
     skip_install_phase = False
-
     # package name
     name = ''
 
-    # e.g. install user-defined-dir
-    # e.g. run-script install
+    bundler = ''
+    bundlerargs = ''
+
+    npmcmd = None
     npmargs = ''
 
-    # a package is usually a folder containing a program described by package.json file
-    # https://docs.npmjs.com/about-packages-and-modules
-    # locate the package.json file
-    packagedir = ''
-
-    # npm command 
-    npmcmd = None
     extraenv = None
 
+    supports_install_destdir = True
+
     def __init__(self, name, branch=None, npmargs=''):
+        super(NPMModule, self).__init__(name, branch=branch)
         self.name = name
         self.npmargs = npmargs
-        super(NPMModule, self).__init__(name, branch=branch)
+        self.supports_install_destdir = True
 
     def do_install_dependencies(self, buildscript):
         """ Install dependcies list in packages.json
-        
+
         dependencies will be installed under builddir/package_name/node_moduels
         """
         buildscript.set_action(_('Installing Package Dependencies'), self)
 
-        source = os.path.join(self.get_srcdir(buildscript), self.packagedir, 'package.json')
+        source = os.path.join(self.get_srcdir(buildscript), 'package.json')
         dest = os.path.join(self.get_builddir(buildscript), 'package.json')
         if not os.path.exists(self.get_builddir(buildscript)):
             os.makedirs(self.get_builddir(buildscript))
@@ -76,10 +73,14 @@ class NPMModule(Package, DownloadableModule):
         self.npm(buildscript, 'install', npmargs='--prefix %s' % self.get_builddir(buildscript))
 
     def do_build(self, buildscript):
-        """ run npm run-script build
+        """ run bundler to build and pack
         """
-        packagedir = os.path.join(self.get_srcdir(buildscript), self.packagedir)
-        self.npm(buildscript, 'run-script build %s' % packagedir, npmargs='--prefix %s' % self.get_builddir(buildscript))
+        self.prepare_installroot(buildscript)
+        args = {
+            'prefix': self.get_destdir(buildscript) + buildscript.config.prefix
+        }
+        self.bundlerargs = self.bundlerargs % args
+        getattr(self, self.bundler, self.default_bundler)(buildscript)
 
     do_build.depends = [PHASE_INSTALL_DEPENDENCIES]
     do_build.error_phases = [PHASE_FORCE_CHECKOUT]
@@ -88,8 +89,6 @@ class NPMModule(Package, DownloadableModule):
         """ install the output files to installdir
         """
         buildscript.set_action(_('Installing'), self)
-        destdir = self.prepare_installroot(buildscript)
-        # TODO copy compiled output file to destdir
         self.process_install(buildscript, self.get_revision())
 
     do_install.depends = [PHASE_BUILD]
@@ -102,7 +101,6 @@ class NPMModule(Package, DownloadableModule):
 
     def get_builddir(self, buildscript):
         return os.path.join(buildscript.config.buildroot, self.name)
-    
 
     def get_npmcmd(self, config):
         if self.npmcmd:
@@ -128,6 +126,15 @@ class NPMModule(Package, DownloadableModule):
                                                 target=target)
         buildscript.execute(cmd, cwd=self.get_builddir(buildscript), extra_env=extra_env)
 
+    # bundlers               
+    def default_bundler(self, buildscript):
+        raise CommandError('unknown bundler')
+
+    def webpack(self, buildscript):
+        webpack = os.path.join(self.get_builddir(buildscript), 'node_modules/.bin', 'webpack')
+        cmd = '%s %s' % (webpack, self.bundlerargs)
+        buildscript.execute(cmd, cwd=self.get_srcdir(buildscript))
+
     def xml_tag_and_attrs(self):
         return 'npm', [('id', 'name', None),]
 
@@ -136,15 +143,12 @@ def parse_npm(node, config, uri, repositories, default_repo):
     instance.dependencies += ['npm']
 
     instance.npmargs = collect_args(instance, node, 'npmargs')
+    instance.bundler = collect_args(instance, node, 'bundler')
+    instance.bundlerargs = collect_args(instance, node, 'bundlerargs')
 
-    instance.packagedir = os.path.join(instance.get_srcdir(), collect_args(instance, node, 'packagedir'))
-    
     if node.hasAttribute('skip-install'):
         skip_install = node.getAttribute('skip-install')
-        if skip_install.lower() in ('true', 'yes'):
-            instance.skip_install_phase = True
-        else:
-            instance.skip_install_phase = False
+        instance.skip_install_phase = bool(skip_install.lower() in ('true', 'yes'))
 
     return instance
 
