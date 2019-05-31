@@ -71,6 +71,8 @@ class NPMModule(Package, DownloadableModule):
             os.makedirs(self.get_builddir(buildscript))
         shutil.copyfile(source, dest)
         self.npm(buildscript, 'install', npmargs='--prefix %s' % self.get_builddir(buildscript))
+    do_install_dependencies.depends = [PHASE_CHECKOUT]
+    do_install_dependencies.error_phases = [PHASE_FORCE_CHECKOUT]
 
     def do_build(self, buildscript):
         """ run bundler to build and pack
