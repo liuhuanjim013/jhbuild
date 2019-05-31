@@ -65,11 +65,11 @@ class NPMModule(Package, DownloadableModule):
         """
         buildscript.set_action(_('Installing Package Dependencies'), self)
 
-        source = os.path.join(self.get_srcdir(buildscript), 'package.json')
-        dest = os.path.join(self.get_builddir(buildscript), 'package.json')
-        if not os.path.exists(self.get_builddir(buildscript)):
-            os.makedirs(self.get_builddir(buildscript))
-        shutil.copyfile(source, dest)
+        source = self.get_srcdir(buildscript)
+        dest = self.get_builddir(buildscript)
+        if os.path.exists(self.get_builddir(buildscript)):
+            shutil.rmtree(self.get_builddir(buildscript))
+        shutil.copytree(source, dest)
         self.npm(buildscript, 'install', npmargs='--prefix %s' % self.get_builddir(buildscript))
     do_install_dependencies.depends = [PHASE_CHECKOUT]
     do_install_dependencies.error_phases = [PHASE_FORCE_CHECKOUT]
@@ -135,7 +135,7 @@ class NPMModule(Package, DownloadableModule):
     def webpack(self, buildscript):
         webpack = os.path.join(self.get_builddir(buildscript), 'node_modules/.bin', 'webpack')
         cmd = '%s %s' % (webpack, self.bundlerargs)
-        buildscript.execute(cmd, cwd=self.get_srcdir(buildscript))
+        buildscript.execute(cmd, cwd=self.get_builddir(buildscript))
 
     def xml_tag_and_attrs(self):
         return 'npm', [('id', 'name', None),]
