@@ -27,7 +27,6 @@ from jhbuild.modtypes import \
     Package, DownloadableModule, register_module_type
 from jhbuild.modtypes.autotools import collect_args
 
-import logging
 
 class NPMModule(Package, DownloadableModule):
     """
@@ -138,7 +137,10 @@ class NPMModule(Package, DownloadableModule):
         buildscript.execute(cmd, cwd=self.get_builddir(buildscript))
 
     def xml_tag_and_attrs(self):
-        return 'npm', [('id', 'name', None),]
+        return 'npm', [('id', 'name', None),
+                       ('npmargs', 'npmargs', ''),
+                       ('bundler', 'bundler', ''),
+                       ('bundlerargs', 'bundlerargs', '')]
 
 def parse_npm(node, config, uri, repositories, default_repo):
     instance = NPMModule.parse_from_xml(node, config, uri, repositories, default_repo)
