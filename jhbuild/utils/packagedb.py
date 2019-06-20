@@ -111,7 +111,7 @@ class PackageEntry:
         if self.branch is not None:
             module = self.branch.module
             if hasattr(self.branch.repository, 'href'):
-                module = self.branch.module[len(self.branch.repository.href)+1:]
+                module = self.branch.module[len(self.branch.repository.href.rstip('/'))+1:]
 
             if hasattr(self.branch, 'tag') and self.branch.tag is not None:
                 fileutils.mkdir_with_parents(os.path.join(self.dirname, 'branch'))
