@@ -565,6 +565,7 @@ them into the prefix."""
 
             buildscript.moduleset.packagedb.add(self.name, revision or '',
                                                 new_contents,
+                                                self.branch,
                                                 self.configure_cmd,
                                                 systemdependencies)
 
