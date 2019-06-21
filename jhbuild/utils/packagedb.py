@@ -118,7 +118,7 @@ class PackageEntry:
                 writer = fileutils.SafeWriter(os.path.join(self.dirname, 'branch', self.package))
                 json.dump({
                     "%s:%s" % (self.branch.repository.name, module): self.version
-                }, writer.fp)
+                }, writer.fp, sort_keys=True, indent=4, separators=(',', ': '))
                 writer.fp.write('\n')
                 writer.commit()
 
