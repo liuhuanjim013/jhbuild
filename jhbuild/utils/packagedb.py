@@ -111,13 +111,13 @@ class PackageEntry:
         if self.branch is not None:
             module = self.branch.module
             if hasattr(self.branch.repository, 'href'):
-                module = self.branch.module[len(self.branch.repository.href.rstip('/'))+1:]
+                module = self.branch.module[len(self.branch.repository.href.rstrip('/'))+1:]
 
             if hasattr(self.branch, 'tag') and self.branch.tag is not None:
                 fileutils.mkdir_with_parents(os.path.join(self.dirname, 'branch'))
                 writer = fileutils.SafeWriter(os.path.join(self.dirname, 'branch', self.package))
                 json.dump({
-                    "%s:%s" % (self.branch.repository.name, module): self.branch.tag
+                    "%s:%s" % (self.branch.repository.name, module): self.version
                 }, writer.fp)
                 writer.fp.write('\n')
                 writer.commit()
