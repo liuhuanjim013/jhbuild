@@ -48,12 +48,11 @@ def _format_isotime(tm):
     return time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime(tm))
 
 class PackageEntry:
-    def __init__(self, package, version, metadata, dirname, branch=None):
+    def __init__(self, package, version, metadata, dirname):
         self.package = package # string
         self.version = version # string
         self.metadata = metadata # hash of string to value
         self.dirname = dirname
-        self.branch = branch
 
     _manifest = None
     def get_manifest(self):
@@ -99,6 +98,21 @@ class PackageEntry:
 
     systemdependencies = property(get_systemdependencies, set_systemdependencies)
 
+    _branch = None
+    def get_branch(self):
+        if self._branch is not None:
+            return self._branch
+        if not os.path.exists(os.path.join(self.dirname, 'branch', self.package)):
+            return {}
+        with open(os.path.join(self.dirname, 'branch', self.package), 'r') as f:
+            self._branch = json.load(f)
+        return self._branch
+
+    def set_branch(self, value):
+        self._branch = value
+
+    branch = property(get_branch, set_branch)
+
     def write(self):
         # write info file
         fileutils.mkdir_with_parents(os.path.join(self.dirname, 'info'))
@@ -108,19 +122,10 @@ class PackageEntry:
         writer.commit()
 
         # write branch file
-        if self.branch is not None:
-            module = self.branch.module
-            if hasattr(self.branch.repository, 'href'):
-                module = self.branch.module[len(self.branch.repository.href.rstrip('/'))+1:]
-
-            if hasattr(self.branch, 'tag') and self.branch.tag is not None:
-                fileutils.mkdir_with_parents(os.path.join(self.dirname, 'branch'))
-                writer = fileutils.SafeWriter(os.path.join(self.dirname, 'branch', self.package))
-                json.dump({
-                    "%s:%s" % (self.branch.repository.name, module): self.version
-                }, writer.fp, sort_keys=True, indent=4, separators=(',', ': '))
-                writer.fp.write('\n')
-                writer.commit()
+        fileutils.mkdir_with_parents(os.path.join(self.dirname, 'branch'))
+        writer = fileutils.SafeWriter(os.path.join(self.dirname, 'branch', self.package))
+        writer.fp.write(json.dumps(self.branch, sort_keys=True, indent=4, separators=(',', ': ')) + '\n')
+        writer.commit()
 
         # write manifest
         fileutils.mkdir_with_parents(os.path.join(self.dirname, 'manifests'))
@@ -149,6 +154,9 @@ class PackageEntry:
 
         # remove sysdeps
         fileutils.ensure_unlinked(os.path.join(self.dirname, 'sysdeps', self.package))
+
+        # remove branch file
+        fileutils.ensure_unlinked(os.path.join(self.dirname, 'branch', self.package))
 
     def to_xml(self):
         entry_node = ET.Element('entry', {'package': self.package,
@@ -225,7 +233,7 @@ class PackageDB:
         '''Return entry if package is installed, otherwise return None.'''
         return PackageEntry.open(self.dirname, package)
 
-    def add(self, package, version, contents, branch = None, configure_cmd = None, systemdependencies = None):
+    def add(self, package, version, contents, configure_cmd = None, systemdependencies = None, branch = None):
         '''Add a module to the install cache.'''
         entry = self.get(package)
         if entry:
@@ -235,9 +243,10 @@ class PackageDB:
         metadata['installed-date'] = time.time() # now
         if configure_cmd:
             metadata['configure-hash'] = hashlib.md5(configure_cmd).hexdigest()
-        pkg = PackageEntry(package, version, metadata, self.dirname, branch)
+        pkg = PackageEntry(package, version, metadata, self.dirname)
         pkg.manifest = contents
         pkg.systemdependencies = systemdependencies or []
+        pkg.branch = branch or {}
         pkg.write()
 
     def check(self, package, version=None):

@@ -116,9 +116,11 @@ class GitRepository(Repository):
                         module = new_module
                     # need to disable tag because it will override our branch override
                     tag = None
+
         # also allow specifying by the format of repo:module
-        elif ('%s:%s' % (self.name, module)) in self.config.branches:
-            revision = self.config.branches['%s:%s' % (self.name, module)]
+        repomodule = '%s:%s' % (self.name, module)
+        if repomodule in self.config.branches:
+            revision = self.config.branches[repomodule]
             tag = None
 
         if not (urlparse.urlparse(module)[0] or module[0] == '/'):
@@ -130,9 +132,9 @@ class GitRepository(Repository):
 
         if mirror_module:
             return GitBranch(self, mirror_module, subdir, checkoutdir,
-                    revision, tag, unmirrored_module=module)
+                    revision, tag, unmirrored_module=module, repomodule=repomodule)
         else:
-            return GitBranch(self, module, subdir, checkoutdir, revision, tag)
+            return GitBranch(self, module, subdir, checkoutdir, revision, tag, repomodule=repomodule)
 
     def to_sxml(self):
         return [sxml.repository(type='git', name=self.name, href=self.href)]
@@ -145,14 +147,16 @@ class GitBranch(Branch):
     """A class representing a GIT branch."""
 
     dirty_branch_suffix = '-dirty'
+    repomodule = None
 
     def __init__(self, repository, module, subdir, checkoutdir=None,
-                 branch=None, tag=None, unmirrored_module=None):
+                 branch=None, tag=None, unmirrored_module=None, repomodule=None):
         Branch.__init__(self, repository, module, checkoutdir)
         self.subdir = subdir
         self.branch = branch
         self.tag = tag
         self.unmirrored_module = unmirrored_module
+        self.repomodule = repomodule
 
     def get_module_basename(self):
         # prevent basename() from returning empty strings on trailing '/'

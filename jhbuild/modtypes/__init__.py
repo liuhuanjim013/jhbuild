@@ -34,6 +34,7 @@ import stat
 import subprocess
 import logging
 import collections
+import json
 
 from jhbuild.errors import FatalError, CommandError, BuildStateError, \
              SkipToEnd, UndefinedRepositoryError
@@ -563,11 +564,17 @@ them into the prefix."""
                         logging.warn(_("Failed to delete no longer installed file %(file)r: %(msg)s") % { 'file': path,
                                                                                                           'msg': error_string})
 
+            # determine branch
+            branch = None
+            if self.branch is not None and hasattr(self.branch, 'repomodule') and self.branch.repomodule is not None:
+                branch = {self.branch.repomodule: revision}
+                logging.info(_('Installed branch: %s') % json.dumps(branch))
+
             buildscript.moduleset.packagedb.add(self.name, revision or '',
                                                 new_contents,
-                                                self.branch,
                                                 self.configure_cmd,
-                                                systemdependencies)
+                                                systemdependencies,
+                                                branch)
 
         if errors:
             raise CommandError(_('Install encountered errors: %(num)d '
