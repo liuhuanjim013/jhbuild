@@ -704,7 +704,7 @@ them into the prefix."""
         instance.dependencies += instance.branch.repository.get_sysdeps()
 
         # ziyan: remember the hash of the module xml, so when it changes, rebuild will be automatic
-        instance.module_hash = hashlib.sha1(json.dumps(dict(node.attributes.items()))).hexdigest()
+        instance.module_hash = hashlib.sha1(json.dumps(sorted(node.attributes.items()))).hexdigest()
         return instance
 
 class NinjaModule(Package):
