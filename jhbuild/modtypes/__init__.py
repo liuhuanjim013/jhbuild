@@ -35,6 +35,7 @@ import subprocess
 import logging
 import collections
 import json
+import hashlib
 
 from jhbuild.errors import FatalError, CommandError, BuildStateError, \
              SkipToEnd, UndefinedRepositoryError
@@ -192,6 +193,7 @@ class Package:
         self.supports_parallel_build = True
         self.supports_stripping_debug_symbols = True
         self.configure_cmd = None
+        self.module_hash = None
 
     def __repr__(self):
         return "<%s '%s'>" % (self.__class__.__name__, self.name)
@@ -574,7 +576,8 @@ them into the prefix."""
                                                 new_contents,
                                                 self.configure_cmd,
                                                 systemdependencies,
-                                                branch)
+                                                branch,
+                                                self.module_hash)
 
         if errors:
             raise CommandError(_('Install encountered errors: %(num)d '
@@ -626,7 +629,7 @@ them into the prefix."""
         if hasattr(self.branch, 'is_dirty') and self.branch.is_dirty():
             return
 
-        if not buildscript.moduleset.packagedb.check(self.name, self.get_revision() or ''):
+        if not buildscript.moduleset.packagedb.check(self.name, version=self.get_revision() or '', module_hash=self.module_hash):
             # package has not been updated
             return
 
@@ -699,6 +702,9 @@ them into the prefix."""
             instance.pkg_config = pkg_config
             instance.dependencies += ['pkg-config']
         instance.dependencies += instance.branch.repository.get_sysdeps()
+
+        # ziyan: remember the hash of the module xml, so when it changes, rebuild will be automatic
+        instance.module_hash = hashlib.sha1(json.dumps(dict(node.attributes.items()))).hexdigest()
         return instance
 
 class NinjaModule(Package):

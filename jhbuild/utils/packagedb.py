@@ -164,8 +164,9 @@ class PackageEntry:
         if 'installed-date' in self.metadata:
             entry_node.attrib['installed'] = _format_isotime(self.metadata['installed-date'])
         if 'configure-hash' in self.metadata:
-            entry_node.attrib['configure-hash'] = \
-                self.metadata['configure-hash']
+            entry_node.attrib['configure-hash'] = self.metadata['configure-hash']
+        if 'module-hash' in self.metadata:
+            entry_node.attrib['module-hash'] = self.metadata['module-hash']
 
         return entry_node
 
@@ -181,6 +182,9 @@ class PackageEntry:
         configure_hash = node.attrib.get('configure-hash')
         if configure_hash:
             metadata['configure-hash'] = configure_hash
+        module_hash = node.attrib.get('module-hash')
+        if module_hash:
+            metadata['module-hash'] = module_hash
 
         dbentry = cls(package, version, metadata, dirname)
 
@@ -233,7 +237,7 @@ class PackageDB:
         '''Return entry if package is installed, otherwise return None.'''
         return PackageEntry.open(self.dirname, package)
 
-    def add(self, package, version, contents, configure_cmd = None, systemdependencies = None, branch = None):
+    def add(self, package, version, contents, configure_cmd = None, systemdependencies = None, branch = None, module_hash = None):
         '''Add a module to the install cache.'''
         entry = self.get(package)
         if entry:
@@ -243,19 +247,25 @@ class PackageDB:
         metadata['installed-date'] = time.time() # now
         if configure_cmd:
             metadata['configure-hash'] = hashlib.md5(configure_cmd).hexdigest()
+        if module_hash:
+            metadata['module-hash'] = module_hash
         pkg = PackageEntry(package, version, metadata, self.dirname)
         pkg.manifest = contents
         pkg.systemdependencies = systemdependencies or []
         pkg.branch = branch or {}
         pkg.write()
 
-    def check(self, package, version=None):
+    def check(self, package, version=None, module_hash=None):
         '''Check whether a particular module is installed.'''
         entry = self.get(package)
         if entry is None:
             return False
         if version is not None:
-            if entry.version != version: return False
+            if entry.version != version:
+                return False
+        if module_hash is not None:
+            if entry.metadata.get('module-hash') != module_hash:
+                return False
         return True
 
     def installdate(self, package, version=None):
