@@ -327,7 +327,9 @@ class GitBranch(Branch):
             logging.warning(_('Dirty tree, but TEAMCITY_VERSION is present, so ignoring'))
 
         branch = self.get_current_branch()
-        if branch and not self.is_tracking_a_remote_branch(branch):
+        if not branch:
+            return
+        if not self.is_tracking_a_remote_branch(branch):
             # custom behavior, don't want people getting an outdated build without noticing
             raise CommandError(_('Local branch is not tracking remote, refuse to continue.'))
 
