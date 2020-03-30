@@ -397,6 +397,12 @@ class AptSystemInstall(SystemInstall):
         SystemInstall.__init__(self)
 
     def _get_package_for(self, filename, exact_match):
+        # HACK: speed up look up for path:/usr/share/doc/pkgname
+        if filename.startswith('/usr/share/doc/'):
+            name = filename[len('/usr/share/doc/'):].rstrip('/')
+            if '/' not in name:
+                return name
+
         if exact_match:
             proc = subprocess.Popen(['apt-file', '--fixed-string', 'search', filename],
                                     stdout=subprocess.PIPE, close_fds=True)

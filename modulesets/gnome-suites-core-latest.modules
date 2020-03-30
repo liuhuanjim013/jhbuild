@@ -9,8 +9,6 @@
       href="https://gitlab.gnome.org/"/>
   <repository type="git" name="gitlab.gnome.org/GNOME" default="yes"
       href="https://gitlab.gnome.org/GNOME/"/>
-  <repository type="git" name="git.freedesktop.org"
-      href="https://anongit.freedesktop.org/git/"/>
   <repository type="git" name="gitlab.freedesktop.org"
       href="https://gitlab.freedesktop.org/"/>
   <repository type="git" name="github.com"
@@ -194,6 +192,7 @@
       <dep package="gnome-online-accounts"/>
       <dep package="gnome-settings-daemon"/>
       <dep package="gsettings-desktop-schemas"/>
+      <dep package="gsound"/>
       <dep package="ibus"/>
       <dep package="intltool"/>
       <dep package="iso-codes"/>
@@ -390,6 +389,7 @@
       <if condition-set="linux">
         <dep package="gnome-bluetooth"/>
         <dep package="libnma"/>
+        <dep package="sysprof-capture"/>
         <dep package="NetworkManager"/>
       </if>
       <if condition-set="systemd">
@@ -431,23 +431,15 @@
     </dependencies>
   </autotools>
 
-  <autotools id="gnome-user-share">
-    <if condition-unset="linux">
-      <autogenargs value="--disable-bluetooth"/>
-    </if>
+  <meson id="gnome-user-share">
     <branch/>
     <dependencies>
-      <dep package="avahi"/>
+      <dep package="glib"/>
       <dep package="gtk+-3"/>
-      <dep package="dbus-glib"/>
-      <dep package="libcanberra"/>
-      <dep package="libnotify"/>
+      <dep package="libsystemd"/>
       <dep package="nautilus"/>
-      <if condition-set="linux">
-        <dep package="gnome-bluetooth"/>
-      </if>
     </dependencies>
-  </autotools>
+  </meson>
 
   <meson id="gsettings-desktop-schemas">
     <branch/>
@@ -524,7 +516,7 @@
 
   <meson id="mutter">
     <if condition-unset="linux">
-      <mesonargs value="-Dremote_desktop=false -Dudev=false"/>
+      <mesonargs value="-Dprofiler=false -Dremote_desktop=false -Dudev=false"/>
     </if>
     <if condition-unset="systemd">
       <mesonargs value="-Dnative_backend=false"/>
@@ -572,7 +564,9 @@
       <dep package="xcb-res"/>
       <dep package="xkeyboard-config"/>
       <dep package="zenity"/>
-
+      <if condition-set="linux">
+        <dep package="sysprof-capture"/>
+      </if>
       <if condition-set="wayland">
         <dep package="libgudev"/>
         <dep package="gbm"/>
@@ -625,9 +619,10 @@
   <autotools id="telepathy-mission-control"
              autogenargs="--disable-upower"
              supports-non-srcdir-builds="no">
-    <branch repo="git.freedesktop.org"
-            module="telepathy/telepathy-mission-control"
-            revision="telepathy-mission-control-5.16"/>
+    <branch repo="github.com"
+            module="TelepathyIM/telepathy-mission-control.git"
+            revision="telepathy-mission-control-5.16"
+            checkoutdir="telepathy-mission-control"/>
     <dependencies>
       <dep package="dbus"/>
       <dep package="dbus-glib"/>
@@ -753,8 +748,7 @@
     </dependencies>
   </meson>
 
-  <autotools id="evince" autogenargs="--enable-introspection"
-                         supports-parallel-builds="no">
+  <meson id="evince">
     <branch/>
     <dependencies>
       <dep package="intltool"/>
@@ -772,7 +766,7 @@
     <suggests>
       <dep package="libsecret"/>
     </suggests>
-  </autotools>
+  </meson>
 
   <meson id="file-roller">
     <branch/>
@@ -785,9 +779,10 @@
     </dependencies>
   </meson>
 
-  <autotools id="gedit">
-    <branch revision="gnome-3-30"/>
+  <meson id="gedit">
+    <branch/>
     <dependencies>
+      <dep package="libsoup"/>
       <dep package="libpeas"/>
       <dep package="yelp-tools"/>
       <dep package="gtksourceview"/>
@@ -800,7 +795,7 @@
     <suggests>
       <dep package="gspell"/>
     </suggests>
-  </autotools>
+  </meson>
 
   <meson id="gnome-boxes">
     <branch/>
@@ -912,28 +907,6 @@
       <dep package="libsecret"/>
       <dep package="udisks"/>
       <dep package="dvdread"/>
-    </dependencies>
-  </meson>
-
-  <meson id="gnome-documents">
-    <branch/>
-    <dependencies>
-      <dep package="evince"/>
-      <dep package="gjs"/>
-      <dep package="glib"/>
-      <dep package="gobject-introspection"/>
-      <dep package="gtk+-3"/>
-      <dep package="gnome-desktop"/>
-      <dep package="tracker"/>
-      <dep package="tracker-miners"/>
-      <dep package="gnome-online-accounts"/>
-      <dep package="gnome-online-miners"/>
-      <dep package="libgdata"/>
-      <dep package="libgepub"/>
-      <dep package="liboauth"/>
-      <dep package="libzapojit"/>
-      <dep package="m4-common"/>
-      <dep package="WebKit"/>
     </dependencies>
   </meson>
 
@@ -1123,7 +1096,7 @@
       <dep package="gnome-online-accounts"/>
       <dep package="evolution-data-server"/>
       <dep package="glib"/>
-      <dep package="gtk+-3"/>
+      <dep package="gtk+"/>
       <dep package="libpeas"/>
     </dependencies>
   </meson>
@@ -1263,7 +1236,9 @@
 <!-- Core OS Services -->
 
   <meson id="accountsservice">
-    <branch repo="git.freedesktop.org" module="accountsservice"/>
+    <branch repo="gitlab.freedesktop.org"
+            module="accountsservice/accountsservice.git"
+            checkoutdir="accountsservice"/>
     <dependencies>
       <dep package="glib"/>
       <dep package="gobject-introspection"/>
@@ -1276,8 +1251,8 @@
 
   <autotools id="NetworkManager"
              autogenargs="PYTHON=python3 --with-udev-dir=${libdir}/udev --with-systemdsystemunitdir=no --with-crypto=gnutls --disable-more-warnings --disable-json-validation --disable-ovs">
-    <branch repo="git.freedesktop.org"
-	          module="NetworkManager/NetworkManager.git"
+    <branch repo="gitlab.freedesktop.org"
+            module="NetworkManager/NetworkManager.git"
             checkoutdir="NetworkManager"/>
     <dependencies>
       <dep package="libndp"/>
@@ -1384,7 +1359,6 @@
       <dep package="gnome-characters"/>
       <dep package="gnome-clocks"/>
       <dep package="gnome-contacts"/>
-      <dep package="gnome-documents"/>
       <dep package="gnome-font-viewer"/>
       <dep package="gnome-maps"/>
       <dep package="gnome-music"/>

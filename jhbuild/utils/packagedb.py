@@ -23,6 +23,7 @@ import time
 import logging
 import errno
 import xml.dom.minidom as DOM
+import json
 try:
     import hashlib
 except ImportError:
@@ -97,12 +98,33 @@ class PackageEntry:
 
     systemdependencies = property(get_systemdependencies, set_systemdependencies)
 
+    _branch = None
+    def get_branch(self):
+        if self._branch is not None:
+            return self._branch
+        if not os.path.exists(os.path.join(self.dirname, 'branch', self.package)):
+            return {}
+        with open(os.path.join(self.dirname, 'branch', self.package), 'r') as f:
+            self._branch = json.load(f)
+        return self._branch
+
+    def set_branch(self, value):
+        self._branch = value
+
+    branch = property(get_branch, set_branch)
+
     def write(self):
         # write info file
         fileutils.mkdir_with_parents(os.path.join(self.dirname, 'info'))
         writer = fileutils.SafeWriter(os.path.join(self.dirname, 'info', self.package))
         ET.ElementTree(self.to_xml()).write(writer.fp)
         writer.fp.write('\n')
+        writer.commit()
+
+        # write branch file
+        fileutils.mkdir_with_parents(os.path.join(self.dirname, 'branch'))
+        writer = fileutils.SafeWriter(os.path.join(self.dirname, 'branch', self.package))
+        writer.fp.write(json.dumps(self.branch, sort_keys=True, indent=4, separators=(',', ': ')) + '\n')
         writer.commit()
 
         # write manifest
@@ -133,14 +155,18 @@ class PackageEntry:
         # remove sysdeps
         fileutils.ensure_unlinked(os.path.join(self.dirname, 'sysdeps', self.package))
 
+        # remove branch file
+        fileutils.ensure_unlinked(os.path.join(self.dirname, 'branch', self.package))
+
     def to_xml(self):
         entry_node = ET.Element('entry', {'package': self.package,
                                           'version': self.version})
         if 'installed-date' in self.metadata:
             entry_node.attrib['installed'] = _format_isotime(self.metadata['installed-date'])
         if 'configure-hash' in self.metadata:
-            entry_node.attrib['configure-hash'] = \
-                self.metadata['configure-hash']
+            entry_node.attrib['configure-hash'] = self.metadata['configure-hash']
+        if 'module-hash' in self.metadata:
+            entry_node.attrib['module-hash'] = self.metadata['module-hash']
 
         return entry_node
 
@@ -156,6 +182,9 @@ class PackageEntry:
         configure_hash = node.attrib.get('configure-hash')
         if configure_hash:
             metadata['configure-hash'] = configure_hash
+        module_hash = node.attrib.get('module-hash')
+        if module_hash:
+            metadata['module-hash'] = module_hash
 
         dbentry = cls(package, version, metadata, dirname)
 
@@ -208,7 +237,7 @@ class PackageDB:
         '''Return entry if package is installed, otherwise return None.'''
         return PackageEntry.open(self.dirname, package)
 
-    def add(self, package, version, contents, configure_cmd = None, systemdependencies = None):
+    def add(self, package, version, contents, configure_cmd = None, systemdependencies = None, branch = None, module_hash = None):
         '''Add a module to the install cache.'''
         entry = self.get(package)
         if entry:
@@ -218,18 +247,25 @@ class PackageDB:
         metadata['installed-date'] = time.time() # now
         if configure_cmd:
             metadata['configure-hash'] = hashlib.md5(configure_cmd).hexdigest()
+        if module_hash:
+            metadata['module-hash'] = module_hash
         pkg = PackageEntry(package, version, metadata, self.dirname)
         pkg.manifest = contents
         pkg.systemdependencies = systemdependencies or []
+        pkg.branch = branch or {}
         pkg.write()
 
-    def check(self, package, version=None):
+    def check(self, package, version=None, module_hash=None):
         '''Check whether a particular module is installed.'''
         entry = self.get(package)
         if entry is None:
             return False
         if version is not None:
-            if entry.version != version: return False
+            if entry.version != version:
+                return False
+        if module_hash is not None:
+            if entry.metadata.get('module-hash') != module_hash:
+                return False
         return True
 
     def installdate(self, package, version=None):

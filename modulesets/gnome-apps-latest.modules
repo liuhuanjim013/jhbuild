@@ -288,6 +288,25 @@
     </suggests>
   </meson>
 
+  <meson id="gnome-books">
+    <branch/>
+    <dependencies>
+      <dep package="evince"/>
+      <dep package="gjs"/>
+      <dep package="glib"/>
+      <dep package="gobject-introspection"/>
+      <dep package="gtk+-3"/>
+      <dep package="gnome-desktop"/>
+      <dep package="tracker"/>
+      <dep package="tracker-miners"/>
+      <dep package="gnome-online-accounts"/>
+      <dep package="gnome-online-miners"/>
+      <dep package="libgdata"/>
+      <dep package="liboauth"/>
+      <dep package="WebKit"/>
+    </dependencies>
+  </meson>
+
   <meson id="gnome-builder" mesonargs="-Dplugin_sysprof=false">
     <if condition-unset="linux">
       <mesonargs value="-Dplugin_flatpak=false"/>
@@ -335,6 +354,27 @@
       <dep package="libcanberra"/>
       <dep package="libgusb"/>
       <dep package="udisks"/>
+    </dependencies>
+  </meson>
+
+  <meson id="gnome-documents">
+    <branch/>
+    <dependencies>
+      <dep package="evince"/>
+      <dep package="gjs"/>
+      <dep package="glib"/>
+      <dep package="gobject-introspection"/>
+      <dep package="gtk+-3"/>
+      <dep package="gnome-desktop"/>
+      <dep package="tracker"/>
+      <dep package="tracker-miners"/>
+      <dep package="gnome-online-accounts"/>
+      <dep package="gnome-online-miners"/>
+      <dep package="libgdata"/>
+      <dep package="libgepub"/>
+      <dep package="liboauth"/>
+      <dep package="libzapojit"/>
+      <dep package="WebKit"/>
     </dependencies>
   </meson>
 
@@ -407,17 +447,16 @@
     </dependencies>
   </meson>
 
-  <autotools id="four-in-a-row">
+  <meson id="four-in-a-row">
     <branch/>
     <dependencies>
       <dep package="appstream-glib"/>
-      <dep package="intltool"/>
       <dep package="librsvg"/>
       <dep package="gtk+-3"/>
       <dep package="libcanberra"/>
       <dep package="yelp-tools"/>
     </dependencies>
-  </autotools>
+  </meson>
 
   <meson id="gnome-chess">
     <branch/>
@@ -464,14 +503,13 @@
     </dependencies>
   </meson>
 
-  <autotools id="gnome-nibbles">
+  <meson id="gnome-nibbles">
     <branch/>
     <dependencies>
       <dep package="appstream-glib"/>
       <dep package="clutter"/>
       <dep package="clutter-gtk"/>
       <dep package="gtk+-3"/>
-      <dep package="intltool"/>
       <dep package="libcanberra"/>
       <dep package="libgnome-games-support"/>
       <dep package="libgee"/>
@@ -479,20 +517,19 @@
       <dep package="vala"/>
       <dep package="yelp-tools"/>
     </dependencies>
-  </autotools>
+  </meson>
 
-  <autotools id="gnome-robots">
+  <meson id="gnome-robots">
     <branch/>
     <dependencies>
       <dep package="appstream-glib"/>
-      <dep package="intltool"/>
       <dep package="libgnome-games-support"/>
       <dep package="librsvg"/>
       <dep package="gtk+-3"/>
       <dep package="libcanberra"/>
       <dep package="yelp-tools"/>
     </dependencies>
-  </autotools>
+  </meson>
 
   <meson id="gnome-sudoku">
     <branch/>

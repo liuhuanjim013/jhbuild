@@ -10,12 +10,6 @@
       href="https://gitlab.gnome.org/GNOME/"/>
   <repository type="svn" name="svn.abisource.com"
       href="http://svn.abisource.com/"/>
-  <repository type="git" name="wayland.freedesktop.org"
-      href="git://anongit.freedesktop.org/git/wayland"/>
-  <repository type="git" name="gstreamer.freedesktop.org"
-      href="git://anongit.freedesktop.org/gstreamer/"/>
-  <repository type="git" name="fprint.freedesktop.org"
-      href="git://anongit.freedesktop.org/libfprint/"/>
   <repository type="cvs" name="elysium-project.sf.net"
       cvsroot=":pserver:anonymous@elysium-project.cvs.sourceforge.net:/cvsroot/elysium-project"
       password=""/>
@@ -82,8 +76,6 @@
       href="git://git.ardour.org/"/>
   <repository type="git" name="gitorious.org"
       href="https://gitorious.org/"/>
-  <repository type="git" name="telepathy.freedesktop.org"
-      href="git://anongit.freedesktop.org/telepathy/"/>
   <repository type="tarball" name="samba.org"
       href="https://ftp.samba.org/pub/"/>
   <repository type="tarball" name="sourceforge.net"
@@ -263,7 +255,7 @@
   </autotools>
 
   <meson id="geary">
-    <branch/>
+    <branch revision="mainline"/>
     <dependencies>
       <dep package="glib"/>
       <dep package="gmime"/>
@@ -584,18 +576,10 @@
     <branch/>
   </autotools>
 
-  <autotools id="gst-openmax" autogenargs="-- --disable-tests" supports-non-srcdir-builds="no">
-    <branch repo="gstreamer.freedesktop.org" module="gst-openmax"/>
-    <dependencies>
-      <dep package="gstreamer-0.10"/>
-      <dep package="gst-plugins-base-0.10"/>
-      <dep package="gst-plugins-bad-0.10"/>
-    </dependencies>
-  </autotools>
-
   <autotools id="libva">
-    <branch repo="git.freedesktop.org"
-            module="vaapi/libva"/>
+    <branch repo="github.com"
+            module="intel/libva.git"
+            checkoutdir="libva"/>
   </autotools>
 
   <autotools id="gstreamer-vaapi">
@@ -609,9 +593,9 @@
   </autotools>
 
   <autotools id="libva-intel-driver">
-    <branch repo="git.freedesktop.org"
+    <branch repo="github.com"
             checkoutdir="libva-intel-driver"
-            module="vaapi/intel-driver"
+            module="intel/intel-vaapi-driver"
             revision="v1.0-branch"/>
     <dependencies>
       <dep package="libva"/>
@@ -639,8 +623,10 @@
   <autotools id="gst-plugins-bad-0.10"
              autogenargs="--disable-tests --disable-fatal-warnings"
              supports-non-srcdir-builds="no">
-    <branch repo="gstreamer.freedesktop.org" module="gst-plugins-bad"
-            revision="0.10" checkoutdir="gst-plugins-bad-0.10"/>
+    <branch repo="gitlab.freedesktop.org"
+            module="gstreamer/gst-plugins-bad.git"
+            revision="0.10"
+            checkoutdir="gst-plugins-bad-0.10"/>
     <dependencies>
       <dep package="gstreamer-0.10"/>
       <dep package="gst-plugins-base-0.10"/>
@@ -648,8 +634,10 @@
   </autotools>
 
   <autotools id="gst-plugins-ugly-0.10" autogenargs="-- --disable-tests" supports-non-srcdir-builds="no">
-    <branch repo="gstreamer.freedesktop.org" module="gst-plugins-ugly"
-            revision="0.10" checkoutdir="gst-plugins-ugly-0.10"/>
+    <branch repo="gitlab.freedesktop.org"
+            module="gstreamer/gst-plugins-ugly.git"
+            revision="0.10"
+            checkoutdir="gst-plugins-ugly-0.10"/>
     <dependencies>
       <dep package="gstreamer-0.10"/>
       <dep package="gst-plugins-base-0.10"/>
@@ -657,27 +645,12 @@
     </dependencies>
   </autotools>
 
-  <autotools id="gst-plugins-gl" autogenargs="-- --disable-tests" supports-non-srcdir-builds="no">
-    <branch repo="gstreamer.freedesktop.org" module="gst-plugins-gl"/>
-    <dependencies>
-      <dep package="gstreamer-0.10"/>
-      <dep package="gst-plugins-base-0.10"/>
-    </dependencies>
-  </autotools>
-
-  <autotools id="gst-ffmpeg" autogenargs="-- --disable-tests" supports-non-srcdir-builds="no">
-    <branch repo="gstreamer.freedesktop.org"
-            module="gst-ffmpeg"
-            revision="0.10"/>
-    <dependencies>
-      <dep package="gstreamer-0.10"/>
-      <dep package="gst-plugins-base-0.10"/>
-    </dependencies>
-  </autotools>
-
   <autotools id="gst-libav"
              autogenargs="--disable-fatal-warnings">
-    <branch repo="gstreamer.freedesktop.org" revision="1.10"/>
+    <branch repo="gitlab.freedesktop.org"
+            revision="1.10"
+            module="gstreamer/gst-libav.git"
+            checkoutdir="gst-libav"/>
     <dependencies>
       <dep package="gstreamer"/>
       <dep package="gst-plugins-base"/>
@@ -685,7 +658,8 @@
   </autotools>
 
   <autotools id="gst-python2" autogenargs="PYTHON=python2">
-    <branch repo="gstreamer.freedesktop.org" module="gst-python"
+    <branch repo="gitlab.freedesktop.org"
+            module="gstreamer/gst-python.git"
             checkoutdir="gst-python2"/>
     <dependencies>
       <dep package="pygobject-python2"/>
@@ -695,7 +669,9 @@
   </autotools>
 
   <autotools id="gst-python" autogenargs="PYTHON=python3">
-    <branch repo="gstreamer.freedesktop.org"/>
+    <branch repo="gitlab.freedesktop.org"
+            module="gstreamer/gst-python.git"
+            checkoutdir="gst-python"/>
     <dependencies>
       <dep package="pygobject"/>
       <dep package="gstreamer"/>
@@ -706,9 +682,10 @@
   <autotools id="gst-python-0.10"
              makeargs="GLIB_EXTRA_CFLAGS=-UG_DISABLE_DEPRECATED ERROR_CFLAGS="
              supports-non-srcdir-builds="no">
-    <branch repo="gstreamer.freedesktop.org"
-            module="gst-python"
-            revision="0.10"/>
+    <branch repo="gitlab.freedesktop.org"
+            module="gstreamer/gst-python.git"
+            revision="0.10"
+            checkoutdir="gst-python-0.10"/>
     <dependencies>
       <dep package="pygobject2"/>
       <dep package="gstreamer-0.10"/>
@@ -717,7 +694,9 @@
   </autotools>
 
   <meson id="libfprint">
-    <branch repo="fprint.freedesktop.org" module="libfprint"/>
+    <branch repo="gitlab.freedesktop.org"
+            module="libfprint/libfprint.git"
+            checkoutdir="libfprint"/>
     <dependencies>
       <dep package="libusb1"/>
       <dep package="nss"/>
@@ -726,7 +705,9 @@
   </meson>
 
   <autotools id="fprintd">
-    <branch repo="fprint.freedesktop.org" module="fprintd"/>
+    <branch repo="gitlab.freedesktop.org"
+            module="libfprint/fprintd.git"
+            checkoutdir="fprintd"/>
     <dependencies>
       <dep package="libfprint"/>
       <dep package="dbus-glib"/>
@@ -1206,26 +1187,17 @@
     </dependencies>
   </autotools>
 
-  <autotools id="gnonlin"
-             makeargs="GLIB_EXTRA_CFLAGS=-UG_DISABLE_DEPRECATED ERROR_CFLAGS=">
-    <branch repo="gstreamer.freedesktop.org"
-            module="gnonlin"/>
-    <dependencies>
-      <dep package="gstreamer"/>
-      <dep package="gst-plugins-base"/>
-    </dependencies>
-  </autotools>
-
-  <autotools id="gst-editing-services">
-    <branch repo="gstreamer.freedesktop.org"
-            module="gst-editing-services"/>
+  <meson id="gst-editing-services">
+    <branch repo="gitlab.freedesktop.org"
+            module="gstreamer/gst-editing-services.git"
+            checkoutdir="gst-editing-services"/>
     <dependencies>
       <dep package="glib"/>
       <dep package="gstreamer"/>
       <dep package="gst-plugins-base"/>
       <dep package="gst-plugins-bad"/>
     </dependencies>
-  </autotools>
+  </meson>
 
   <meson id="pitivi">
     <branch/>
@@ -1312,14 +1284,14 @@
     </dependencies>
   </autotools>
 
-  <autotools id="dia">
+  <meson id="dia">
     <branch/>
     <dependencies>
       <dep package="gtk+-2"/>
       <dep package="libxml2"/>
       <dep package="libxslt"/>
     </dependencies>
-  </autotools>
+  </meson>
 
   <autotools id="clutter-box2d">
     <branch/>
@@ -1436,19 +1408,19 @@
     </dependencies>
   </autotools>
 
-  <autotools id="gtkmm-3-documentation">
+  <meson id="gtkmm-3-documentation">
     <branch repo="gitlab.gnome.org" checkoutdir="gtkmm-3-documentation" module="GNOME/gtkmm-documentation.git" revision="gtkmm-3-24"/>
     <dependencies>
       <dep package="gtkmm-3"/>
     </dependencies>
-  </autotools>
+  </meson>
 
-  <autotools id="gtkmm-documentation">
+  <meson id="gtkmm-documentation">
     <branch/>
     <dependencies>
       <dep package="gtkmm"/>
     </dependencies>
-  </autotools>
+  </meson>
 
   <autotools id="gtkmm-utils">
     <branch repo="git.savannah.nongnu.org" module="gtkmm-utils" checkoutdir="gtkmm-utils" />
@@ -1891,7 +1863,7 @@
 
   <!-- ########## End of Ubuntu Netbook Remix Modules ########## -->
 
-  <autotools id="almanah">
+  <meson id="almanah">
     <branch/>
     <dependencies>
       <dep package="gcr"/>
@@ -1899,18 +1871,21 @@
       <dep package="gpgme"/>
       <dep package="gtk+-3"/>
       <dep package="sqlite3"/>
-      <dep package="intltool"/>
+      <dep package="gettext"/>
       <dep package="appdata-tools"/>
+      <dep package="desktop-file-utils"/>
     </dependencies>
     <suggests>
       <dep package="evolution-data-server"/>
       <dep package="gtkspell-3"/>
     </suggests>
-  </autotools>
+  </meson>
 
   <autotools id="gst-rtsp-server-0.10">
-    <branch repo="gstreamer.freedesktop.org" module="gst-rtsp-server"
-            revision="0.10" checkoutdir="gst-rtsp-server-0.10"/>
+    <branch repo="gitlab.freedesktop.org"
+            module="gstreamer/gst-rtsp-server.git"
+            revision="0.10"
+            checkoutdir="gst-rtsp-server-0.10"/>
     <dependencies>
       <dep package="glib"/>
       <dep package="gstreamer-0.10"/>
@@ -1918,14 +1893,16 @@
     </dependencies>
   </autotools>
 
-  <autotools id="gst-rtsp-server">
-    <branch repo="gstreamer.freedesktop.org" module="gst-rtsp-server"/>
+  <meson id="gst-rtsp-server">
+    <branch repo="gitlab.freedesktop.org"
+            module="gstreamer/gst-rtsp-server.git"
+            checkoutdir="gst-rtsp-server"/>
     <dependencies>
       <dep package="glib"/>
       <dep package="gstreamer"/>
       <dep package="gst-plugins-base"/>
     </dependencies>
-  </autotools>
+  </meson>
 
   <autotools id="gnome-dvb-daemon">
    <branch />
@@ -2663,8 +2640,8 @@
   <autotools id="gstreamer-0.10"
              autogenargs="--disable-tests --disable-fatal-warnings"
              supports-non-srcdir-builds="no">
-    <branch repo="gstreamer.freedesktop.org"
-            module="gstreamer"
+    <branch repo="gitlab.freedesktop.org"
+            module="gstreamer/gstreamer.git"
             revision="0.10"
             checkoutdir="gstreamer-0.10"/>
     <dependencies>
@@ -2678,8 +2655,8 @@
              autogenargs="--with-gtk=3.0 --disable-tests --disable-gnome_vfs"
              makeargs="GLIB_EXTRA_CFLAGS=-UG_DISABLE_DEPRECATED ERROR_CFLAGS= ERROR_CXXFLAGS="
              supports-non-srcdir-builds="no">
-    <branch repo="gstreamer.freedesktop.org"
-            module="gst-plugins-base"
+    <branch repo="gitlab.freedesktop.org"
+            module="gstreamer/gst-plugins-base.git"
             revision="0.10"
             checkoutdir="gst-plugins-base-0.10"/>
     <dependencies>
@@ -2694,7 +2671,10 @@
   </autotools>
 
   <autotools id="gst-plugins-good-0.10" autogenargs="--with-gtk=3.0 --disable-tests --disable-examples" makeargs="GLIB_EXTRA_CFLAGS=-UG_DISABLE_DEPRECATED ERROR_CFLAGS= ERROR_CXXFLAGS=" supports-non-srcdir-builds="no">
-    <branch repo="gstreamer.freedesktop.org" module="gst-plugins-good" revision="0.10"/>
+    <branch repo="gitlab.freedesktop.org"
+            module="gstreamer/gst-plugins-good"
+            revision="0.10"
+            checkoutdir="gst-plugins-good-0.10"/>
     <dependencies>
       <dep package="gstreamer-0.10"/>
       <dep package="gst-plugins-base-0.10"/>
@@ -3397,11 +3377,8 @@
     </suggests>
   </autotools>
 
-  <autotools id="libgda"
-             autogenargs="--with-java=no --disable-tools --enable-gda-gi --enable-gdaui-gi --enable-vala --enable-gdaui-vala">
-    <if condition-set="freebsd">
-      <autogenargs value="LIBCRYPTO_CFLAGS=' ' LIBCRYPTO_LIBS='-lcrypto' --with-bdb=/usr/local --with-bdb-libdir-name=lib/db5 --with-bdb-includedir-name=include/db5"/>
-    </if>
+  <meson id="libgda"
+         mesonargs="-Denable-gda-gi=true -Denable-tools=false -Dwith-ui=true">
     <branch/>
     <dependencies>
       <dep package="glib"/>
@@ -3410,7 +3387,7 @@
       <dep package="openssl"/>
       <dep package="vala"/>
     </dependencies>
-  </autotools>
+  </meson>
 
   <autotools id="java-gnome" autogen-sh="configure" skip-autogen="never">
     <branch repo="research.operationaldynamics.com"
@@ -3437,8 +3414,10 @@
     </dependencies>
   </autotools>
 
-  <autotools id="weston" autogenargs="--disable-setuid-install">
-    <branch repo="wayland.freedesktop.org"/>
+  <meson id="weston" mesonargs="-Dbackend-drm-screencast-vaapi=false -Dbackend-rdp=false -Dsimple-dmabuf-drm=auto">
+    <branch repo="gitlab.freedesktop.org"
+            module="wayland/weston.git"
+            checkoutdir="weston"/>
     <dependencies>
       <dep package="wayland-protocols"/>
       <dep package="wayland"/>
@@ -3446,7 +3425,7 @@
       <dep package="libxkbcommon"/>
       <dep package="mesa-libGLES"/>
     </dependencies>
-  </autotools>
+  </meson>
 
   <autotools id="nemiver"
              autogenargs="--enable-gsettings=yes">
@@ -3583,7 +3562,9 @@
   </autotools>
 
   <autotools id="telepathy-farstream" autogenargs="--disable-python" supports-non-srcdir-builds="no">
-    <branch repo="telepathy.freedesktop.org"/>
+    <branch repo="github.com"
+            module="TelepathyIM/telepathy-farstream.git"
+            checkoutdir="telepathy-farstream"/>
     <dependencies>
       <dep package="telepathy-glib"/>
       <dep package="farstream"/>

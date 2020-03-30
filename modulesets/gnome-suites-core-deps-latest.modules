@@ -8,8 +8,6 @@
     href="https://gitlab.gnome.org/"/>
 <repository type="git" name="gitlab.gnome.org/GNOME" default="yes"
     href="https://gitlab.gnome.org/GNOME/"/>
-<repository type="git" name="git.freedesktop.org"
-    href="https://anongit.freedesktop.org/git/"/>
 <repository type="git" name="gitlab.freedesktop.org"
     href="https://gitlab.freedesktop.org/"/>
 <repository type="git" name="gitlab.com"
@@ -41,6 +39,8 @@
     href="https://sourceforge.net/projects/"/>
 <repository type="tarball" name="webkitgtk.org"
     href="https://webkitgtk.org/releases/"/>
+<repository type="tarball" name="wpewebkit.org"
+    href="https://wpewebkit.org/releases/"/>
 <repository type="tarball" name="freedesktop.org"
     href="https://freedesktop.org/software/"/>
 <repository type="tarball" name="people.freedesktop.org"
@@ -146,7 +146,9 @@
     <if condition-set="quartz">
       <autogenargs value="--enable-quartz --disable-gl"/>
     </if>
-    <branch repo="git.freedesktop.org" module="cairo"/>
+    <branch repo="gitlab.freedesktop.org"
+            module="cairo/cairo.git"
+            checkoutdir="cairo"/>
     <dependencies>
       <if condition-unset="quartz">
         <dep package="fontconfig"/>
@@ -177,7 +179,9 @@
   </autotools>
 
   <autotools id="cairomm">
-    <branch repo="git.freedesktop.org" module="cairomm"/>
+    <branch repo="gitlab.freedesktop.org"
+            module="cairo/cairomm.git"
+            checkoutdir="cairomm"/>
     <dependencies>
        <dep package="cairo"/>
        <dep package="libsigcplusplus"/>
@@ -249,7 +253,7 @@
     </dependencies>
   </meson>
 
-  <autotools id="cogl" autogenargs="--enable-cogl-gst --disable-maintainer-flags">
+  <autotools id="cogl" autogenargs="--disable-maintainer-flags">
     <if condition-set="x11">
       <autogenargs value="--enable-xlib-egl-platform"/>
     </if>
@@ -328,7 +332,7 @@
     </suggests>
   </meson>
 
-  <autotools id="colord-gtk" autogenargs="--enable-vala">
+  <meson id="colord-gtk" mesonargs="-Dvapi=true">
     <branch repo="github.com" checkoutdir="colord-gtk" module="hughsie/colord-gtk.git"/>
     <dependencies>
       <dep package="glib"/>
@@ -336,7 +340,7 @@
       <dep package="colord"/>
       <dep package="vala"/>
     </dependencies>
-  </autotools>
+  </meson>
 
   <autotools id="enchant-2"
              autogen-sh="configure"
@@ -387,13 +391,11 @@
 
   <cmake id="exiv2"
          cmakeargs="-DEXIV2_ENABLE_CURL=OFF -DEXIV2_ENABLE_SSH=OFF -DEXIV2_BUILD_SAMPLES=OFF">
-    <branch repo="github.com" checkoutdir="exiv2" module="Exiv2/exiv2.git" revision="0.27"/>
+    <branch repo="github.com" checkoutdir="exiv2" module="Exiv2/exiv2.git" revision="0.27.1"/>
   </cmake>
 
-  <autotools id="folks"
-             autogenargs="--enable-eds-backend --disable-libsocialweb-backend --disable-fatal-warnings"
-             supports-non-srcdir-builds="no"
-             uninstall-before-install="true">
+  <meson id="folks"
+             mesonargs="-Deds_backend=true -Dtelepathy_backend=true">
     <branch/>
     <dependencies>
       <dep package="dbus"/>
@@ -408,7 +410,7 @@
     <suggests>
       <dep package="telepathy-logger"/>
     </suggests>
-  </autotools>
+  </meson>
 
   <meson id="fribidi" mesonargs="-Ddocs=false">
     <branch repo="github.com" checkoutdir="fribidi" module="fribidi/fribidi"/>
@@ -458,15 +460,12 @@
     </dependencies>
   </meson>
 
-  <autotools id="glade">
+  <meson id="glade">
     <if condition-set="macos">
-      <autogenargs value="--disable-man-pages"/>
+      <mesonargs value="-Dman=false"/>
     </if>
     <branch/>
     <dependencies>
-      <dep package="intltool"/>
-      <dep package="gnome-common"/>
-      <dep package="gtk-doc" />
       <dep package="gtk+-3"/>
       <dep package="libxml2"/>
       <dep package="yelp-tools"/>
@@ -474,7 +473,7 @@
         <dep package="gtk-mac-integration"/>
       </if>
     </dependencies>
-  </autotools>
+  </meson>
 
  <autotools id="gnome-autoar">
    <branch/>
@@ -539,7 +538,9 @@
     <if condition-set="macos">
       <mesonargs value="-Dnmea-source=false"/>
     </if>
-    <branch repo="git.freedesktop.org"/>
+    <branch repo="gitlab.freedesktop.org"
+            module="geoclue/geoclue.git"
+            checkoutdir="geoclue"/>
     <dependencies>
       <dep package="avahi"/>
       <dep package="libnotify"/>
@@ -574,7 +575,7 @@
 
   <meson id="glib" mesonargs="-Dlibmount=false">
     <if condition-set="freebsd">
-      <mesonargs value="-Db_lundef=false -Ddtrace=false -Diconv=gnu -Dxattr=false"/>
+      <mesonargs value="-Db_lundef=false -Ddtrace=false -Diconv=external -Dxattr=false"/>
     </if>
     <if condition-set="macos">
       <mesonargs value="-Dinternal_pcre=true"/>
@@ -597,7 +598,7 @@
   </meson>
 
   <autotools id="glibmm-2.4">
-    <branch repo="gitlab.gnome.org" checkoutdir="glibmm-2.4" module="GNOME/glibmm.git" revision="glibmm-2-58"/>
+    <branch repo="gitlab.gnome.org" checkoutdir="glibmm-2.4" module="GNOME/glibmm.git" revision="glibmm-2-60"/>
     <dependencies>
       <dep package="glib"/>
       <dep package="libsigcplusplus-2.0"/>
@@ -670,6 +671,9 @@
       <dep package="dbus-glib"/>
       <dep package="gobject-introspection"/>
       <dep package="mozjs60"/>
+      <if condition-set="linux">
+        <dep package="sysprof-capture"/>
+      </if>
       <if condition-set="coverage">
         <dep package="lcov"/>
       </if>
@@ -869,17 +873,23 @@
   </autotools>
 
   <meson id="gtk+" mesonargs="-Dbroadway-backend=true">
+    <if condition-set="x11">
+      <mesonargs value="-Dx11-backend=true"/>
+    </if>
     <if condition-unset="x11">
       <mesonargs value="-Dx11-backend=false"/>
+    </if>
+    <if condition-set="wayland">
+      <mesonargs value="-Dwayland-backend=true"/>
     </if>
     <if condition-unset="wayland">
       <mesonargs value="-Dwayland-backend=false"/>
     </if>
-    <if condition-set="mir">
-      <mesonargs value="-Dmir-backend=true"/>
-    </if>
     <if condition-set="quartz">
       <mesonargs value="-Dquartz-backend=true"/>
+    </if>
+    <if condition-unset="quartz">
+      <mesonargs value="-Dquartz-backend=false"/>
     </if>
     <branch repo="gitlab.gnome.org" checkoutdir="gtk+" module="GNOME/gtk.git"/>
     <dependencies>
@@ -922,18 +932,33 @@
     </suggests>
   </meson>
 
-  <autotools id="gtk+-3" autogenargs="--enable-broadway-backend --enable-installed-tests">
+  <meson id="gtk+-3" mesonargs="-Dbroadway_backend=true -Dman=true">
     <if condition-set="x11">
-      <autogenargs value="--enable-x11-backend"/>
+      <mesonargs value="-Dx11_backend=true"/>
+    </if>
+    <if condition-unset="x11">
+      <mesonargs value="-Dx11_backend=false"/>
     </if>
     <if condition-set="wayland">
-      <autogenargs value="--enable-wayland-backend"/>
+      <mesonargs value="-Dwayland_backend=true"/>
+    </if>
+    <if condition-unset="wayland">
+      <mesonargs value="-Dwayland_backend=false"/>
     </if>
     <if condition-set="mir">
-      <autogenargs value="--enable-mir-backend"/>
+      <mesonargs value="-Dmir_backend=true"/>
+    </if>
+    <if condition-unset="mir">
+      <mesonargs value="-Dmir_backend=false"/>
     </if>
     <if condition-set="quartz">
-      <autogenargs value="--enable-quartz-backend"/>
+      <mesonargs value="-Dquartz_backend=true"/>
+    </if>
+    <if condition-unset="quartz">
+      <mesonargs value="-Dquartz_backend=false"/>
+    </if>
+    <if condition-set="macos">
+      <mesonargs value="-Dman=false"/>
     </if>
     <branch repo="gitlab.gnome.org" checkoutdir="gtk+-3" module="GNOME/gtk.git" revision="gtk-3-24"/>
     <dependencies>
@@ -968,9 +993,9 @@
       <dep package="desktop-file-utils"/>
       <dep package="shared-mime-info"/>
     </suggests>
-  </autotools>
+  </meson>
 
-  <meson id="gtk-doc">
+  <meson id="gtk-doc" mesonargs="-Dtests=false">
     <branch/>
     <dependencies>
       <dep package="libxslt"/>
@@ -1029,15 +1054,14 @@
     </dependencies>
   </autotools>
 
-  <autotools id="gtksourceview">
+  <meson id="gtksourceview">
     <branch/>
     <dependencies>
       <dep package="libxml2"/>
       <dep package="shared-mime-info"/>
       <dep package="gtk+-3"/>
-      <dep package="m4-common"/>
     </dependencies>
-  </autotools>
+  </meson>
 
   <autotools id="gtksourceview-3">
     <branch checkoutdir="gtksourceview-3" module="gtksourceview" revision="gnome-3-24"/>
@@ -1214,7 +1238,7 @@
     </suggests>
   </meson>
 
- <autotools id="libchamplain" autogenargs="--enable-vala">
+ <meson id="libchamplain" mesonargs="-Dintrospection=true -Dvapi=true">
    <branch/>
    <dependencies>
      <dep package="glib"/>
@@ -1227,7 +1251,7 @@
      <dep package="libsoup"/>
      <dep package="clutter-gtk"/>
    </suggests>
- </autotools>
+ </meson>
 
   <autotools id="libcroco" supports-non-srcdir-builds="no">
     <if condition-unset="gnu-elf">
@@ -1402,8 +1426,26 @@
     </dependencies>
   </meson>
 
+  <cmake id="libical"
+         cmakeargs="-DUSE_INTEROPERABLE_VTIMEZONES:BOOL=true
+                    -DICAL_ALLOW_EMPTY_PROPERTIES:BOOL=true
+                    -DGOBJECT_INTROSPECTION:BOOL=true
+                    -DICAL_GLIB:BOOL=true
+                    -DICAL_GLIB_VAPI:BOOL=true
+                    -DSHARED_ONLY:BOOL=true">
+    <branch repo="github-tar"
+            version="3.0.5"
+            checkoutdir="libical-${version}"
+            module="libical/libical/releases/download/v${version}/libical-${version}.tar.gz"
+            hash="7ad550c8c49c9b9983658e3ab3e68b1eee2439ec17b169a6b1e6ecb5274e78e6"
+            size="881800">
+    </branch>
+  </cmake>
+
   <meson id="libinput" mesonargs="-Ddocumentation=false">
-    <branch repo="git.freedesktop.org" checkoutdir="libinput" module="wayland/libinput.git" />
+    <branch repo="gitlab.freedesktop.org"
+            checkoutdir="libinput"
+            module="libinput/libinput.git" />
     <dependencies>
       <dep package="check"/>
       <dep package="libevdev"/>
@@ -1415,8 +1457,9 @@
   </meson>
 
   <autotools id="libmbim">
-    <branch repo="git.freedesktop.org"
-            module="libmbim/libmbim.git"/>
+    <branch repo="gitlab.freedesktop.org"
+            module="mobile-broadband/libmbim.git"
+            checkoutdir="libmbim"/>
     <dependencies>
       <dep package="glib"/>
       <dep package="gtk-doc"/>
@@ -1490,7 +1533,9 @@
   </autotools>
 
   <autotools id="libqmi">
-    <branch repo="git.freedesktop.org" module="libqmi.git"/>
+    <branch repo="gitlab.freedesktop.org"
+            module="mobile-broadband/libqmi.git"
+            checkoutdir="libqmi"/>
     <dependencies>
       <dep package="glib"/>
       <dep package="gtk-doc"/>
@@ -1572,6 +1617,7 @@
       <dep package="sqlite3"/>
       <dep package="gobject-introspection"/>
       <dep package="vala"/>
+      <dep package="brotli"/>
     </dependencies>
     <suggests>
       <dep package="glib-networking"/>
@@ -1656,19 +1702,19 @@
 
   <distutils id="meson" python3="1">
     <branch repo="github-tar"
-            version="0.49.2"
+            version="0.51.0"
             module="mesonbuild/meson/releases/download/${version}/meson-${version}.tar.gz"
             checkoutdir="meson-${version}"
-            hash="sha256:ef9f14326ec1e30d3ba1a26df0f92826ede5a79255ad723af78a2691c37109fd">
+            hash="sha256:2f75fdf6d586d3595c03a07afcd0eaae11f68dd33fea5906a434d22a409ed63f">
     </branch>
     <dependencies>
       <dep package="ninja"/>
     </dependencies>
   </distutils>
 
-  <autotools id="mm-common">
+  <meson id="mm-common" mesonargs="-Duse-network=true">
     <branch/>
-  </autotools>
+  </meson>
 
   <autotools id="mobile-broadband-provider-info">
     <branch/>
@@ -1676,8 +1722,9 @@
 
   <autotools id="ModemManager"
              autogenargs="--with-udev-base-dir=${libdir}/udev --with-systemdsystemunitdir=no --disable-more-warnings">
-    <branch repo="git.freedesktop.org"
-	    module="ModemManager/ModemManager.git" checkoutdir="ModemManager" />
+    <branch repo="gitlab.freedesktop.org"
+             module="mobile-broadband/ModemManager.git"
+             checkoutdir="ModemManager" />
     <dependencies>
       <dep package="glib"/>
       <dep package="dbus-glib"/>
@@ -1767,7 +1814,9 @@
   </meson>
 
   <autotools id="pixman" autogenargs="--disable-gtk">
-    <branch repo="git.freedesktop.org" module="pixman"/>
+    <branch repo="gitlab.freedesktop.org"
+            module="pixman/pixman.git"
+            checkoutdir="pixman"/>
   </autotools>
 
   <autotools id="pyatspi2" autogenargs="--with-python=python3" >
@@ -1861,12 +1910,21 @@
     </dependencies>
   </meson>
 
+  <meson id="sysprof-capture"
+         mesonargs="-Denable_gtk=false -Dhelp=false -Dlibsysprof=false -Dwith_sysprofd=none">
+    <branch module="sysprof"/>
+    <dependencies>
+      <dep package="glib"/>
+    </dependencies>
+  </meson>
+
   <autotools id="telepathy-glib"
              supports-non-srcdir-builds="no"
              autogenargs="--enable-vala-bindings --disable-fatal-warnings">
     <pkg-config>telepathy-glib.pc</pkg-config>
-    <branch repo="git.freedesktop.org"
-            module="telepathy/telepathy-glib"/>
+    <branch repo="github.com"
+            module="TelepathyIM/telepathy-glib.git"
+            checkoutdir="telepathy-glib"/>
     <dependencies>
       <dep package="glib"/>
       <dep package="gobject-introspection"/>
@@ -1879,8 +1937,9 @@
 
   <autotools id="telepathy-logger" supports-non-srcdir-builds="no">
     <pkg-config>telepathy-logger-0.2.pc</pkg-config>
-    <branch repo="git.freedesktop.org"
-            module="telepathy/telepathy-logger"/>
+    <branch repo="github.com"
+            module="TelepathyIM/telepathy-logger"
+            checkoutdir="telepathy-logger"/>
     <dependencies>
       <dep package="dbus"/>
       <dep package="dbus-glib"/>
@@ -1957,7 +2016,7 @@
   </meson>
 
   <autotools id="uhttpmock" supports-non-srcdir-builds="no">
-    <branch repo="github.com" checkoutdir="uhttpmock" module="pwithnall/uhttpmock.git"/>
+    <branch repo="gitlab.com" checkoutdir="uhttpmock" module="uhttpmock/uhttpmock.git"/>
     <dependencies>
       <dep package="glib"/>
       <dep package="libsoup"/>
@@ -1977,8 +2036,9 @@
   </autotools>
 
   <autotools id="wayland-protocols">
-    <branch repo="git.freedesktop.org"
-            module="wayland/wayland-protocols"/>
+    <branch repo="gitlab.freedesktop.org"
+            module="wayland/wayland-protocols.git"
+            checkoutdir="wayland-protocols"/>
     <dependencies>
       <if condition-set="linux">
         <dep package="wayland"/>
@@ -1988,14 +2048,33 @@
 
   <autotools id="wayland"
              autogenargs="--disable-documentation">
-    <branch repo="git.freedesktop.org"
-            module="wayland/wayland"/>
+    <branch repo="gitlab.freedesktop.org"
+            module="wayland/wayland.git"
+            checkoutdir="wayland"/>
     <dependencies>
       <dep package="libffi"/>
       <dep package="doxygen"/>
       <dep package="xmlto"/>
     </dependencies>
   </autotools>
+
+  <cmake id="libwpe">
+    <branch repo="wpewebkit.org"
+            module="libwpe-1.3.0.tar.xz"
+            version="1.3.0"
+            hash="sha256:68986647af2433e74f830a06a497ed536dbc8721b04026ed82611a584be71148"/>
+  </cmake>
+
+  <cmake id="wpebackend-fdo">
+    <branch repo="wpewebkit.org"
+            module="wpebackend-fdo-1.3.1.tar.xz"
+            version="1.3.1"
+            hash="sha256:b0d136aa9ce9f94b1d06b258ed68c4a7b588b2e692d448d9c6eedb72edf56739"/>
+    <dependencies>
+      <dep package="libwpe"/>
+      <dep package="glib"/>
+    </dependencies>
+  </cmake>
 
   <cmake id="WebKit" cmakeargs="-DPORT=GTK -DCMAKE_BUILD_TYPE=RelWithDebInfo -DENABLE_PLUGIN_PROCESS_GTK2=OFF">
     <if condition-unset="x11">
@@ -2006,9 +2085,9 @@
     </if>
     <pkg-config>webkit2gtk-4.0.pc</pkg-config>
     <branch repo="webkitgtk.org"
-            module="webkitgtk-2.23.91.tar.xz" version="2.23.91"
-            hash="sha256:f90c4edff3408d1e291b6dbe3c210cf13ac7200486b733c4bb935559bd93d951"
-            size="17899788"/>
+            module="webkitgtk-2.25.2.tar.xz" version="2.25.2"
+            hash="sha256:7c352f1a8ca4227c0f3c19662eb88e41788953c8869d7193fe250a8cfcc1cbfc"
+            size="19174000"/>
     <dependencies>
       <dep package="c++"/>
       <dep package="at-spi2-core"/>
@@ -2052,6 +2131,7 @@
         <if condition-set="linux">
           <dep package="wayland"/>
         </if>
+        <dep package="wpebackend-fdo"/>
       </if>
     </dependencies>
     <suggests>
@@ -2073,25 +2153,16 @@
     </dependencies>
   </cmake>
 
- <autotools id="vte"
-            autogenargs="--enable-introspection=yes"
-            supports-non-srcdir-builds="no"
-            uninstall-before-install="true">
-    <!-- We uninstall the old copy before installing to avoid the version from
-         the installed pkg-config file winding up in the new vapi. See bug #762780. -->
-    <if condition-unset="gnu-elf">
-      <autogenargs value="--disable-Bsymbolic"/>
-    </if>
+ <meson id="vte">
     <branch/>
     <dependencies>
-      <dep package="intltool"/>
       <dep package="glib"/>
       <dep package="gtk+-3"/>
       <dep package="gnutls"/>
       <dep package="pcre2"/>
       <dep package="vala"/>
     </dependencies>
-  </autotools>
+  </meson>
 
   <autotools id="yelp-tools">
     <branch/>

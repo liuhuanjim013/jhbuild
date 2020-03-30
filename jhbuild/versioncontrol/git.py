@@ -50,6 +50,10 @@ if 'git+ssh' not in urlparse.uses_relative:
 if 'ssh' not in urlparse.uses_relative:
     urlparse.uses_relative.append('ssh')
 
+# detect running on teamcity
+# TODO: maybe put this into config
+is_teamcity = os.environ.get('TEAMCITY_VERSION', '') != ''
+
 def get_git_extra_env():
     # we run git without the JHBuild LD_LIBRARY_PATH and PATH, as it can
     # lead to errors if it picks up jhbuilded libraries, such as nss
@@ -116,9 +120,11 @@ class GitRepository(Repository):
                         module = new_module
                     # need to disable tag because it will override our branch override
                     tag = None
+
         # also allow specifying by the format of repo:module
-        elif ('%s:%s' % (self.name, module)) in self.config.branches:
-            revision = self.config.branches['%s:%s' % (self.name, module)]
+        repomodule = '%s:%s' % (self.name, module)
+        if repomodule in self.config.branches:
+            revision = self.config.branches[repomodule]
             tag = None
 
         if not (urlparse.urlparse(module)[0] or module[0] == '/'):
@@ -130,9 +136,9 @@ class GitRepository(Repository):
 
         if mirror_module:
             return GitBranch(self, mirror_module, subdir, checkoutdir,
-                    revision, tag, unmirrored_module=module)
+                    revision, tag, unmirrored_module=module, repomodule=repomodule)
         else:
-            return GitBranch(self, module, subdir, checkoutdir, revision, tag)
+            return GitBranch(self, module, subdir, checkoutdir, revision, tag, repomodule=repomodule)
 
     def to_sxml(self):
         return [sxml.repository(type='git', name=self.name, href=self.href)]
@@ -145,14 +151,16 @@ class GitBranch(Branch):
     """A class representing a GIT branch."""
 
     dirty_branch_suffix = '-dirty'
+    repomodule = None
 
     def __init__(self, repository, module, subdir, checkoutdir=None,
-                 branch=None, tag=None, unmirrored_module=None):
+                 branch=None, tag=None, unmirrored_module=None, repomodule=None):
         Branch.__init__(self, repository, module, checkoutdir)
         self.subdir = subdir
         self.branch = branch
         self.tag = tag
         self.unmirrored_module = unmirrored_module
+        self.repomodule = repomodule
 
     def get_module_basename(self):
         # prevent basename() from returning empty strings on trailing '/'
@@ -292,7 +300,11 @@ class GitBranch(Branch):
 
         if switch_command:
             if self.is_dirty():
-                raise CommandError(_('Refusing to switch a dirty tree.'))
+                if not is_teamcity:
+                    raise CommandError(_('Refusing to switch branch on a dirty tree.'))
+                logging.warning(_('Dirty tree, but TEAMCITY_VERSION is present, so reset hard and switch branch'))
+                buildscript.execute(['git', 'reset', '--hard'], cwd=self.get_checkoutdir(), extra_env=get_git_extra_env())
+                buildscript.execute(['git', 'clean', '-ffxd'], cwd=self.get_checkoutdir(), extra_env=get_git_extra_env())
             buildscript.execute(switch_command, cwd=self.get_checkoutdir(),
                     extra_env=get_git_extra_env())
 
@@ -310,18 +322,31 @@ class GitBranch(Branch):
 
         if self.is_dirty(ignore_submodules=True):
             # custom behavior, instead of allowing for stash, refuse to deal with dirty tree at all
-            raise CommandError(_('Refusing to switch a dirty tree.'))
+            if not is_teamcity:
+                raise CommandError(_('Refusing to pull branch on a dirty tree.'))
+            logging.warning(_('Dirty tree, but TEAMCITY_VERSION is present, so ignoring'))
 
-        branch = self.get_current_branch();
-        if not self.is_tracking_a_remote_branch(branch):
+        branch = self.get_current_branch()
+        if not branch:
             return
+        if not self.is_tracking_a_remote_branch(branch):
+            # custom behavior, don't want people getting an outdated build without noticing
+            raise CommandError(_('Local branch is not tracking remote, refuse to continue.'))
 
         if self.has_diverged_from_remote_branch(branch):
             # custom behavior, do not merge from origin if local branch has diverged
-            raise CommandError(_('Refusing to merge origin into a diverged branch.'))
+            if not is_teamcity:
+                raise CommandError(_('Refusing to merge remote branch into a diverged branch.'))
+            logging.warning(_('Branch has diverged, but TEAMCITY_VERSION is present, so ignoring'))
 
         git_extra_args = {'cwd': self.get_checkoutdir(),
                 'extra_env': get_git_extra_env()}
+
+        if is_teamcity:
+            logging.warning(_('Hard reset to remote branch, because TEAMCITY_VERSION is present'))
+            buildscript.execute(['git', 'reset', '--hard', 'origin/' + branch], **git_extra_args)
+            buildscript.execute(['git', 'clean', '-ffxd'], **git_extra_args)
+            return
 
         stashed = False
         if self.is_dirty(ignore_submodules=True):
