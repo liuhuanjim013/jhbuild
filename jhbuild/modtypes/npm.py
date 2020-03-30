@@ -18,13 +18,11 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 __metaclass__ = type
-__all__ = ["NPMModule"]
 
 import os
 import shutil
-from jhbuild.errors import BuildStateError, CommandError
-from jhbuild.modtypes import \
-    Package, DownloadableModule, register_module_type
+from jhbuild.errors import CommandError
+from jhbuild.modtypes import Package, DownloadableModule, register_module_type
 from jhbuild.modtypes.autotools import collect_args
 
 
