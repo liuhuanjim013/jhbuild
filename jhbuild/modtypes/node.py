@@ -33,17 +33,18 @@ class NodeModule(Package, DownloadableModule):
     PHASE_INSTALL = 'install'
     PHASE_BUILD = 'build'
 
-    def __init__(self, name, branch=None):
+    def __init__(self, name, branch=None, nodescript='build'):
         super(NodeModule, self).__init__(name, branch=branch)
         self.name = name
         self.supports_install_destdir = True
+        self.nodescript = nodescript
 
     def do_install_dependencies(self, buildscript):
         """Install dependcies list in package.json
 
         dependencies will be installed under builddir/package_name/node_modules
         """
-        buildscript.set_action(_('Installing Package Dependencies'), self)
+        buildscript.set_action(_('Installing dependencies'), self)
         srcdir = self.get_srcdir(buildscript)
         builddir = self.get_builddir(buildscript)
         buildscript.execute('yarn install --production --modules-folder %s' % os.path.join(builddir, 'node_modules'), cwd=srcdir)
@@ -54,11 +55,12 @@ class NodeModule(Package, DownloadableModule):
     def do_build(self, buildscript):
         """Run build command specified in package.json
         """
+        buildscript.set_action(_('Building'), self)
         prefix = os.path.expanduser(buildscript.config.prefix)
         destdir = self.prepare_installroot(buildscript)
         srcdir = self.get_srcdir(buildscript)
         builddir = self.get_builddir(buildscript)
-        buildscript.execute('yarn run build', cwd=srcdir, extra_env={
+        buildscript.execute('yarn run %s' % self.nodescript, cwd=srcdir, extra_env={
             'PATH': '%s:%s' % (os.path.join(builddir, 'node_modules', '.bin'), os.environ['PATH']),
             'NODE_PATH': os.path.join(builddir, 'node_modules'),
             'NODE_ENV': 'production',
@@ -89,11 +91,14 @@ class NodeModule(Package, DownloadableModule):
     def xml_tag_and_attrs(self):
         return 'node', [
             ('id', 'name', None),
+            ('nodescript', 'nodescript', None),
         ]
 
 def parse_node(node, config, uri, repositories, default_repo):
     instance = NodeModule.parse_from_xml(node, config, uri, repositories, default_repo)
     instance.dependencies += ['node'] # add node to the dep
+    if node.hasAttribute('nodescript'):
+        instance.nodescript = node.getAttribute('nodescript')
     return instance
 
 register_module_type('node', parse_node)
