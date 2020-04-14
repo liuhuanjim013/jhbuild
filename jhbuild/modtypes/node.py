@@ -42,12 +42,16 @@ class NodeModule(Package, DownloadableModule):
     def do_install_dependencies(self, buildscript):
         """Install dependcies list in package.json
 
-        dependencies will be installed under builddir/package_name/node_modules
+        both dependencies and dev dependencies will be installed under builddir/package_name/node_modules
         """
         buildscript.set_action(_('Installing dependencies'), self)
         srcdir = self.get_srcdir(buildscript)
         builddir = self.get_builddir(buildscript)
-        buildscript.execute('yarn install --production --modules-folder %s' % os.path.join(builddir, 'node_modules'), cwd=srcdir)
+        # buildscript.execute('npm install --prefix {}'.format(builddir), cwd=srcdir)
+        buildscript.execute('npm run jhbuild-dep', cwd=srcdir, extra_env={
+            'BUILDDIR': builddir,
+        })
+        buildscript.execute('npm install', cwd=builddir)
 
     do_install_dependencies.depends = [PHASE_CHECKOUT]
     do_install_dependencies.error_phases = [PHASE_FORCE_CHECKOUT]
@@ -58,11 +62,8 @@ class NodeModule(Package, DownloadableModule):
         buildscript.set_action(_('Building'), self)
         prefix = os.path.expanduser(buildscript.config.prefix)
         destdir = self.prepare_installroot(buildscript)
-        srcdir = self.get_srcdir(buildscript)
         builddir = self.get_builddir(buildscript)
-        buildscript.execute('yarn run %s' % self.nodescript, cwd=srcdir, extra_env={
-            'PATH': '%s:%s' % (os.path.join(builddir, 'node_modules', '.bin'), os.environ['PATH']),
-            'NODE_PATH': os.path.join(builddir, 'node_modules'),
+        buildscript.execute('npm run %s' % self.nodescript, cwd=builddir, extra_env={
             'NODE_ENV': 'production',
             'PREFIX': prefix,
             'DESTDIR': destdir,
@@ -75,6 +76,17 @@ class NodeModule(Package, DownloadableModule):
         """ install the output files to installdir
         """
         buildscript.set_action(_('Installing'), self)
+
+        destdir = self.prepare_installroot(buildscript)
+        prefix_without_drive = os.path.splitdrive(buildscript.config.prefix)[1]
+        stripped_prefix = prefix_without_drive[1:]
+        destdir_prefix = os.path.join(destdir, stripped_prefix)
+
+        builddir = self.get_builddir(buildscript)
+        buildscript.execute('npm run jhbuild-install', cwd=builddir, extra_env={
+            'INSTALLDIR': destdir_prefix,
+        })
+
         self.process_install(buildscript, self.get_revision())
 
     do_install.depends = [PHASE_BUILD]
