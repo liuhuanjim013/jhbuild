@@ -54,7 +54,6 @@ class PipModule(Package):
                     '--no-dependencies',
                     '--ignore-installed',
                     '--prefix', buildscript.config.prefix,
-                    '--build', os.path.join(tempdir, 'build'),
                     '--src', os.path.join(tempdir, 'src'),
                     '--root', destdir] + self.branch.version.split())
             buildscript.execute(cmd, cwd=tempdir, extra_env=self.extra_env)
