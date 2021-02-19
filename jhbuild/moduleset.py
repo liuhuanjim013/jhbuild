@@ -69,9 +69,10 @@ def get_default_repo():
     return _default_repo
 
 class ModuleSet:
-    def __init__(self, config = None, db=None):
+    def __init__(self, config = None, db=None, included_moduleset_uris=set()):
         self.config = config
         self.modules = {}
+        self.included_moduleset_uris = included_moduleset_uris
         self.raise_exception_on_warning=False
 
         if db is None:
@@ -451,7 +452,7 @@ def _handle_conditions(config, element):
     for c in _child_elements(element):
         _handle_conditions(config, c)
 
-def _parse_module_set(config, uri):
+def _parse_module_set(config, uri, included_moduleset_uris=set()):
     try:
         filename = httpcache.load(uri, nonetwork=config.nonetwork, age=0)
     except Exception as e:
@@ -473,7 +474,7 @@ def _parse_module_set(config, uri):
 
     _handle_conditions(config, document.documentElement)
 
-    moduleset = ModuleSet(config = config)
+    moduleset = ModuleSet(config = config, included_moduleset_uris = included_moduleset_uris)
     moduleset_name = document.documentElement.getAttribute('name')
     if not moduleset_name:
         moduleset_name = os.path.basename(uri)
@@ -535,6 +536,10 @@ def _parse_module_set(config, uri):
         if node.nodeName == 'include':
             href = node.getAttribute('href')
             inc_uri = urlparse.urljoin(uri, href)
+
+            if inc_uri in moduleset.included_moduleset_uris:
+                continue
+
             try:
                 inc_moduleset = _parse_module_set(config, inc_uri)
             except UndefinedRepositoryError:
@@ -548,6 +553,8 @@ def _parse_module_set(config, uri):
                 inc_moduleset = _parse_module_set(config, inc_uri)
 
             moduleset.modules.update(inc_moduleset.modules)
+            moduleset.included_moduleset_uris |= inc_moduleset.included_moduleset_uris
+            moduleset.included_moduleset_uris.add(inc_uri)
         elif node.nodeName in ['repository', 'cvsroot', 'svnroot',
                                'arch-archive']:
             pass
